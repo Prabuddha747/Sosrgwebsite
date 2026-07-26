@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Layout from '@/components/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronDown, MapPin, ArrowRight, Plus, Wallet, Clock } from 'lucide-react';
@@ -277,7 +277,7 @@ const ArtistsTab = () => {
   );
 };
 
-const Explore = () => {
+const ExploreInner = () => {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(searchParams?.get('tab') === 'artists' ? 'artists' : 'casting');
   const cinematicTransition: any = { duration: 0.8, ease: [] as any };
@@ -332,5 +332,11 @@ const Explore = () => {
     </Layout>
   );
 };
+
+const Explore = () => (
+  <Suspense fallback={null}>
+    <ExploreInner />
+  </Suspense>
+);
 
 export default Explore;

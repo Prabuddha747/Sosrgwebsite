@@ -10,20 +10,29 @@ import { ArrowRight } from 'lucide-react';
 // rallying-cry moment on the whole site; used only once below, on purpose.
 const MarqueeCall = ({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) => {
   const prefersReducedMotion = useReducedMotion();
+  let i = 0;
   return (
     <span className={className} style={style} aria-label={text}>
-      {text.split('').map((ch, i) => (
-        <motion.span
-          key={i}
-          aria-hidden="true"
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: prefersReducedMotion ? 0 : i * 0.02 }}
-          style={{ display: 'inline-block' }}
-        >
-          {ch === ' ' ? ' ' : ch}
-        </motion.span>
+      {text.split(' ').map((word, wi, words) => (
+        <span key={wi} style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+          {word.split('').map((ch) => {
+            const idx = i++;
+            return (
+              <motion.span
+                key={idx}
+                aria-hidden="true"
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: prefersReducedMotion ? 0 : idx * 0.02 }}
+                style={{ display: 'inline-block' }}
+              >
+                {ch}
+              </motion.span>
+            );
+          })}
+          {wi < words.length - 1 ? ' ' : ''}
+        </span>
       ))}
     </span>
   );

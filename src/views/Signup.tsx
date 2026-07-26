@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
 import { useAuth, PENDING_WORKSPACE_KEY, PENDING_STUDIO_KEY, Workspace } from '@/contexts/AuthContext';
@@ -16,7 +16,7 @@ const ORG_TYPES: StudioProfile['orgType'][] = [
   'production_house', 'theatre', 'agency', 'brand', 'studio', 'casting_director', 'other',
 ];
 
-const Signup = () => {
+const SignupInner = () => {
   const { user, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const searchParams = useSearchParams();
@@ -277,5 +277,11 @@ const Signup = () => {
     </Layout>
   );
 };
+
+const Signup = () => (
+  <Suspense fallback={null}>
+    <SignupInner />
+  </Suspense>
+);
 
 export default Signup;
