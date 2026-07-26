@@ -5,13 +5,13 @@ import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@/lib/router-compat';
-import { 
-  Users, TrendingUp, Bell, MessageSquare, 
-  Send, Shield, BarChart3, Clock, ArrowUpRight 
+import {
+  Users, TrendingUp, Bell, MessageSquare,
+  Send, Shield, BarChart3, Clock, ArrowUpRight, BadgeCheck
 } from 'lucide-react';
-import { 
-  collection, addDoc, serverTimestamp, 
-  getDocs, query, orderBy, limit 
+import {
+  collection, addDoc, serverTimestamp,
+  getDocs, query, orderBy, limit, doc, updateDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { showSuccess, showError } from '@/utils/toast';
@@ -75,6 +75,18 @@ const AdminDashboard = () => {
 
     if (isAdmin) fetchAdminData();
   }, [isAdmin]);
+
+  // Verification badge (docs/PLATFORM_EVOLUTION_PLAN.md §12) — a manual,
+  // admin-reviewed toggle, deliberately not a document-upload KYC flow.
+  const toggleVerified = async (uid: string, current: boolean) => {
+    try {
+      await updateDoc(doc(db, 'profiles', uid), { verified: !current });
+      setRecentUsers(prev => prev.map(u => (u.id === uid ? { ...u, verified: !current } : u)));
+      showSuccess(!current ? 'Profile verified.' : 'Verification removed.');
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
 
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,11 +253,24 @@ const AdminDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right space-y-1">
-                        <p className="text-[#B9914A] text-[10px] md:text-xs font-black tracking-[0.3em] uppercase group-hover:scale-105 transition-transform">
-                          {creator.coins || 0} COINS
-                        </p>
-                        <p className="text-[8px] text-white/20 uppercase font-black">VAULT BALANCE</p>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right space-y-1">
+                          <p className="text-[#B9914A] text-[10px] md:text-xs font-black tracking-[0.3em] uppercase group-hover:scale-105 transition-transform">
+                            {creator.coins || 0} COINS
+                          </p>
+                          <p className="text-[8px] text-white/20 uppercase font-black">VAULT BALANCE</p>
+                        </div>
+                        <button
+                          onClick={() => toggleVerified(creator.id, !!creator.verified)}
+                          className={cn(
+                            'flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all shrink-0',
+                            creator.verified
+                              ? 'bg-[#B9914A] border-[#B9914A] text-[#090B10]'
+                              : 'border-white/10 text-white/40 hover:border-[#B9914A]/50 hover:text-[#B9914A]'
+                          )}
+                        >
+                          <BadgeCheck size={12} /> {creator.verified ? 'Verified' : 'Verify'}
+                        </button>
                       </div>
                     </div>
                   ))}

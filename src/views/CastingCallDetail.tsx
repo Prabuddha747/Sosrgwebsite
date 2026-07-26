@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useParams, useNavigate } from '@/lib/router-compat';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
-import { getCastingCall, applyCastingCall, hasAppliedToCall, CastingCall } from '@/lib/db';
+import { getCastingCall, applyCastingCall, hasAppliedToCall, computeMatchScore, CastingCall } from '@/lib/db';
 import { ArrowLeft, MapPin, Clock, Wallet, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const CastingCallDetail = () => {
@@ -41,6 +41,10 @@ const CastingCallDetail = () => {
   const talentTags = (profile?.creativeDomains?.length ? profile.creativeDomains : profile?.skills) || [];
   const callTags = call?.creativeDomain || [];
   const tagsMatch = talentTags.some(t => callTags.some(c => c.trim().toLowerCase() === t.trim().toLowerCase()));
+
+  // Broader than the apply-gate above — folds in requiredSkills too, since
+  // this is "how well do you fit" (an indicator), not a hard requirement.
+  const matchScore = computeMatchScore(talentTags, [...callTags, ...(call?.requiredSkills || [])]);
 
   const handleApply = async () => {
     if (!user) {
@@ -157,6 +161,17 @@ const CastingCallDetail = () => {
                 transition={{ ...cinematicTransition, delay: 0.15 }}
                 className="bg-white/5 border border-white/10 rounded-2xl p-10 shadow-2xl sticky top-32"
               >
+                {user && profile?.activeWorkspace !== 'studio' && (
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] text-white/40 uppercase font-bold tracking-[0.3em]">Your Match</span>
+                      <span className="text-sm font-black text-[#B9914A]">{matchScore}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#B9914A] rounded-full transition-all duration-700" style={{ width: `${matchScore}%` }} />
+                    </div>
+                  </div>
+                )}
                 <p className="text-[10px] text-white/40 uppercase font-bold tracking-[0.4em] mb-8">Ready to apply?</p>
                 <button
                   onClick={handleApply}

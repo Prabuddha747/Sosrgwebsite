@@ -11,9 +11,26 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getOrCreateChat } from '@/lib/db';
-import { Send, ArrowLeft, Shield, Sparkles } from 'lucide-react';
+import { Send, ArrowLeft, Shield, Sparkles, Film, Clapperboard, CalendarClock, Mail, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+
+// Contextual attachment cards (docs/PLATFORM_EVOLUTION_PLAN.md §8) — one
+// new field on the existing message schema, not a new messaging system.
+// URL-based types (portfolio/showreel/audition_tape) need a link since
+// there's no file-upload infra; the rest are structured text.
+type AttachmentType = 'portfolio' | 'showreel' | 'audition_tape' | 'availability' | 'invitation' | 'meeting';
+
+const ATTACHMENT_ACTIONS: { type: AttachmentType; label: string; icon: typeof Film; placeholder: string; needsUrl: boolean }[] = [
+  { type: 'portfolio', label: 'Portfolio', icon: Sparkles, placeholder: 'Paste your portfolio link...', needsUrl: true },
+  { type: 'showreel', label: 'Showreel', icon: Film, placeholder: 'Paste your showreel link...', needsUrl: true },
+  { type: 'audition_tape', label: 'Audition Tape', icon: Clapperboard, placeholder: 'Paste your audition tape link...', needsUrl: true },
+  { type: 'availability', label: 'Availability', icon: CalendarClock, placeholder: 'When are you available?', needsUrl: false },
+  { type: 'invitation', label: 'Invite', icon: Mail, placeholder: 'What are you inviting them to?', needsUrl: false },
+  { type: 'meeting', label: 'Meeting', icon: CalendarCheck, placeholder: 'Propose a date/time...', needsUrl: false },
+];
+
+const attachmentIcon = (type?: AttachmentType) => ATTACHMENT_ACTIONS.find(a => a.type === type)?.icon || Sparkles;
 
 const ChatPage = () => {
   const { id } = useParams();
@@ -23,6 +40,8 @@ const ChatPage = () => {
   const [chatId, setChatId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   const [text, setText] = useState('');
+  const [pendingAttachment, setPendingAttachment] = useState<typeof ATTACHMENT_ACTIONS[number] | null>(null);
+  const [attachmentValue, setAttachmentValue] = useState('');
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cinematicTransition: any = { duration: 0.8, ease: [] as any };
@@ -111,6 +130,36 @@ const ChatPage = () => {
     }
   };
 
+  const handleConfirmAttachment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !chatId || !pendingAttachment || !attachmentValue.trim()) return;
+
+    const action = pendingAttachment;
+    const value = attachmentValue.trim();
+    const attachment = action.needsUrl
+      ? { type: action.type, label: action.label, url: value }
+      : { type: action.type, label: action.label, note: value };
+
+    setPendingAttachment(null);
+    setAttachmentValue('');
+
+    try {
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        senderId: user.uid,
+        text: '',
+        attachment,
+        timestamp: serverTimestamp(),
+      });
+
+      await updateDoc(doc(db, 'chats', chatId), {
+        lastMessage: `${action.label}: ${value}`,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Send Attachment Error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -176,11 +225,30 @@ const ChatPage = () => {
                 >
                   <div className={cn(
                     "p-5 md:p-8 text-sm md:text-base font-light leading-relaxed italic border transition-all duration-700 shadow-sm rounded-3xl",
-                    isMe 
-                      ? "bg-[#B9914A] text-white border-[#B9914A] rounded-br-sm" 
+                    isMe
+                      ? "bg-[#B9914A] text-white border-[#B9914A] rounded-br-sm"
                       : "liquid-glass border-white/10 text-white rounded-bl-sm"
                   )}>
-                    {msg.text}
+                    {msg.attachment ? (
+                      (() => {
+                        const AttIcon = attachmentIcon(msg.attachment.type);
+                        return (
+                          <div className="not-italic flex items-start gap-3">
+                            <AttIcon size={18} className="shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[10px] uppercase tracking-widest font-black opacity-70 mb-1">{msg.attachment.label}</p>
+                              {msg.attachment.url ? (
+                                <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer" className="underline break-all">
+                                  {msg.attachment.url}
+                                </a>
+                              ) : (
+                                <p>{msg.attachment.note}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ) : msg.text}
                   </div>
                   <span className="text-[8px] md:text-[9px] text-white/40 uppercase font-black tracking-widest mt-2 px-2 italic">
                     {msg.timestamp?.toDate ? format(msg.timestamp.toDate(), 'HH:mm') : 'Recently'}
@@ -194,7 +262,56 @@ const ChatPage = () => {
 
         {/* Input Area - Mobile Spacing Fix */}
         <div className="pb-8 md:pb-10 pt-4 md:pt-6 px-4 md:px-[5%] border-t border-white/10 liquid-glass relative z-20">
-          <form 
+          <div className="max-w-[800px] mx-auto flex gap-2 mb-4 overflow-x-auto custom-scrollbar pb-1">
+            {ATTACHMENT_ACTIONS.map((action) => (
+              <button
+                key={action.type}
+                type="button"
+                onClick={() => { setPendingAttachment(action); setAttachmentValue(''); }}
+                title={action.label}
+                className={cn(
+                  "shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-[10px] font-bold uppercase tracking-widest",
+                  pendingAttachment?.type === action.type
+                    ? "border-[#B9914A] text-[#B9914A] bg-[#B9914A]/10"
+                    : "border-white/10 text-white/50 hover:text-[#B9914A] hover:border-[#B9914A]/50"
+                )}
+              >
+                <action.icon size={14} /> {action.label}
+              </button>
+            ))}
+          </div>
+
+          {pendingAttachment && (
+            <form
+              onSubmit={handleConfirmAttachment}
+              className="max-w-[800px] mx-auto flex gap-3 items-center mb-4"
+            >
+              <input
+                autoFocus
+                type={pendingAttachment.needsUrl ? 'url' : 'text'}
+                value={attachmentValue}
+                onChange={(e) => setAttachmentValue(e.target.value)}
+                placeholder={pendingAttachment.placeholder}
+                className="flex-1 liquid-glass rounded-full px-6 py-4 focus:outline-none focus:border-[#B9914A] transition-all text-white font-light placeholder:text-white/40 border border-[#B9914A]/40 text-sm shadow-sm"
+              />
+              <button
+                type="submit"
+                disabled={!attachmentValue.trim()}
+                className="bg-[#B9914A] rounded-full text-white px-6 py-4 text-xs font-bold uppercase tracking-widest disabled:opacity-30 hover:bg-white hover:text-black transition-all"
+              >
+                Send
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingAttachment(null)}
+                className="text-white/40 hover:text-white text-xs uppercase tracking-widest font-bold px-2"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
+
+          <form
             onSubmit={handleSendMessage}
             className="max-w-[800px] mx-auto flex gap-3 md:gap-4 items-center"
           >

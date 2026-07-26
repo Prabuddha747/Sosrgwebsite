@@ -1,6 +1,6 @@
 import {
   collection, addDoc, getDocs, getDoc, query, where,
-  serverTimestamp, doc, setDoc, updateDoc, deleteDoc, increment, arrayUnion
+  serverTimestamp, doc, setDoc, updateDoc, deleteDoc, increment, arrayUnion, writeBatch
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -255,6 +255,16 @@ export const getCastingCall = async (id: string) => {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as CastingCall) : null;
 };
 
+// Rule-based "AI Match Score" (docs/PLATFORM_EVOLUTION_PLAN.md §11 Phase 6)
+// — plain tag overlap, no LLM call, no cost/latency budget needed. Scores
+// what fraction of the call's own tags the talent's profile covers.
+export const computeMatchScore = (talentTags: string[], callTags: string[]): number => {
+  if (!callTags.length) return 0;
+  const normalizedTalent = new Set(talentTags.map(t => t.trim().toLowerCase()));
+  const matches = callTags.filter(c => normalizedTalent.has(c.trim().toLowerCase()));
+  return Math.round((matches.length / callTags.length) * 100);
+};
+
 export interface EventListing {
   id?: string;
   studioUid: string;
@@ -335,6 +345,18 @@ export const applyCastingCall = async (
   });
 
   return docRef.id;
+};
+
+// Nothing previously marked notifications as read (Inbox.tsx just lists
+// them), so an unread-count badge would blink forever. Called when the
+// user opens their Inbox.
+export const markAllNotificationsRead = async (uid: string) => {
+  const q = query(collection(db, 'notifications'), where('userId', '==', uid), where('read', '==', false));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return;
+  const batch = writeBatch(db);
+  snapshot.docs.forEach((d) => batch.update(d.ref, { read: true }));
+  await batch.commit();
 };
 
 export const updateApplicationStatus = async (applicationId: string, status: ApplicationStatus) => {

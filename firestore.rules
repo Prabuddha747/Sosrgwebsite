@@ -78,8 +78,15 @@ service cloud.firestore {
       }
     }
 
+    // Inbox.tsx queries userId `in` [own uid, 'broadcast', 'broadcast_<skill>'...]
+    // in one request — Firestore requires every value the query could match
+    // to independently satisfy the rule, so broadcast values need their own
+    // clause here, not just the ownership check.
     match /notifications/{id} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow read: if isOwner(resource.data.userId)
+        || resource.data.userId == 'broadcast'
+        || resource.data.userId.matches('^broadcast_.*')
+        || isAdmin();
       allow create: if isSignedIn() || isAdmin();
       allow update: if isOwner(resource.data.userId);
       allow delete: if false;
