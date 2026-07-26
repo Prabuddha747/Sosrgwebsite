@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Link } from '@/lib/router-compat';
 import Navbar from '@/components/Navbar';
-import MediaPlaceholder from '@/components/MediaPlaceholder';
 
 const beats = [
   'Every society remembers its leaders.',
@@ -14,81 +13,29 @@ const beats = [
   'Most remain unseen.',
 ];
 
-const beatDuration = 0.9;
-const beatGap = 0.5;
-const logoDelay = beats.length * (beatDuration + beatGap) + 0.3;
-const headlineDelay = logoDelay + 0.9;
-const ctaDelay = headlineDelay + 0.8;
-const introEndMs = (ctaDelay + 0.8) * 1000;
-
+// The cinematic sequence now lives in PageCinematicBackdrop, driven by the
+// whole page's scroll — Hero no longer owns its own video, mask, or pin.
+// It's a normal section like every other, revealing its content the same
+// way ArtistJourneySection/AboutSection do.
 const HeroSection = () => {
-  const [locked, setLocked] = useState(true);
-  const [skipAnimation, setSkipAnimation] = useState(false);
-
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      setSkipAnimation(true);
-      setLocked(false);
-      return;
-    }
-
-    // The page's actual scrolling element is <html>, not <body> — both need
-    // overflow:hidden or the lock is a no-op (body alone doesn't block scroll).
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    const release = () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      setLocked(false);
-    };
-    const timer = setTimeout(release, introEndMs);
-
-    // Safety valve: Escape always gets a visitor out, even mid-sequence.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') release();
-    };
-    window.addEventListener('keydown', onKey);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', onKey);
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    };
-  }, []);
-
-  const delay = (d: number) => (skipAnimation ? 0 : d);
-
   return (
-    <section className="relative min-h-screen flex flex-col overflow-hidden bg-[#090B10]">
-      <div className="absolute inset-0 z-0">
-        <MediaPlaceholder
-          purpose="Hero background — establishes tone before any text"
-          framing="wide"
-          aspectRatio="16/9"
-          durationSec={12}
-          shot="Dark Bihar landscape, morning fog, single spotlight, an artist walking toward the light. Slow parallax, no cuts, film grain."
-          className="!aspect-auto h-full !rounded-none border-0 opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#090B10] via-[#090B10]/60 to-[#090B10]/20" />
-      </div>
+    <section className="relative min-h-screen flex flex-col overflow-hidden bg-transparent">
+      {/* Text-safe darkening — the shared backdrop shows through everywhere
+          except directly behind the headline/CTA column. */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#090B10]/85 via-[#090B10]/40 to-[#090B10]/15 -z-[5]" />
 
       <Navbar />
 
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-12 text-center">
-        <div className="min-h-[3.5rem] flex items-center justify-center mb-8">
+        <div className="flex flex-col items-center gap-3 mb-8">
           {beats.map((line, i) => (
             <motion.p
               key={line}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: skipAnimation ? 0 : [0, 1, 1, 0] }}
-              transition={{
-                duration: beatDuration + beatGap,
-                times: [0, 0.25, 0.75, 1],
-                delay: delay(i * (beatDuration + beatGap)),
-              }}
-              className="absolute text-[#F5F4F2]/70 text-sm sm:text-base tracking-[0.15em] uppercase max-w-2xl px-4"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: i * 0.12 }}
+              className="text-[#F5F4F2]/70 text-sm sm:text-base tracking-[0.15em] uppercase max-w-2xl px-4"
             >
               {line}
             </motion.p>
@@ -99,26 +46,29 @@ const HeroSection = () => {
           src="/sosrg.webp"
           alt="SosrG"
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: skipAnimation ? 0 : 1, delay: delay(logoDelay) }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.5 }}
           className="h-12 md:h-16 w-auto object-contain mb-10"
         />
 
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: skipAnimation ? 0 : 1, delay: delay(headlineDelay) }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.9, delay: 0.65 }}
           className="text-4xl md:text-7xl lg:text-8xl text-[#F5F4F2] tracking-tighter leading-[0.95] mb-12 max-w-4xl mx-auto"
         >
-          Artists aren't <span style={{ fontFamily: "'Cormorant Garamond', serif" }} className="italic text-[#B9914A]">created</span>.
+          Artists aren't created.
           <br />
-          They are recognised.
+          They're finally <span style={{ fontFamily: "'Cormorant Garamond', serif" }} className="italic text-[#B9914A]">seen</span>.
         </motion.h1>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: skipAnimation ? 0 : 0.8, delay: delay(ctaDelay) }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.85 }}
           className="flex flex-col sm:flex-row items-center gap-6"
         >
           <Link
@@ -135,10 +85,6 @@ const HeroSection = () => {
             Explore the Ecosystem
           </a>
         </motion.div>
-
-        {locked && (
-          <span className="absolute bottom-6 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#F5F4F2]/30 animate-pulse" />
-        )}
       </div>
     </section>
   );

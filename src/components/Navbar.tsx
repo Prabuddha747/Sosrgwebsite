@@ -3,14 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from '@/lib/router-compat';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, User, Mail, Shield, ArrowRight } from 'lucide-react';
+import { Menu, X, User, Mail, Shield, ArrowRight, Sparkles, Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { showNotificationToast } from '@/utils/toast';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, profile, logout, isAdmin } = useAuth();
+  const { user, profile, logout, isAdmin, setActiveWorkspace } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,16 +23,37 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Real-time "you've got a notification" pop-up (new applications, referral
+  // rewards, etc.) — skips the initial snapshot dump (that's just existing
+  // history, not new), only toasts for docs genuinely added while mounted.
+  useEffect(() => {
+    if (!user) return;
+    let isInitial = true;
+    const q = query(collection(db, 'notifications'), where('userId', '==', user.uid));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      if (isInitial) {
+        isInitial = false;
+        return;
+      }
+      snap.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data() as any;
+          showNotificationToast(data.message || 'You have a new notification.', () => navigate('/inbox'));
+        }
+      });
+    });
+    return () => unsubscribe();
+  }, [user, navigate]);
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   const navLinks = [
-    { name: 'Discover Artists', path: '/artists' },
-    { name: 'Casting Calls', path: '/casting' },
+    { name: 'Explore', path: '/explore' },
     { name: 'Events', path: '/event' },
-    { name: 'Elite Services', path: '/services' },
+    { name: 'Services', path: '/services' },
     { name: 'Manifesto', path: '/about' },
   ];
 
@@ -72,11 +96,30 @@ const Navbar = () => {
         <div className="flex items-center gap-4 relative z-[60]">
           {user ? (
             <div className="hidden md:flex items-center gap-4">
+              {profile?.workspaces && profile.workspaces.length > 1 && (
+                <div className="flex items-center bg-[#11151B] rounded-full border border-[#B9914A]/20 p-1">
+                  {profile.workspaces.map((ws) => (
+                    <button
+                      key={ws}
+                      onClick={() => setActiveWorkspace(ws)}
+                      title={ws === 'talent' ? 'Talent workspace' : 'Studio workspace'}
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center transition-all",
+                        profile.activeWorkspace === ws
+                          ? "bg-[#B9914A] text-[#090B10]"
+                          : "text-[#F5F4F2]/50 hover:text-[#F5F4F2]"
+                      )}
+                    >
+                      {ws === 'talent' ? <Sparkles size={12} /> : <Building2 size={12} />}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Link to="/inbox" className="text-[#F5F4F2]/70 hover:text-[#B9914A] transition-colors">
                 <Mail size={18} />
               </Link>
               <button
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(profile?.activeWorkspace === 'studio' ? '/studio/dashboard' : '/profile')}
                 className="w-8 h-8 bg-[#11151B] rounded-full flex items-center justify-center overflow-hidden border border-[#B9914A]/20 hover:border-[#B9914A] transition-all"
               >
                 {profile?.photoURL ? (
@@ -174,8 +217,11 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  <Link to="/profile" className="w-full bg-[#11151B] rounded-full py-4 flex justify-center items-center gap-2 text-[#F5F4F2] text-sm font-medium border border-[#B9914A]/20">
-                    <User size={16} /> My Profile
+                  <Link
+                    to={profile?.activeWorkspace === 'studio' ? '/studio/dashboard' : '/profile'}
+                    className="w-full bg-[#11151B] rounded-full py-4 flex justify-center items-center gap-2 text-[#F5F4F2] text-sm font-medium border border-[#B9914A]/20"
+                  >
+                    <User size={16} /> {profile?.activeWorkspace === 'studio' ? 'Studio Dashboard' : 'My Profile'}
                   </Link>
                   <button onClick={logout} className="w-full py-4 text-[#F5F4F2]/40 text-xs font-medium uppercase tracking-widest hover:text-red-400 transition-colors">
                     Sign Out

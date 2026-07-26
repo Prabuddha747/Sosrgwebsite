@@ -1,8 +1,8 @@
 import React from 'react';
 
 const nodes = [
-  'Films', 'OTT', 'Literature', 'Agencies', 'Painting', 'Portfolio',
-  'Workshops', 'Casting', 'Dance', 'Branding', 'Music', 'Theatre',
+  'Films', 'Literature',
+  'Casting', 'Dance', 'Music', 'Theatre',
 ];
 
 // True even radial layout (angle math), not hand-placed — a real hub-and-spoke,
@@ -10,8 +10,8 @@ const nodes = [
 // so the highlight never depends on a listener firing correctly.
 const EcosystemSection = () => {
   return (
-    <section id="ecosystem" className="relative bg-[#090B10] py-32 md:py-40 px-6 overflow-hidden">
-      <div className="max-w-4xl mx-auto text-center mb-16">
+    <section id="ecosystem" className="relative bg-[#090B10]/60 py-42 md:py-60 px-10 overflow-hidden">
+      <div className="max-w-6xl mx-auto text-center mb-16">
         <p className="text-[#B9914A] text-xs tracking-widest uppercase mb-4">Living Ecosystem</p>
         <h2 className="text-3xl md:text-5xl text-[#F5F4F2] tracking-tight">
           Not a company. A connected network.
@@ -49,7 +49,7 @@ const EcosystemSection = () => {
           );
         })}
 
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-[#B9914A] text-[#090B10] text-[10px] md:text-xs font-medium tracking-widest w-16 h-16 md:w-20 md:h-20">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-[#B9914A] text-[#090B10] text-xs md:text-sm font-medium tracking-widest w-24 h-24 md:w-32 md:h-32 shadow-[0_0_60px_16px_rgba(185,145,74,0.35)]">
           SOSRG
         </div>
       </div>

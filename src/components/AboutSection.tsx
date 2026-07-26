@@ -10,7 +10,7 @@ const AboutSection = () => {
   return (
     <section
       ref={ref}
-      className="bg-[#090B10] pt-32 md:pt-44 pb-10 md:pb-14 px-6 overflow-hidden relative"
+      className="bg-[#090B10]/68 pt-32 md:pt-44 pb-10 md:pb-14 px-6 overflow-hidden relative"
     >
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(185,145,74,0.05)_0%,_transparent_70%)] pointer-events-none" />
 

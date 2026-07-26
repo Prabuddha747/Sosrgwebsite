@@ -105,7 +105,7 @@ const ServiceCategoryDetail = () => {
       <Layout>
         <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-[5%] text-center">
           <h1 className="text-3xl md:text-6xl font-bold text-white mb-8 premium-serif italic">Category Not Found.</h1>
-          <button onClick={() => navigate('/services')} className="px-16 py-6 bg-[#5490B4] text-[#1A1A1A] text-[10px] font-black uppercase tracking-[0.5em] hover:bg-[#5490B4]/90 transition-all duration-700 font-sans">
+          <button onClick={() => navigate('/services')} className="px-16 py-6 bg-[#B9914A] text-[#1A1A1A] text-[10px] font-black uppercase tracking-[0.5em] hover:bg-[#B9914A]/90 transition-all duration-700 font-sans">
             RETURN TO SERVICES
           </button>
         </div>
@@ -117,7 +117,7 @@ const ServiceCategoryDetail = () => {
     <Layout>
       <div className="bg-transparent min-h-screen pb-40 text-[#F5F5F5] relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-[#5490B4]/5 blur-[200px] rounded-full" />
+          <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-[#B9914A]/5 blur-[200px] rounded-full" />
         </div>
 
         {/* --- Header Section --- */}
@@ -125,7 +125,7 @@ const ServiceCategoryDetail = () => {
           <div className="layout-container relative z-10">
             <button 
               onClick={() => navigate('/services')}
-              className="mb-20 flex items-center gap-4 text-white/40 hover:text-[#5490B4] transition-colors group"
+              className="mb-20 flex items-center gap-4 text-white/40 hover:text-[#B9914A] transition-colors group"
             >
               <ArrowLeft size={16} className="group-hover:-translate-x-2 transition-transform" />
               <span className="text-[10px] font-bold uppercase tracking-[0.6em]">BACK TO SERVICES</span>
@@ -139,12 +139,12 @@ const ServiceCategoryDetail = () => {
             >
               <div className="flex items-center gap-8 mb-12">
                 <div className="w-20 h-20 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center justify-center shadow-2xl">
-                  <data.icon size={36} className="text-[#5490B4]" />
+                  <data.icon size={36} className="text-[#B9914A]" />
                 </div>
-                <span className="text-[#5490B4] text-[11px] font-bold uppercase tracking-[0.6em]">ECOSYSTEM SECTOR</span>
+                <span className="text-[#B9914A] text-[11px] font-bold uppercase tracking-[0.6em]">ECOSYSTEM SECTOR</span>
               </div>
               <h1 className="text-[clamp(3rem,8vw,7rem)] font-bold text-white tracking-tighter leading-[0.85] mb-12 premium-serif font-sans">
-                {data.title}<span className="text-[#5490B4] italic font-light">.</span>
+                {data.title}<span className="text-[#B9914A] italic font-light">.</span>
               </h1>
               <p className="text-2xl text-white/60 font-light leading-relaxed italic max-w-3xl">
                 {data.description}
@@ -164,16 +164,16 @@ const ServiceCategoryDetail = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white/5 p-6 md:p-16 border border-white/10 rounded-2xl group hover:border-[#5490B4]/50 transition-all duration-700 shadow-sm backdrop-blur-md"
+                  className="bg-white/5 p-6 md:p-16 border border-white/10 rounded-2xl group hover:border-[#B9914A]/50 transition-all duration-700 shadow-sm backdrop-blur-md"
                 >
                   <div className="flex items-center justify-between mb-12 border-b border-white/10 pb-8">
                     <h3 className="text-3xl font-bold text-white premium-serif">{group.name}</h3>
-                    <Shield size={20} className="text-[#5490B4] opacity-20 group-hover:opacity-100 transition-opacity" />
+                    <Shield size={20} className="text-[#B9914A] opacity-20 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {group.roles.map((role: string, k: number) => (
                       <div key={k} className="flex items-center gap-4 group/item">
-                        <div className="w-1.5 h-1.5 bg-[#5490B4]/30 rounded-full group-hover/item:scale-150 group-hover/item:bg-[#5490B4] transition-all" />
+                        <div className="w-1.5 h-1.5 bg-[#B9914A]/30 rounded-full group-hover/item:scale-150 group-hover/item:bg-[#B9914A] transition-all" />
                         <span className="text-[11px] font-bold text-white/50 uppercase tracking-[0.2em] group-hover/item:text-white transition-colors">
                           {role}
                         </span>
@@ -190,10 +190,10 @@ const ServiceCategoryDetail = () => {
         <section className="py-32 relative z-10">
           <div className="layout-container">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-24 text-center relative overflow-hidden backdrop-blur-md">
-              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-30" />
-              <Sparkles className="mx-auto text-[#5490B4] mb-10" size={48} />
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-30" />
+              <Sparkles className="mx-auto text-[#B9914A] mb-10" size={48} />
               <h2 className="text-3xl md:text-6xl font-bold text-white tracking-tighter mb-10 premium-serif">
-                Join the <span className="text-[#5490B4] italic font-light font-sans">Ecosystem.</span>
+                Join the <span className="text-[#B9914A] italic font-light font-sans">Ecosystem.</span>
               </h2>
               <p className="text-xl text-white/60 italic font-light mb-16 max-w-2xl mx-auto">
                 Are you a professional in this field? Register today to connect with elite production houses and creators.
@@ -201,7 +201,7 @@ const ServiceCategoryDetail = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
                 <button 
                   onClick={() => navigate('/bihar-creators-registration')}
-                  className="px-16 py-8 bg-[#5490B4] text-[#1A1A1A] text-[11px] font-black uppercase tracking-[0.5em] hover:bg-white hover:text-[#1A1A1A] transition-all duration-700 shadow-2xl shadow-[#5490B4]/10 flex items-center group font-sans"
+                  className="px-16 py-8 bg-[#B9914A] text-[#1A1A1A] text-[11px] font-black uppercase tracking-[0.5em] hover:bg-white hover:text-[#1A1A1A] transition-all duration-700 shadow-2xl shadow-[#B9914A]/10 flex items-center group font-sans"
                 >
                   Apply Now <ArrowRight size={18} className="ml-4 group-hover:translate-x-2 transition-transform" />
                 </button>

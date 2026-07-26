@@ -10,7 +10,7 @@ const stats = [
 
 const StatsSection = () => {
   return (
-    <section className="py-20 md:py-28 border-y border-[#B9914A]/10 relative z-10 overflow-hidden bg-[#090B10]">
+    <section className="py-20 md:py-28 border-y border-[#B9914A]/10 relative z-10 overflow-hidden bg-[#090B10]/68">
       <div className="layout-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

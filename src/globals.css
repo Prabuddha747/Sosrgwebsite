@@ -16,28 +16,28 @@
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 96%;
     
-    --primary: 202 38% 52%; /* #5490B4 */
-    --primary-foreground: 0 0% 100%;
-    
+    --primary: 38 44% 51%; /* #B9914A */
+    --primary-foreground: 0 0% 4%;
+
     --secondary: 207 16% 63%; /* #92A3AF */
     --secondary-foreground: 0 0% 10%;
-    
+
     --muted: 210 10% 16%;
     --muted-foreground: 207 16% 63%;
-    
-    --accent: 202 38% 52%;
-    --accent-foreground: 0 0% 100%;
-    
-    --border: 204 31% 36%; /* #40647A */
+
+    --accent: 38 44% 51%;
+    --accent-foreground: 0 0% 4%;
+
+    --border: 38 20% 30%; /* muted gold-grey, replaces the old blue border */
     --input: 210 10% 14%;
-    --ring: 202 38% 52%;
-    
+    --ring: 38 44% 51%;
+
     /* Studio specific vars */
-    --studio-bg: #0B1014; /* Extremely deep slate navy for maximum contrast */
+    --studio-bg: #090B10; /* matches the homepage's cinematic dark, not a near-miss */
     --studio-text: #F5F5F5;
-    --studio-accent-green: #92A3AF; /* muted steel blue */
-    --studio-accent-bronze: #5490B4; /* premium interactive accent */
-    --studio-border: rgba(132, 155, 169, 0.2); 
+    --studio-accent-green: #92A3AF; /* secondary muted tone, unchanged */
+    --studio-accent-bronze: #B9914A; /* premium interactive accent — matches homepage gold */
+    --studio-border: rgba(185, 145, 74, 0.2);
     
     --radius: 0.5rem;
   }
@@ -57,7 +57,7 @@
     font-family: 'Inter', sans-serif;
     font-weight: 300;
     line-height: 1.6;
-    @apply antialiased selection:bg-[#5490B4] selection:text-[#0B1014] scroll-smooth overflow-x-hidden;
+    @apply antialiased selection:bg-[#B9914A] selection:text-[#0B1014] scroll-smooth overflow-x-hidden;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif;
@@ -97,7 +97,7 @@
   /* Glassmorphism Cards */
   .premium-card {
     background: rgba(24, 34, 44, 0.7); /* Deep surface tone */
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(132, 155, 169, 0.2);
     border-radius: var(--radius);
     padding: 2rem;

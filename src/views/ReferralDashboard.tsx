@@ -54,9 +54,9 @@ const ReferralDashboard = () => {
             transition={cinematicTransition}
           >
             <div className="text-center mb-24">
-              <span className="text-[#5490B4] text-[10px] font-black uppercase tracking-[0.6em] mb-12 block">THE VAULT PROTOCOL</span>
+              <span className="text-[#B9914A] text-[10px] font-black uppercase tracking-[0.6em] mb-12 block">THE VAULT PROTOCOL</span>
               <h1 className="text-3xl md:text-8xl font-bold text-white tracking-tighter leading-none font-serif italic">
-                Referral <span className="text-[#5490B4] not-italic font-sans">Portal.</span>
+                Referral <span className="text-[#B9914A] not-italic font-sans">Portal.</span>
               </h1>
               <p className="text-xl text-white/40 font-light italic max-w-2xl mx-auto leading-relaxed mt-12">
                 Expand the SosrG sanctuary. Every successful initiation enriches your vault and strengthens the guild's collective vision.
@@ -67,10 +67,10 @@ const ReferralDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-32">
               {[
                 { label: "Total Initiations", value: referralsCount, icon: Users, color: "text-white" },
-                { label: "Vault Balance", value: coins, icon: Trophy, color: "text-[#5490B4]" },
+                { label: "Vault Balance", value: coins, icon: Trophy, color: "text-[#B9914A]" },
                 { label: "Bonus Progress", value: `${referralsCount % 10}/10`, icon: Zap, color: "text-white/40" },
               ].map((stat, i) => (
-                <div key={i} className="liquid-glass rounded-3xl p-10 md:p-16 border border-white/10 flex flex-col items-center text-center group hover:border-[#5490B4] transition-all duration-700">
+                <div key={i} className="liquid-glass rounded-3xl p-10 md:p-16 border border-white/10 flex flex-col items-center text-center group hover:border-[#B9914A] transition-all duration-700">
                   <stat.icon size={24} className={cn("mb-10", stat.color)} />
                   <p className="text-[9px] text-white/40 uppercase font-black tracking-[0.4em] mb-4">{stat.label}</p>
                   <h3 className={cn("text-3xl md:text-6xl font-black tracking-tighter font-serif italic", stat.color)}>{stat.value}</h3>
@@ -81,9 +81,9 @@ const ReferralDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Share Card */}
               <div className="p-12 md:p-20 liquid-glass rounded-3xl border border-white/10 relative overflow-hidden flex flex-col">
-                <h2 className="text-4xl font-bold text-white mb-10 font-serif italic tracking-tight">EXPAND THE <span className="text-[#5490B4] not-italic font-sans">CIRCLE.</span></h2>
+                <h2 className="text-4xl font-bold text-white mb-10 font-serif italic tracking-tight">EXPAND THE <span className="text-[#B9914A] not-italic font-sans">CIRCLE.</span></h2>
                 <p className="text-white/60 font-light italic mb-16 leading-relaxed">
-                  Every 10th initiation awards a divine <span className="text-[#5490B4] font-bold">500 SOSRG Coin Bonus</span>. Your next milestone is only {nextMilestone} souls away.
+                  Every 10th initiation awards a divine <span className="text-[#B9914A] font-bold">500 SOSRG Coin Bonus</span>. Your next milestone is only {nextMilestone} souls away.
                 </p>
 
                 <div className="space-y-12 mt-auto">
@@ -91,7 +91,7 @@ const ReferralDashboard = () => {
                     <label className="text-[9px] uppercase tracking-[0.4em] font-black text-white/40 ml-6">Your Divine Code</label>
                     <div className="flex items-center gap-4 p-4 pl-8 liquid-glass rounded-full border border-white/10">
                       <code className="flex-1 text-center font-black tracking-[0.5em] text-white text-3xl uppercase">{referralCode}</code>
-                      <button onClick={() => copyToClipboard(referralCode, 'code')} className="p-6 rounded-full bg-[#5490B4] text-white hover:bg-white hover:text-black transition-all">
+                      <button onClick={() => copyToClipboard(referralCode, 'code')} className="p-6 rounded-full bg-[#B9914A] text-white hover:bg-white hover:text-black transition-all">
                         {copied ? <Check size={24} /> : <Copy size={24} />}
                       </button>
                     </div>
@@ -103,7 +103,7 @@ const ReferralDashboard = () => {
                       <div className="flex-1 truncate text-white/40 text-sm italic">
                         {referralLink}
                       </div>
-                      <button onClick={handleShare} className="bg-[#5490B4] text-white p-5 rounded-full hover:bg-white hover:text-black transition-all">
+                      <button onClick={handleShare} className="bg-[#B9914A] text-white p-5 rounded-full hover:bg-white hover:text-black transition-all">
                         <Share2 size={20} />
                       </button>
                     </div>
@@ -115,7 +115,7 @@ const ReferralDashboard = () => {
               <div className="p-12 md:p-20 liquid-glass rounded-3xl border border-white/10 relative overflow-hidden flex flex-col justify-center items-center text-center">
                 <div className="space-y-12">
                   <div className="relative inline-block">
-                    <Sparkles className="absolute -top-12 -right-12 text-[#5490B4]/40 animate-pulse" size={60} />
+                    <Sparkles className="absolute -top-12 -right-12 text-[#B9914A]/40 animate-pulse" size={60} />
                     <div className="w-64 h-64 rounded-full border border-white/10 flex items-center justify-center relative liquid-glass shadow-xl">
                       <svg className="w-full h-full -rotate-90">
                         <circle
@@ -131,7 +131,7 @@ const ReferralDashboard = () => {
                           cy="128"
                           r="120"
                           fill="transparent"
-                          stroke="#5490B4"
+                          stroke="#B9914A"
                           strokeWidth="8"
                           strokeDasharray={753}
                           initial={{ strokeDashoffset: 753 }}

@@ -76,7 +76,7 @@ const NewsletterPopup = () => {
             className="relative w-full max-w-[500px] liquid-glass p-8 md:p-16 shadow-2xl border border-white/10 z-[101] my-auto rounded-3xl overflow-hidden"
           >
             {/* Top accent line */}
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-50" />
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-50" />
 
             {/* Close Button */}
             <button 
@@ -92,12 +92,12 @@ const NewsletterPopup = () => {
 
             <div className="text-center mt-4">
               <div className="w-14 h-14 md:w-16 md:h-16 liquid-glass rounded-full border border-white/10 flex items-center justify-center mx-auto mb-8 md:mb-10 shadow-lg relative">
-                <div className="absolute inset-0 bg-[#5490B4]/10 rounded-full blur-md" />
-                <Mail className="text-[#5490B4] w-5 h-5 md:w-6 md:h-6 relative z-10" />
+                <div className="absolute inset-0 bg-[#B9914A]/10 rounded-full blur-md" />
+                <Mail className="text-[#B9914A] w-5 h-5 md:w-6 md:h-6 relative z-10" />
               </div>
 
               <div className="flex justify-center mb-6 md:mb-8">
-                <span className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 bg-transparent border border-white/10 rounded-full text-[#5490B4] text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] shadow-sm">
+                <span className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 bg-transparent border border-white/10 rounded-full text-[#B9914A] text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] shadow-sm">
                   <Sparkles size={10} className="animate-pulse" />
                   Exclusive Invitation
                 </span>
@@ -105,7 +105,7 @@ const NewsletterPopup = () => {
 
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 md:mb-8 leading-none tracking-tighter font-serif italic">
                 Curated <br className="hidden md:block" />
-                <span className="text-[#5490B4] not-italic font-sans">Artistic Growth.</span>
+                <span className="text-[#B9914A] not-italic font-sans">Artistic Growth.</span>
               </h2>
               
               <p className="text-white/60 mb-8 md:mb-12 max-w-[300px] md:max-w-[340px] mx-auto font-light leading-relaxed text-sm md:text-base">
@@ -119,12 +119,12 @@ const NewsletterPopup = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ENTER EMAIL ADDRESS"
-                  className="w-full bg-transparent border border-white/10 rounded-full py-4 md:py-6 px-6 md:px-10 focus:outline-none focus:border-[#5490B4] focus:bg-white/5 transition-all placeholder:text-white/20 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-white shadow-inner"
+                  className="w-full bg-transparent border border-white/10 rounded-full py-4 md:py-6 px-6 md:px-10 focus:outline-none focus:border-[#B9914A] focus:bg-white/5 transition-all placeholder:text-white/20 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-white shadow-inner"
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 md:py-6 liquid-glass rounded-full border border-white/10 text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] shadow-xl hover:bg-[#5490B4] hover:border-[#5490B4] transition-all duration-700 disabled:opacity-30 flex items-center justify-center gap-4 group"
+                  className="w-full py-4 md:py-6 liquid-glass rounded-full border border-white/10 text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] shadow-xl hover:bg-[#B9914A] hover:border-[#B9914A] transition-all duration-700 disabled:opacity-30 flex items-center justify-center gap-4 group"
                 >
                   {isSubmitting ? "SYNCHRONIZING..." : (
                     <>SECURE ACCESS <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" /></>
@@ -133,7 +133,7 @@ const NewsletterPopup = () => {
               </form>
 
               <div className="mt-8 md:mt-10 flex items-center justify-center gap-3 md:gap-4 text-[8px] md:text-[9px] text-white/20 uppercase font-black tracking-[0.4em]">
-                <Shield size={10} className="text-[#5490B4] opacity-50" />
+                <Shield size={10} className="text-[#B9914A] opacity-50" />
                 EXCLUSIVITY GUARANTEED.
               </div>
             </div>

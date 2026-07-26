@@ -15,3 +15,10 @@ export const showLoading = (message: string) => {
 export const dismissToast = (toastId: string) => {
   toast.dismiss(toastId);
 };
+
+// Sonner defaults to bottom-right — no position config needed. Used for
+// real-time notification pop-ups (e.g. a studio receiving a new
+// application) with a one-click jump to the Inbox.
+export const showNotificationToast = (message: string, onView: () => void) => {
+  toast(message, { action: { label: 'View', onClick: onView } });
+};

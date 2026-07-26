@@ -8,34 +8,39 @@ Phase 2
 
 Hero
 
-In Progress
+✓
 
 Phase 3
 
 Story
 
-Pending
+✓
 
 Phase 4
 
 Founder Timeline
 
-Pending
+✓
 
 Phase 5
 
 Interactive Ecosystem
 
-Pending
+✓
 
 Phase 6
 
 Community
 
-Pending
+✓
 
 Phase 7
 
 Artist Journey
 
-Pending
+✓
+
+All 7 homepage phases are built (all 8 narrative Acts exist in
+`views/Index.tsx`, backed by the shared scroll-driven
+`PageCinematicBackdrop`). Next: the Talent/Studio platform evolution — see
+`docs/PLATFORM_EVOLUTION_PLAN.md`.

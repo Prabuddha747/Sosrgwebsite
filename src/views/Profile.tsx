@@ -125,7 +125,7 @@ const Profile = () => {
               {/* Left Column: Portrait & Vault */}
               <div className="w-full lg:w-1/3 space-y-8">
                 <div className="liquid-glass rounded-3xl border border-white/10 p-8 md:p-12 text-center shadow-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-30" />
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-30" />
                   <div className="w-40 h-40 md:w-48 md:h-48 mx-auto mb-10 md:mb-12 rounded-full border-2 border-white/10 overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-[2s] shadow-lg">
                     {profile?.photoURL ? (
                       <img src={profile.photoURL} alt="Portrait" className="w-full h-full object-cover" />
@@ -139,9 +139,9 @@ const Profile = () => {
                   <p className="text-[9px] text-white/40 uppercase font-black tracking-[0.4em] mb-10 md:mb-12 italic">REGISTERED CREATOR</p>
                   
                   <div className="py-8 px-6 md:px-12 liquid-glass rounded-2xl border border-white/10 flex flex-col items-center mb-10 md:mb-12 relative">
-                    <span className="text-[9px] text-[#5490B4] uppercase font-black tracking-[0.4em] mb-3">VAULT BALANCE</span>
+                    <span className="text-[9px] text-[#B9914A] uppercase font-black tracking-[0.4em] mb-3">VAULT BALANCE</span>
                     <span className="text-4xl md:text-5xl font-black text-white tracking-tighter font-serif italic">
-                      {profile?.coins || 0} <span className="text-[#5490B4] not-italic text-[10px] uppercase tracking-widest font-black ml-2 font-sans">COINS</span>
+                      {profile?.coins || 0} <span className="text-[#B9914A] not-italic text-[10px] uppercase tracking-widest font-black ml-2 font-sans">COINS</span>
                     </span>
                   </div>
 
@@ -154,13 +154,13 @@ const Profile = () => {
                           onClick={() => handleAvatarSelect(url)}
                           className={cn(
                             "aspect-square border transition-all duration-700 relative group overflow-hidden rounded-xl",
-                            profile?.photoURL === url ? "border-[#5490B4] shadow-[0_0_15px_rgba(184,160,137,0.3)]" : "border-white/10 hover:border-[#5490B4]/50"
+                            profile?.photoURL === url ? "border-[#B9914A] shadow-[0_0_15px_rgba(184,160,137,0.3)]" : "border-white/10 hover:border-[#B9914A]/50"
                           )}
                         >
                           <img src={url} alt={`Avatar ${i}`} className="w-full h-full object-cover grayscale group-hover:grayscale-0" />
                           {profile?.photoURL === url && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                              <div className="bg-[#5490B4] p-1.5 rounded-full shadow-lg">
+                              <div className="bg-[#B9914A] p-1.5 rounded-full shadow-lg">
                                 <Check size={14} className="text-white" />
                               </div>
                             </div>
@@ -179,13 +179,13 @@ const Profile = () => {
                     <h3 className="text-3xl font-bold text-white font-serif italic tracking-tight">The Hub.</h3>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
-                    <Link to="/referral" className="flex items-center justify-between p-6 liquid-glass rounded-2xl border border-white/10 hover:border-[#5490B4] transition-all group shadow-sm">
-                      <span className="text-[9px] text-white/60 uppercase tracking-[0.2em] font-black group-hover:text-[#5490B4]">Referral Portal</span>
-                      <ArrowRight size={14} className="text-white/20 group-hover:text-[#5490B4] group-hover:translate-x-2 transition-all" />
+                    <Link to="/referral" className="flex items-center justify-between p-6 liquid-glass rounded-2xl border border-white/10 hover:border-[#B9914A] transition-all group shadow-sm">
+                      <span className="text-[9px] text-white/60 uppercase tracking-[0.2em] font-black group-hover:text-[#B9914A]">Referral Portal</span>
+                      <ArrowRight size={14} className="text-white/20 group-hover:text-[#B9914A] group-hover:translate-x-2 transition-all" />
                     </Link>
-                    <Link to="/inbox" className="flex items-center justify-between p-6 liquid-glass rounded-2xl border border-white/10 hover:border-[#5490B4] transition-all group shadow-sm">
-                      <span className="text-[9px] text-white/60 uppercase tracking-[0.2em] font-black group-hover:text-[#5490B4]">Digital Inbox</span>
-                      <ArrowRight size={14} className="text-white/20 group-hover:text-[#5490B4] group-hover:translate-x-2 transition-all" />
+                    <Link to="/inbox" className="flex items-center justify-between p-6 liquid-glass rounded-2xl border border-white/10 hover:border-[#B9914A] transition-all group shadow-sm">
+                      <span className="text-[9px] text-white/60 uppercase tracking-[0.2em] font-black group-hover:text-[#B9914A]">Digital Inbox</span>
+                      <ArrowRight size={14} className="text-white/20 group-hover:text-[#B9914A] group-hover:translate-x-2 transition-all" />
                     </Link>
                   </div>
                 </div>
@@ -199,21 +199,21 @@ const Profile = () => {
                     animate={{ opacity: 1 }}
                     className="liquid-glass rounded-3xl border border-white/10 p-8 md:p-20 shadow-2xl relative"
                   >
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-30" />
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-30" />
                     <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-12 mb-16 md:mb-24">
                       <div className="space-y-4">
-                        <span className="text-[#5490B4] text-[10px] font-black uppercase tracking-[0.6em] block italic">THE MANIFESTO</span>
+                        <span className="text-[#B9914A] text-[10px] font-black uppercase tracking-[0.6em] block italic">THE MANIFESTO</span>
                         <h2 className="text-3xl md:text-7xl font-bold text-white tracking-tighter font-serif leading-none italic">
-                          Sanctuary<span className="text-[#5490B4] not-italic font-sans">.</span>
+                          Sanctuary<span className="text-[#B9914A] not-italic font-sans">.</span>
                         </h2>
                       </div>
                       <div className="flex flex-wrap gap-4 w-full xl:w-auto">
-                        <Link to={`/artists/${user?.uid}`} className="flex-1 xl:flex-none text-center px-8 py-4 rounded-full border border-white/10 text-white/60 text-[9px] font-black uppercase tracking-widest hover:border-[#5490B4] hover:text-[#5490B4] transition-all">
+                        <Link to={`/artists/${user?.uid}`} className="flex-1 xl:flex-none text-center px-8 py-4 rounded-full border border-white/10 text-white/60 text-[9px] font-black uppercase tracking-widest hover:border-[#B9914A] hover:text-[#B9914A] transition-all">
                           Public View
                         </Link>
                         <button
                           onClick={() => setIsEditing(true)}
-                          className="flex-1 xl:flex-none px-10 py-4 rounded-full border border-white/10 text-white text-[9px] font-black uppercase tracking-widest hover:bg-[#5490B4] hover:border-[#5490B4] transition-all shadow-xl shadow-black/10"
+                          className="flex-1 xl:flex-none px-10 py-4 rounded-full border border-white/10 text-white text-[9px] font-black uppercase tracking-widest hover:bg-[#B9914A] hover:border-[#B9914A] transition-all shadow-xl shadow-black/10"
                         >
                           Edit Profile
                         </button>
@@ -236,9 +236,9 @@ const Profile = () => {
                           <div className="space-y-4">
                             {profile?.links && profile.links.length > 0 ? (
                               profile.links.map((link, i) => (
-                                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-6 liquid-glass rounded-2xl border border-white/10 hover:border-[#5490B4] transition-all group shadow-sm">
-                                  <span className="text-[10px] text-white/60 uppercase font-black tracking-widest group-hover:text-[#5490B4]">{link.label}</span>
-                                  <ExternalLink size={12} className="text-white/20 group-hover:text-[#5490B4]" />
+                                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-6 liquid-glass rounded-2xl border border-white/10 hover:border-[#B9914A] transition-all group shadow-sm">
+                                  <span className="text-[10px] text-white/60 uppercase font-black tracking-widest group-hover:text-[#B9914A]">{link.label}</span>
+                                  <ExternalLink size={12} className="text-white/20 group-hover:text-[#B9914A]" />
                                 </a>
                               ))
                             ) : (
@@ -251,7 +251,7 @@ const Profile = () => {
                           <div className="flex flex-wrap gap-3">
                             {profile?.skills && profile.skills.length > 0 ? (
                               profile.skills.map(skill => (
-                                <span key={skill} className="px-6 md:px-8 py-3 liquid-glass rounded-full border border-white/10 text-white/80 text-[9px] md:text-[10px] font-black uppercase tracking-widest italic hover:border-[#5490B4] transition-all shadow-sm">
+                                <span key={skill} className="px-6 md:px-8 py-3 liquid-glass rounded-full border border-white/10 text-white/80 text-[9px] md:text-[10px] font-black uppercase tracking-widest italic hover:border-[#B9914A] transition-all shadow-sm">
                                   {skill}
                                 </span>
                               ))
@@ -265,12 +265,12 @@ const Profile = () => {
                   </motion.div>
                 ) : (
                   <form onSubmit={handleUpdateProfile} className="liquid-glass rounded-3xl border border-white/10 p-8 md:p-20 shadow-2xl relative space-y-16">
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-30" />
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-30" />
                     <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-12 border-b border-white/10 pb-12">
                       <div className="space-y-4">
-                        <span className="text-[#5490B4] text-[10px] font-black uppercase tracking-[0.6em] block italic">IDENTITY PROTOCOL</span>
+                        <span className="text-[#B9914A] text-[10px] font-black uppercase tracking-[0.6em] block italic">IDENTITY PROTOCOL</span>
                         <h2 className="text-3xl md:text-7xl font-bold text-white tracking-tighter font-serif leading-none italic">
-                          Reclaim<span className="text-[#5490B4] not-italic font-sans">.</span>
+                          Reclaim<span className="text-[#B9914A] not-italic font-sans">.</span>
                         </h2>
                       </div>
                       <div className="flex flex-wrap gap-4 w-full xl:w-auto">
@@ -284,7 +284,7 @@ const Profile = () => {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="flex-1 xl:flex-none px-10 py-5 rounded-full border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#5490B4] hover:border-[#5490B4] transition-all shadow-xl flex items-center justify-center gap-4"
+                          className="flex-1 xl:flex-none px-10 py-5 rounded-full border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#B9914A] hover:border-[#B9914A] transition-all shadow-xl flex items-center justify-center gap-4"
                         >
                           <Save size={18} /> {loading ? "Updating..." : "Update Vault"}
                         </button>
@@ -298,7 +298,7 @@ const Profile = () => {
                           type="text"
                           value={formData.fullName}
                           onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                          className="w-full liquid-glass rounded-full py-5 md:py-6 px-8 md:px-10 border border-white/10 focus:outline-none focus:border-[#5490B4] transition-all text-white font-light shadow-sm bg-transparent"
+                          className="w-full liquid-glass rounded-full py-5 md:py-6 px-8 md:px-10 border border-white/10 focus:outline-none focus:border-[#B9914A] transition-all text-white font-light shadow-sm bg-transparent"
                           placeholder="Your Name"
                         />
                       </div>
@@ -319,7 +319,7 @@ const Profile = () => {
                           type="text"
                           value={formData.mobile}
                           onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
-                          className="w-full liquid-glass rounded-full py-5 md:py-6 px-8 md:px-10 border border-white/10 focus:outline-none focus:border-[#5490B4] transition-all text-white font-light shadow-sm bg-transparent"
+                          className="w-full liquid-glass rounded-full py-5 md:py-6 px-8 md:px-10 border border-white/10 focus:outline-none focus:border-[#B9914A] transition-all text-white font-light shadow-sm bg-transparent"
                           placeholder="+91 00000 00000"
                         />
                       </div>
@@ -329,7 +329,7 @@ const Profile = () => {
                         <textarea
                           value={formData.bio}
                           onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                          className="w-full liquid-glass rounded-3xl py-5 md:py-6 px-8 md:px-10 border border-white/10 focus:outline-none focus:border-[#5490B4] transition-all text-white font-light h-40 md:h-48 resize-none italic shadow-sm bg-transparent"
+                          className="w-full liquid-glass rounded-3xl py-5 md:py-6 px-8 md:px-10 border border-white/10 focus:outline-none focus:border-[#B9914A] transition-all text-white font-light h-40 md:h-48 resize-none italic shadow-sm bg-transparent"
                           placeholder="Define your artistic essence..."
                         />
                       </div>
@@ -346,8 +346,8 @@ const Profile = () => {
                             className={cn(
                               "px-6 md:px-10 py-3 md:py-4 rounded-full text-[9px] font-black uppercase tracking-[0.3em] transition-all border shadow-sm",
                               formData.skills.includes(skill)
-                                ? "bg-[#5490B4] text-white border-[#5490B4]"
-                                : "liquid-glass text-white/40 border-white/10 hover:border-[#5490B4] hover:text-[#5490B4]"
+                                ? "bg-[#B9914A] text-white border-[#B9914A]"
+                                : "liquid-glass text-white/40 border-white/10 hover:border-[#B9914A] hover:text-[#B9914A]"
                             )}
                           >
                             {skill}
@@ -363,7 +363,7 @@ const Profile = () => {
                           <button
                             type="button"
                             onClick={addLink}
-                            className="text-[9px] text-[#5490B4] uppercase font-black tracking-widest flex items-center gap-2 hover:gap-3 transition-all italic"
+                            className="text-[9px] text-[#B9914A] uppercase font-black tracking-widest flex items-center gap-2 hover:gap-3 transition-all italic"
                           >
                             <Plus size={14} /> Establish Connection
                           </button>
@@ -378,7 +378,7 @@ const Profile = () => {
                                 type="text"
                                 value={link.label}
                                 onChange={(e) => updateLink(index, 'label', e.target.value)}
-                                className="w-full liquid-glass rounded-full py-4 px-6 border border-white/10 focus:border-[#5490B4] outline-none text-[10px] font-black uppercase tracking-widest shadow-sm bg-transparent text-white"
+                                className="w-full liquid-glass rounded-full py-4 px-6 border border-white/10 focus:border-[#B9914A] outline-none text-[10px] font-black uppercase tracking-widest shadow-sm bg-transparent text-white"
                                 placeholder="PLATFORM"
                               />
                             </div>
@@ -387,7 +387,7 @@ const Profile = () => {
                                 type="url"
                                 value={link.url}
                                 onChange={(e) => updateLink(index, 'url', e.target.value)}
-                                className="w-full liquid-glass rounded-full py-4 px-6 border border-white/10 focus:border-[#5490B4] outline-none text-[10px] italic shadow-sm bg-transparent text-white"
+                                className="w-full liquid-glass rounded-full py-4 px-6 border border-white/10 focus:border-[#B9914A] outline-none text-[10px] italic shadow-sm bg-transparent text-white"
                                 placeholder="HTTPS://..."
                               />
                             </div>

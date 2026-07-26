@@ -117,20 +117,20 @@ const AdminDashboard = () => {
           >
             <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-32 border-b border-white/10 pb-16">
               <div className="space-y-4">
-                <span className="inline-block text-[#5490B4] text-[10px] font-black uppercase tracking-[0.6em] mb-4">
+                <span className="inline-block text-[#B9914A] text-[10px] font-black uppercase tracking-[0.6em] mb-4">
                   ADMINISTRATIVE COMMAND
                 </span>
                 <h1 className="text-3xl md:text-7xl font-bold text-white tracking-tighter leading-none font-serif italic">
-                  Command <span className="text-[#5490B4] not-italic font-sans">Center.</span>
+                  Command <span className="text-[#B9914A] not-italic font-sans">Center.</span>
                 </h1>
                 <p className="text-xl text-white/40 font-light italic mt-6 leading-relaxed">Orchestrating the SosrG artistic ecosystem from the inner circle.</p>
               </div>
               <div className="flex gap-6">
                 <div className="liquid-glass rounded-2xl px-10 py-6 border border-white/10 text-center relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-30" />
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-30" />
                   <p className="text-[9px] text-white/40 uppercase font-black tracking-[0.3em] mb-2">Protocol Status</p>
-                  <p className="text-[#5490B4] font-black flex items-center gap-3 text-[11px] uppercase tracking-widest">
-                    <span className="w-2 h-2 bg-[#5490B4] rounded-full animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.5)]" /> Operational
+                  <p className="text-[#B9914A] font-black flex items-center gap-3 text-[11px] uppercase tracking-widest">
+                    <span className="w-2 h-2 bg-[#B9914A] rounded-full animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.5)]" /> Operational
                   </p>
                 </div>
               </div>
@@ -144,15 +144,15 @@ const AdminDashboard = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.1 }}
-                  className="liquid-glass rounded-3xl p-10 border border-white/10 relative overflow-hidden group hover:border-[#5490B4]/50 transition-all duration-700"
+                  className="liquid-glass rounded-3xl p-10 border border-white/10 relative overflow-hidden group hover:border-[#B9914A]/50 transition-all duration-700"
                 >
-                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-0 group-hover:opacity-100 transition-all duration-700" />
-                  <div className="w-12 h-12 rounded-full border border-white/10 liquid-glass flex items-center justify-center text-white/60 mb-10 group-hover:bg-[#5490B4] group-hover:border-[#5490B4] group-hover:text-white transition-all duration-700">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-0 group-hover:opacity-100 transition-all duration-700" />
+                  <div className="w-12 h-12 rounded-full border border-white/10 liquid-glass flex items-center justify-center text-white/60 mb-10 group-hover:bg-[#B9914A] group-hover:border-[#B9914A] group-hover:text-white transition-all duration-700">
                     <card.icon size={18} />
                   </div>
                   <p className="text-[9px] text-white/40 uppercase font-black tracking-[0.4em] mb-4">{card.title}</p>
                   <h3 className="text-3xl md:text-6xl font-black text-white mb-6 tracking-tighter font-serif italic">{card.value}</h3>
-                  <p className="text-[10px] text-[#5490B4] font-black flex items-center gap-3 uppercase tracking-widest">
+                  <p className="text-[10px] text-[#B9914A] font-black flex items-center gap-3 uppercase tracking-widest">
                     <ArrowUpRight size={14} /> {card.trend}
                   </p>
                 </motion.div>
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
                     <select 
                       value={notification.type}
                       onChange={(e) => setNotification(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full liquid-glass rounded-full py-5 px-8 border border-white/10 focus:border-[#5490B4] outline-none text-[11px] font-black uppercase tracking-widest text-white cursor-pointer appearance-none bg-transparent"
+                      className="w-full liquid-glass rounded-full py-5 px-8 border border-white/10 focus:border-[#B9914A] outline-none text-[11px] font-black uppercase tracking-widest text-white cursor-pointer appearance-none bg-transparent"
                     >
                       <option value="broadcast">All Creators</option>
                       <option value="broadcast_Artist">Artists Only</option>
@@ -192,7 +192,7 @@ const AdminDashboard = () => {
                       type="text" 
                       value={notification.title}
                       onChange={(e) => setNotification(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full liquid-glass rounded-full py-5 px-8 border border-white/10 focus:border-[#5490B4] outline-none text-white font-light placeholder:text-white/20"
+                      className="w-full liquid-glass rounded-full py-5 px-8 border border-white/10 focus:border-[#B9914A] outline-none text-white font-light placeholder:text-white/20"
                       placeholder="Urgent Artistic Decree..."
                     />
                   </div>
@@ -201,11 +201,11 @@ const AdminDashboard = () => {
                     <textarea 
                       value={notification.message}
                       onChange={(e) => setNotification(prev => ({ ...prev, message: e.target.value }))}
-                      className="w-full liquid-glass rounded-3xl py-5 px-8 border border-white/10 focus:border-[#5490B4] outline-none text-white font-light h-48 resize-none italic placeholder:text-white/20"
+                      className="w-full liquid-glass rounded-3xl py-5 px-8 border border-white/10 focus:border-[#B9914A] outline-none text-white font-light h-48 resize-none italic placeholder:text-white/20"
                       placeholder="Manifest your message here..."
                     />
                   </div>
-                  <button type="submit" className="w-full liquid-glass rounded-full text-white py-6 flex items-center justify-center gap-4 text-[11px] border border-white/10 font-black uppercase tracking-[0.4em] hover:bg-[#5490B4] hover:border-[#5490B4] transition-all duration-500 shadow-xl mt-4">
+                  <button type="submit" className="w-full liquid-glass rounded-full text-white py-6 flex items-center justify-center gap-4 text-[11px] border border-white/10 font-black uppercase tracking-[0.4em] hover:bg-[#B9914A] hover:border-[#B9914A] transition-all duration-500 shadow-xl mt-4">
                     Transmit Signal <Send size={16} />
                   </button>
                 </form>
@@ -220,20 +220,20 @@ const AdminDashboard = () => {
                     </div>
                     <h2 className="text-4xl font-bold text-white font-serif italic tracking-tight">Operational Insights.</h2>
                   </div>
-                  <button className="text-[10px] text-white/40 font-black uppercase tracking-[0.4em] hover:text-[#5490B4] transition-all">
+                  <button className="text-[10px] text-white/40 font-black uppercase tracking-[0.4em] hover:text-[#B9914A] transition-all">
                     Export Archive
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   {recentUsers.map((creator) => (
-                    <div key={creator.id} className="p-6 md:p-8 liquid-glass rounded-2xl border border-white/10 flex items-center justify-between group hover:border-[#5490B4] transition-all duration-700 shadow-sm">
+                    <div key={creator.id} className="p-6 md:p-8 liquid-glass rounded-2xl border border-white/10 flex items-center justify-between group hover:border-[#B9914A] transition-all duration-700 shadow-sm">
                       <div className="flex items-center gap-6 md:gap-8">
-                        <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/20 group-hover:text-[#5490B4] transition-colors">
+                        <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/20 group-hover:text-[#B9914A] transition-colors">
                           <Users size={18} />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-lg md:text-xl font-bold text-white group-hover:text-[#5490B4] transition-colors duration-500 font-serif italic tracking-wide">
+                          <p className="text-lg md:text-xl font-bold text-white group-hover:text-[#B9914A] transition-colors duration-500 font-serif italic tracking-wide">
                             {creator.displayName || creator.email || "Unknown Creator"}
                           </p>
                           <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">
@@ -242,7 +242,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <p className="text-[#5490B4] text-[10px] md:text-xs font-black tracking-[0.3em] uppercase group-hover:scale-105 transition-transform">
+                        <p className="text-[#B9914A] text-[10px] md:text-xs font-black tracking-[0.3em] uppercase group-hover:scale-105 transition-transform">
                           {creator.coins || 0} COINS
                         </p>
                         <p className="text-[8px] text-white/20 uppercase font-black">VAULT BALANCE</p>
@@ -260,10 +260,10 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="mt-12 p-10 liquid-glass rounded-2xl border border-white/10 text-center relative overflow-hidden shadow-xl">
-                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-30" />
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-30" />
                   <MessageSquare className="mx-auto text-white/10 mb-8" size={32} />
                   <p className="text-sm text-white/40 italic font-light leading-relaxed max-w-lg mx-auto">
-                    Real-time traffic analytics are currently synchronized with the <br /> <span className="text-[#5490B4] font-black uppercase tracking-[0.2em] not-italic">Google Digital Command Center</span>
+                    Real-time traffic analytics are currently synchronized with the <br /> <span className="text-[#B9914A] font-black uppercase tracking-[0.2em] not-italic">Google Digital Command Center</span>
                   </p>
                 </div>
               </div>

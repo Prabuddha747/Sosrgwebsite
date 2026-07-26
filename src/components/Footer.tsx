@@ -31,7 +31,9 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-[#090B10] border-t border-[#B9914A]/10 pt-24 md:pt-32 pb-16 relative overflow-hidden">
+    <footer className="bg-[#090B10]/78 border-t border-[#B9914A]/10 pt-24 md:pt-32 pb-16 relative overflow-hidden">
+      {/* The journey's closing beat — light gently settling before the end */}
+      <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#B9914A]/[0.07] to-transparent pointer-events-none" />
       <div className="absolute top-0 right-0 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-[#B9914A]/5 rounded-full blur-[80px] md:blur-[120px]" />
 
       <div className="max-w-6xl mx-auto relative z-10 px-6">

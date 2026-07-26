@@ -132,7 +132,7 @@ const Inbox = () => {
               <div className="space-y-4">
                 <span className="text-white/40 text-[10px] font-black uppercase tracking-[0.6em] block italic">THE REPOSITORY</span>
                 <h1 className="text-[clamp(2.5rem,6vw,6rem)] font-bold text-white tracking-tighter leading-none font-serif italic">
-                  Inbox<span className="text-[#5490B4] not-italic font-sans">.</span>
+                  Inbox<span className="text-[#B9914A] not-italic font-sans">.</span>
                 </h1>
               </div>
               
@@ -141,19 +141,19 @@ const Inbox = () => {
                   onClick={() => setActiveTab('notifications')}
                   className={cn(
                     "px-8 py-5 text-[9px] font-black uppercase tracking-[0.5em] transition-all duration-500 rounded-full border",
-                    activeTab === 'notifications' ? "liquid-glass text-white border-[#5490B4] shadow-xl" : "border-white/10 text-white/40 hover:text-white"
+                    activeTab === 'notifications' ? "liquid-glass text-white border-[#B9914A] shadow-xl" : "border-white/10 text-white/40 hover:text-white"
                   )}
                 >
-                  DECREES <span className="ml-2 text-[#5490B4]">[{notifications.length}]</span>
+                  DECREES <span className="ml-2 text-[#B9914A]">[{notifications.length}]</span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('messages')}
                   className={cn(
                     "px-8 py-5 text-[9px] font-black uppercase tracking-[0.5em] transition-all duration-500 rounded-full border",
-                    activeTab === 'messages' ? "liquid-glass text-white border-[#5490B4] shadow-xl" : "border-white/10 text-white/40 hover:text-white"
+                    activeTab === 'messages' ? "liquid-glass text-white border-[#B9914A] shadow-xl" : "border-white/10 text-white/40 hover:text-white"
                   )}
                 >
-                  DIRECTS <span className="ml-2 text-[#5490B4]">[{chats.length}]</span>
+                  DIRECTS <span className="ml-2 text-[#B9914A]">[{chats.length}]</span>
                 </button>
               </div>
             </div>
@@ -176,14 +176,14 @@ const Inbox = () => {
                       </div>
                     ) : notifications.length > 0 ? (
                       notifications.map((notif) => (
-                        <div key={notif.id} className="liquid-glass rounded-2xl p-8 border border-white/10 relative group hover:border-[#5490B4] transition-all duration-700 shadow-sm">
+                        <div key={notif.id} className="liquid-glass rounded-2xl p-8 border border-white/10 relative group hover:border-[#B9914A] transition-all duration-700 shadow-sm">
                           <div className="flex gap-8 items-start">
-                            <div className="w-12 h-12 rounded-full border border-white/10 liquid-glass flex items-center justify-center text-white shrink-0 shadow-lg group-hover:bg-[#5490B4] group-hover:border-[#5490B4] transition-all duration-700">
+                            <div className="w-12 h-12 rounded-full border border-white/10 liquid-glass flex items-center justify-center text-white shrink-0 shadow-lg group-hover:bg-[#B9914A] group-hover:border-[#B9914A] transition-all duration-700">
                               <Bell size={18} />
                             </div>
                             <div className="flex-1 space-y-4">
                               <div className="flex justify-between items-start">
-                                <h3 className="text-2xl md:text-3xl font-bold text-white group-hover:text-[#5490B4] transition-colors font-serif italic tracking-wide">{notif.title}</h3>
+                                <h3 className="text-2xl md:text-3xl font-bold text-white group-hover:text-[#B9914A] transition-colors font-serif italic tracking-wide">{notif.title}</h3>
                                 <span className="text-[9px] text-white/40 uppercase font-black tracking-widest italic pt-1">
                                   {notif.createdAt?.toDate ? formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true }) : 'Recently Transmitted'}
                                 </span>
@@ -221,7 +221,7 @@ const Inbox = () => {
                         <Link 
                           key={chat.id} 
                           to={`/chat/${chat.id}`}
-                          className="liquid-glass rounded-2xl p-6 md:p-8 border border-white/10 block group hover:border-[#5490B4] transition-all duration-700 shadow-sm relative overflow-hidden"
+                          className="liquid-glass rounded-2xl p-6 md:p-8 border border-white/10 block group hover:border-[#B9914A] transition-all duration-700 shadow-sm relative overflow-hidden"
                         >
                           <div className="flex gap-6 md:gap-8 items-center">
                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border border-white/10 overflow-hidden shrink-0 grayscale group-hover:grayscale-0 transition-all duration-700 shadow-md">
@@ -235,7 +235,7 @@ const Inbox = () => {
                             </div>
                             <div className="flex-1 min-w-0 space-y-2">
                               <div className="flex justify-between items-center">
-                                <h3 className="text-2xl md:text-3xl font-bold text-white group-hover:text-[#5490B4] transition-colors truncate font-serif italic tracking-wide">{chat.otherUser?.displayName || 'Unknown Creator'}</h3>
+                                <h3 className="text-2xl md:text-3xl font-bold text-white group-hover:text-[#B9914A] transition-colors truncate font-serif italic tracking-wide">{chat.otherUser?.displayName || 'Unknown Creator'}</h3>
                                 <span className="text-[9px] text-white/40 uppercase font-black tracking-widest italic shrink-0">
                                   {chat.updatedAt?.toDate ? formatDistanceToNow(chat.updatedAt.toDate(), { addSuffix: true }) : 'Just Now'}
                                 </span>
@@ -244,7 +244,7 @@ const Inbox = () => {
                                 {chat.lastMessage || 'Establishment of divine channel...'}
                               </p>
                             </div>
-                            <div className="w-10 h-10 flex items-center justify-center rounded-full border border-white/10 text-white/40 group-hover:bg-[#5490B4] group-hover:border-[#5490B4] group-hover:text-white transition-all shrink-0">
+                            <div className="w-10 h-10 flex items-center justify-center rounded-full border border-white/10 text-white/40 group-hover:bg-[#B9914A] group-hover:border-[#B9914A] group-hover:text-white transition-all shrink-0">
                               <ChevronRight size={20} />
                             </div>
                           </div>

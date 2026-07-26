@@ -31,7 +31,7 @@ const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="bg-[#090B10] py-24 md:py-32 px-6 relative z-10">
+    <section className="bg-[#090B10]/78 py-24 md:py-32 px-6 relative z-10">
       <div className="max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

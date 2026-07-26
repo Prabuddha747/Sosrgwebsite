@@ -25,7 +25,7 @@ const Contact = () => {
     <Layout>
       <section className="pt-56 pb-40 bg-transparent min-h-screen flex items-center relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#5490B4]/5 rounded-full blur-[180px] opacity-20" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#B9914A]/5 rounded-full blur-[180px] opacity-20" />
         </div>
         
         <div className="layout-container relative z-10">
@@ -35,7 +35,7 @@ const Contact = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={cinematicTransition}
             >
-              <span className="text-[#5490B4] text-[10px] font-bold uppercase tracking-[0.6em] mb-8 block">CORRESPONDENCE</span>
+              <span className="text-[#B9914A] text-[10px] font-bold uppercase tracking-[0.6em] mb-8 block">CORRESPONDENCE</span>
               <h1 className="text-4xl md:text-8xl font-black text-white tracking-tighter leading-none mb-16 font-sans">
                 CONNECT.
               </h1>
@@ -56,12 +56,12 @@ const Contact = () => {
                   { icon: Globe, label: "Facebook", value: "SosrG StudioS Rohtak", href: "https://www.facebook.com/sosrgstudios_rohtak" },
                 ].map((item, i) => (
                   <a key={i} href={item.href} target="_blank" rel="noreferrer" className="flex items-center gap-6 md:gap-10 group cursor-pointer">
-                    <div className="w-12 h-12 shrink-0 bg-white/5 border border-[#5490B4]/20 text-[#5490B4] flex items-center justify-center transition-all duration-300 group-hover:bg-[#5490B4] group-hover:text-[#1A1A1A] group-hover:scale-110">
+                    <div className="w-12 h-12 shrink-0 bg-white/5 border border-[#B9914A]/20 text-[#B9914A] flex items-center justify-center transition-all duration-300 group-hover:bg-[#B9914A] group-hover:text-[#1A1A1A] group-hover:scale-110">
                       <item.icon size={18} />
                     </div>
                     <div>
-                      <p className="text-[9px] text-[#5490B4]/50 uppercase font-bold tracking-[0.4em] mb-2">{item.label}</p>
-                      <p className="text-lg md:text-xl font-bold text-white leading-none group-hover:text-[#5490B4] transition-colors">{item.value}</p>
+                      <p className="text-[9px] text-[#B9914A]/50 uppercase font-bold tracking-[0.4em] mb-2">{item.label}</p>
+                      <p className="text-lg md:text-xl font-bold text-white leading-none group-hover:text-[#B9914A] transition-colors">{item.value}</p>
                     </div>
                   </a>
                 ))}
@@ -120,7 +120,7 @@ const Contact = () => {
                 </div>
                 <button 
                   disabled={isSubmitting}
-                  className="w-full bg-[#5490B4] text-[#1A1A1A] !py-8 !text-[11px] font-black uppercase tracking-[0.5em] flex items-center justify-center gap-6 hover:bg-[#5490B4]/90 transition-all font-sans"
+                  className="w-full bg-[#B9914A] text-[#1A1A1A] !py-8 !text-[11px] font-black uppercase tracking-[0.5em] flex items-center justify-center gap-6 hover:bg-[#B9914A]/90 transition-all font-sans"
                 >
                   {isSubmitting ? "TRANSMITTING..." : (
                     <>

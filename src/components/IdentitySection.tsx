@@ -27,7 +27,7 @@ const IdentitySection = () => {
   return (
     <section
       ref={ref}
-      className="relative bg-[#090B10] min-h-[120vh] flex flex-col items-center justify-center px-6 text-center py-32"
+      className="relative bg-[#090B10]/60 min-h-[120vh] flex flex-col items-center justify-center px-6 text-center py-32"
     >
       {/* Sparkles only arrive with the climax line — a beat, not decoration */}
       <SparkleField opacity={headlineOpacity} />

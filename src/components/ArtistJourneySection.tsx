@@ -7,7 +7,7 @@ const steps = ['Portfolio', 'Recognition', 'Networking', 'Audition', 'Project', 
 
 const ArtistJourneySection = () => {
   return (
-    <section className="relative bg-[#090B10] py-32 md:py-40 px-6 overflow-hidden">
+    <section className="relative bg-[#090B10]/68 py-32 md:py-40 px-6 overflow-hidden">
       <div className="max-w-2xl mx-auto text-center mb-20">
         <p className="text-[#B9914A] text-xs tracking-widest uppercase mb-4">Artist Journey</p>
         <h2 className="text-3xl md:text-5xl text-[#F5F4F2] tracking-tight">

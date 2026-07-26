@@ -11,7 +11,7 @@ const FeaturedVideoSection = () => {
   const [playing, setPlaying] = useState(false);
 
   return (
-    <section className="bg-[#090B10] py-24 md:py-32 px-6 overflow-hidden">
+    <section className="bg-[#090B10]/68 py-24 md:py-32 px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-[#B9914A] text-xs tracking-widest uppercase mb-4">Founder</p>

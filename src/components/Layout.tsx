@@ -28,7 +28,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Premium Minimalist Background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-transparent">
         {/* Subtle Bronze Drifts */}
-        <div className="absolute top-[10%] right-[-5%] w-[40%] h-[40%] bg-[#5490B4]/5 rounded-full blur-[160px]" />
+        <div className="absolute top-[10%] right-[-5%] w-[40%] h-[40%] bg-[#B9914A]/5 rounded-full blur-[160px]" />
         <div className="absolute bottom-[10%] left-[-5%] w-[30%] h-[30%] bg-white/5 rounded-full blur-[140px]" />
       </div>
 
@@ -37,7 +37,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       
       {/* Minimalist Scroll Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] bg-[#5490B4] z-[100] origin-left"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-[#B9914A] z-[100] origin-left"
         style={{ scaleX }}
       />
       
@@ -58,7 +58,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="w-12 h-12 liquid-glass flex items-center justify-center text-[#5490B4] rounded-full shadow-2xl hover:bg-white hover:text-black transition-all group border border-[#5490B4]/20"
+              className="w-12 h-12 liquid-glass flex items-center justify-center text-[#B9914A] rounded-full shadow-2xl hover:bg-white hover:text-black transition-all group border border-[#B9914A]/20"
             >
               <ChevronUp size={20} className="group-hover:scale-125 transition-transform" />
             </motion.button>

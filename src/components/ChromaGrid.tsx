@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BadgeCheck } from 'lucide-react';
 import './ChromaGrid.css';
 
 export interface ChromaItem {
@@ -16,6 +16,7 @@ export interface ChromaItem {
   url?: string;
   skills?: string[];
   isAdmin?: boolean;
+  verified?: boolean;
   rawItem?: any;
 }
 
@@ -54,7 +55,7 @@ export const ChromaGrid = ({
       title: 'Alex Rivera',
       subtitle: 'Full Stack Developer',
       handle: 'PATNA SANCTUARY',
-      borderColor: '#5490B4',
+      borderColor: '#B9914A',
       gradient: 'linear-gradient(145deg, rgba(184, 160, 137, 0.1), #12161f)',
       url: 'https://github.com/'
     },
@@ -63,7 +64,7 @@ export const ChromaGrid = ({
       title: 'Jordan Chen',
       subtitle: 'DevOps Engineer',
       handle: 'GAYA SANCTUARY',
-      borderColor: '#5490B4',
+      borderColor: '#B9914A',
       gradient: 'linear-gradient(210deg, rgba(184, 160, 137, 0.1), #12161f)',
       url: 'https://linkedin.com/in/'
     },
@@ -72,7 +73,7 @@ export const ChromaGrid = ({
       title: 'Morgan Blake',
       subtitle: 'UI/UX Designer',
       handle: 'BHAGALPUR SANCTUARY',
-      borderColor: '#5490B4',
+      borderColor: '#B9914A',
       gradient: 'linear-gradient(165deg, rgba(184, 160, 137, 0.1), #12161f)',
       url: 'https://dribbble.com/'
     }
@@ -169,19 +170,19 @@ export const ChromaGrid = ({
           onMouseMove={handleCardMove}
           onClick={() => handleCardClick(c)}
           style={{
-            '--card-border': c.borderColor || '#5490B4',
+            '--card-border': c.borderColor || '#B9914A',
             '--card-gradient': c.gradient || 'linear-gradient(145deg, rgba(184, 160, 137, 0.05), #12161f)',
             cursor: 'pointer'
           } as React.CSSProperties}
         >
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-[#5490B4] opacity-0 group-hover/card:opacity-100 transition-opacity z-10" />
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-[#B9914A] opacity-0 group-hover/card:opacity-100 transition-opacity z-10" />
 
-          <div className="chroma-img-wrapper">
+          <div className="chroma-img-wrapper relative">
             {c.image ? (
-              <img 
-                src={c.image} 
-                alt={c.title} 
-                loading="lazy" 
+              <img
+                src={c.image}
+                alt={c.title}
+                loading="lazy"
                 className="w-full h-full object-cover rounded-full grayscale group-hover/card:grayscale-0 transition-all duration-1000"
               />
             ) : (
@@ -189,16 +190,21 @@ export const ChromaGrid = ({
                 {(c.title || 'C').charAt(0)}
               </div>
             )}
+            {c.verified && (
+              <div className="absolute bottom-1 right-1 bg-[#090B10] rounded-full p-0.5" title="Verified">
+                <BadgeCheck size={18} className="text-[#B9914A]" fill="currentColor" stroke="#090B10" />
+              </div>
+            )}
           </div>
-          
+
           <footer className="chroma-info flex flex-col gap-3 relative z-10 mt-auto">
             <div className="space-y-1">
               {c.handle && (
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#5490B4]/70 italic block">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B9914A]/70 italic block">
                   {c.handle}
                 </span>
               )}
-              <h3 className="name text-2xl font-bold text-white group-hover/card:text-[#5490B4] transition-colors leading-none font-sans italic truncate">
+              <h3 className="name text-2xl font-bold text-white group-hover/card:text-[#B9914A] transition-colors leading-none font-sans italic truncate flex items-center gap-2">
                 {c.title}
               </h3>
             </div>
@@ -218,7 +224,7 @@ export const ChromaGrid = ({
             )}
 
             <div className="pt-4 mt-2">
-              <div className="w-full py-3.5 bg-white text-[#1A1A1A] rounded-full text-[9px] font-black uppercase tracking-[0.4em] group-hover/card:bg-[#5490B4] group-hover/card:text-white transition-all duration-500 shadow-xl flex items-center justify-center font-sans">
+              <div className="w-full py-3.5 bg-white text-[#1A1A1A] rounded-full text-[9px] font-black uppercase tracking-[0.4em] group-hover/card:bg-[#B9914A] group-hover/card:text-white transition-all duration-500 shadow-xl flex items-center justify-center font-sans">
                 VIEW PORTFOLIO <ArrowRight size={12} className="ml-3 group-hover/card:translate-x-1.5 transition-transform" />
               </div>
             </div>

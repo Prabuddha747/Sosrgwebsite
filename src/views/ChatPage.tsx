@@ -140,14 +140,14 @@ const ChatPage = () => {
                     {otherUser?.displayName || 'Creator'}
                   </h2>
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#5490B4] rounded-full animate-pulse" />
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#B9914A] rounded-full animate-pulse" />
                     <span className="text-[8px] md:text-[9px] text-white/40 uppercase font-black tracking-widest italic">DIRECT CHANNEL</span>
                   </div>
                 </div>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-3 px-6 py-2 liquid-glass rounded-full border border-white/10">
-              <Shield size={12} className="text-[#5490B4]" />
+              <Shield size={12} className="text-[#B9914A]" />
               <span className="text-[9px] text-white/60 font-black uppercase tracking-widest italic">SECURED</span>
             </div>
           </div>
@@ -157,7 +157,7 @@ const ChatPage = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-[5%] py-10 space-y-10 relative bg-transparent">
           <div className="max-w-[800px] mx-auto w-full flex flex-col gap-6 md:gap-10">
             <div className="text-center py-16 border-b border-white/10 mb-8 md:mb-12">
-              <Sparkles className="mx-auto text-[#5490B4] mb-4" size={24} />
+              <Sparkles className="mx-auto text-[#B9914A] mb-4" size={24} />
               <p className="text-[9px] md:text-[11px] uppercase tracking-[0.4em] md:tracking-[0.6em] font-black text-white/40 italic">ESTABLISHING CONNECTION</p>
             </div>
 
@@ -177,7 +177,7 @@ const ChatPage = () => {
                   <div className={cn(
                     "p-5 md:p-8 text-sm md:text-base font-light leading-relaxed italic border transition-all duration-700 shadow-sm rounded-3xl",
                     isMe 
-                      ? "bg-[#5490B4] text-white border-[#5490B4] rounded-br-sm" 
+                      ? "bg-[#B9914A] text-white border-[#B9914A] rounded-br-sm" 
                       : "liquid-glass border-white/10 text-white rounded-bl-sm"
                   )}>
                     {msg.text}
@@ -203,12 +203,12 @@ const ChatPage = () => {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Manifest your message..."
-              className="flex-1 liquid-glass rounded-full px-6 md:px-8 py-4 md:py-5 focus:outline-none focus:border-[#5490B4] transition-all text-white italic font-light placeholder:text-white/40 border border-white/10 text-sm md:text-base shadow-sm"
+              className="flex-1 liquid-glass rounded-full px-6 md:px-8 py-4 md:py-5 focus:outline-none focus:border-[#B9914A] transition-all text-white italic font-light placeholder:text-white/40 border border-white/10 text-sm md:text-base shadow-sm"
             />
             <button 
               type="submit" 
               disabled={!text.trim()}
-              className="bg-[#5490B4] rounded-full text-white p-4 md:p-5 flex items-center justify-center aspect-square disabled:opacity-30 disabled:grayscale hover:bg-white hover:text-black transition-all duration-500 shadow-xl"
+              className="bg-[#B9914A] rounded-full text-white p-4 md:p-5 flex items-center justify-center aspect-square disabled:opacity-30 disabled:grayscale hover:bg-white hover:text-black transition-all duration-500 shadow-xl"
             >
               <Send className="w-5 h-5" />
             </button>

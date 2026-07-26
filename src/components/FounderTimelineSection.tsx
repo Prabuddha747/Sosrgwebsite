@@ -17,7 +17,7 @@ const milestones = [
 
 const FounderTimelineSection = () => {
   return (
-    <section className="relative bg-[#090B10] py-32 md:py-40 px-6">
+    <section className="relative bg-[#090B10]/75 py-32 md:py-40 px-6">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center mb-20">
         <motion.div
           initial={{ opacity: 0, x: -30 }}

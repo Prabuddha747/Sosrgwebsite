@@ -28,7 +28,7 @@ const ProblemSection = () => {
   const convergeOpacity = useTransform(scrollYProgress, [0.8, 1], [0, 1]);
 
   return (
-    <section className="relative bg-[#090B10] py-32 md:py-48 px-6 overflow-hidden">
+    <section className="relative bg-[#090B10]/68 py-32 md:py-48 px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto relative">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 mb-16">
           <div className="space-y-6">

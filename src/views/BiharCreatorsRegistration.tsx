@@ -505,7 +505,7 @@ const BiharCreatorsRegistration = () => {
                     {options.years[lang].map((y, idx) => (
                       <label key={idx} className={cn("relative cursor-pointer group")}>
                         <input type="radio" value={options.years.en[idx]} {...register('yearsExperience')} className="peer sr-only" />
-                        <div className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest peer-checked:bg-[#5490B4] peer-checked:text-white peer-checked:border-[#5490B4] transition-all duration-500">
+                        <div className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest peer-checked:bg-[#B9914A] peer-checked:text-white peer-checked:border-[#B9914A] transition-all duration-500">
                           {y}
                         </div>
                       </label>
@@ -527,7 +527,7 @@ const BiharCreatorsRegistration = () => {
                         {['Yes', 'No'].map((opt) => (
                           <label key={opt} className="relative cursor-pointer flex-1">
                             <input type="radio" value={opt} {...register(field.id as any)} className="peer sr-only" />
-                            <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#5490B4] peer-checked:text-white peer-checked:border-[#5490B4] transition-all duration-500">
+                            <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#B9914A] peer-checked:text-white peer-checked:border-[#B9914A] transition-all duration-500">
                               {t(opt.toLowerCase() as any)}
                             </div>
                           </label>
@@ -548,7 +548,7 @@ const BiharCreatorsRegistration = () => {
                     {['Sent on WhatsApp', "Don't have yet"].map((opt) => (
                       <label key={opt} className="relative cursor-pointer flex-1">
                         <input type="radio" value={opt} {...register('workSamples')} className="peer sr-only" />
-                        <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#5490B4] peer-checked:text-white peer-checked:border-[#5490B4] transition-all duration-500">
+                        <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#B9914A] peer-checked:text-white peer-checked:border-[#B9914A] transition-all duration-500">
                           {opt === "Don't have yet" ? t('dontHaveYet') : opt}
                         </div>
                       </label>
@@ -622,7 +622,7 @@ const BiharCreatorsRegistration = () => {
                     {['Yes', 'No', 'Maybe'].map((opt) => (
                       <label key={opt} className="relative cursor-pointer flex-1 min-w-[120px]">
                         <input type="radio" value={opt} {...register('interestInVisual')} className="peer sr-only" />
-                        <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#5490B4] peer-checked:text-white peer-checked:border-[#5490B4] transition-all duration-500">
+                        <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#B9914A] peer-checked:text-white peer-checked:border-[#B9914A] transition-all duration-500">
                           {t(opt.toLowerCase() as any)}
                         </div>
                       </label>
@@ -674,7 +674,7 @@ const BiharCreatorsRegistration = () => {
                     {['Yes', 'No', 'Maybe'].map((opt) => (
                       <label key={opt} className="relative cursor-pointer flex-1 min-w-[120px]">
                         <input type="radio" value={opt} {...register('activeParticipation')} className="peer sr-only" />
-                        <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#5490B4] peer-checked:text-white peer-checked:border-[#5490B4] transition-all duration-500">
+                        <div className="w-full py-4 rounded-xl border border-white/10 bg-white/5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-center peer-checked:bg-[#B9914A] peer-checked:text-white peer-checked:border-[#B9914A] transition-all duration-500">
                           {t(opt.toLowerCase() as any)}
                         </div>
                       </label>
@@ -691,7 +691,7 @@ const BiharCreatorsRegistration = () => {
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full py-6 md:py-8 liquid-glass bg-white/5 border border-white/10 text-white hover:bg-[#5490B4] hover:border-[#5490B4] rounded-2xl text-[14px] md:text-lg font-black tracking-widest transition-all duration-700 disabled:opacity-30 flex items-center justify-center shadow-xl group"
+              className="w-full py-6 md:py-8 liquid-glass bg-white/5 border border-white/10 text-white hover:bg-[#B9914A] hover:border-[#B9914A] rounded-2xl text-[14px] md:text-lg font-black tracking-widest transition-all duration-700 disabled:opacity-30 flex items-center justify-center shadow-xl group"
             >
               {isSubmitting 
                 ? (lang === 'hi' ? "प्रविष्ट किया जा रहा है..." : "Finalizing Entry...") 
