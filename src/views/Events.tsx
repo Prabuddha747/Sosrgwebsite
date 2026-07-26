@@ -1,12 +1,76 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Layout from '@/components/Layout';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionTemplate, useReducedMotion } from 'framer-motion';
 import { Calendar, MapPin, ArrowRight, Plus, Search } from 'lucide-react';
 import { Link, useNavigate } from '@/lib/router-compat';
 import { useAuth } from '@/contexts/AuthContext';
 import { getLiveEvents, EventListing } from '@/lib/db';
+
+// "Focus Pull" (MOTION_LANGUAGE_GUIDE.md §2) — a rack-focus effect, the
+// image arriving from soft to sharp as it scrolls into view, evoking a
+// camera operator pulling focus rather than a plain fade.
+const EventCard = ({ event, index, onOpen }: { event: EventListing; index: number; onOpen: () => void }) => {
+  const imgRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: imgRef, offset: ['start end', 'center center'] });
+  const blurPx = useTransform(scrollYProgress, [0, 1], [12, 0]);
+  const filter = useMotionTemplate`blur(${blurPx}px)`;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8, delay: index * 0.05 }}
+      className="group flex flex-col lg:flex-row items-center gap-10 md:gap-16 cursor-pointer"
+      onClick={onOpen}
+    >
+      <div ref={imgRef} className="w-full lg:w-1/2 relative aspect-[16/10] overflow-hidden border border-white/10 rounded-xl bg-white/5">
+        {event.image ? (
+          <motion.img
+            src={event.image}
+            alt={event.title}
+            style={prefersReducedMotion ? undefined : { filter }}
+            className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-[1.5s]"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/10">
+            <Calendar size={48} />
+          </div>
+        )}
+        <div className="absolute top-6 right-6 bg-[#090B10]/90 border border-white/10 px-5 py-2 rounded-sm">
+          <span className="text-[9px] text-[#B9914A] font-black uppercase tracking-widest">{event.eventType}</span>
+        </div>
+      </div>
+
+      <div className="w-full lg:w-1/2 space-y-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-6 text-[9px] font-bold uppercase tracking-[0.3em]">
+            <span className="flex items-center gap-2 text-white/60"><Calendar size={12} className="text-[#B9914A]" /> {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span className="flex items-center gap-2 text-white/60"><MapPin size={12} className="text-[#B9914A]" /> {event.location}</span>
+          </div>
+          <h2 className="text-2xl md:text-4xl text-white font-bold leading-tight">
+            {event.title}
+          </h2>
+        </div>
+
+        <p className="text-base text-white/50 font-light leading-relaxed max-w-lg line-clamp-3">
+          {event.description}
+        </p>
+
+        <Link
+          to={`/event/${event.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-3 bg-[#B9914A] text-[#090B10] px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#F5F4F2] transition-colors"
+        >
+          View Details <ArrowRight size={14} />
+        </Link>
+      </div>
+    </motion.div>
+  );
+};
 
 const Events = () => {
   const navigate = useNavigate();
@@ -27,7 +91,8 @@ const Events = () => {
       {/* Header */}
       <section className="pt-40 md:pt-56 pb-24 bg-transparent border-b border-white/10 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#B9914A]/5 rounded-full blur-[150px]" />
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#B9914A]/8 rounded-full blur-[150px]" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#F5D98A]/5 rounded-full blur-[130px]" />
         </div>
         <div className="layout-container text-center relative z-10">
           <motion.div
@@ -75,56 +140,7 @@ const Events = () => {
           ) : (
             <div className="space-y-24">
               {events.map((event, i) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: i * 0.05 }}
-                  className="group flex flex-col lg:flex-row items-center gap-10 md:gap-16 cursor-pointer"
-                  onClick={() => navigate(`/event/${event.id}`)}
-                >
-                  <div className="w-full lg:w-1/2 relative aspect-[16/10] overflow-hidden border border-white/10 rounded-xl bg-white/5">
-                    {event.image ? (
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-[1.5s]"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white/10">
-                        <Calendar size={48} />
-                      </div>
-                    )}
-                    <div className="absolute top-6 right-6 bg-[#090B10]/90 border border-white/10 px-5 py-2 rounded-sm">
-                      <span className="text-[9px] text-[#B9914A] font-black uppercase tracking-widest">{event.eventType}</span>
-                    </div>
-                  </div>
-
-                  <div className="w-full lg:w-1/2 space-y-8">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-6 text-[9px] font-bold uppercase tracking-[0.3em]">
-                        <span className="flex items-center gap-2 text-white/60"><Calendar size={12} className="text-[#B9914A]" /> {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                        <span className="flex items-center gap-2 text-white/60"><MapPin size={12} className="text-[#B9914A]" /> {event.location}</span>
-                      </div>
-                      <h2 className="text-2xl md:text-4xl text-white font-bold leading-tight">
-                        {event.title}
-                      </h2>
-                    </div>
-
-                    <p className="text-base text-white/50 font-light leading-relaxed max-w-lg line-clamp-3">
-                      {event.description}
-                    </p>
-
-                    <Link
-                      to={`/event/${event.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-3 bg-[#B9914A] text-[#090B10] px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#F5F4F2] transition-colors"
-                    >
-                      View Details <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                </motion.div>
+                <EventCard key={event.id} event={event} index={i} onOpen={() => navigate(`/event/${event.id}`)} />
               ))}
             </div>
           )}

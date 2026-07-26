@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Layout from '@/components/Layout';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from '@/lib/router-compat';
 import {
   ArrowRight, Theater, BookOpen, Music as MusicIcon, Palette, Hammer, Users, Film,
@@ -10,6 +10,12 @@ import {
 
 const Services = () => {
   const cinematicTransition: any = { duration: 0.8, ease: [] as any };
+  const heroRef = useRef<HTMLElement>(null);
+  // Scroll-linked parallax on the hero glow, same useScroll+useTransform idiom
+  // ProblemSection/IdentitySection use on the homepage — not a new technique.
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const glowY = useTransform(heroProgress, [0, 1], [0, 160]);
+  const heroTextY = useTransform(heroProgress, [0, 1], [0, -40]);
 
   // Slugs match ECOSYSTEM_DATA in ServiceCategoryDetail.tsx — kept in sync,
   // not duplicated data, just the same keys.
@@ -27,8 +33,8 @@ const Services = () => {
     <Layout>
       <div className="bg-transparent pb-20">
         {/* Hero */}
-        <section className="pt-40 md:pt-56 pb-24 relative overflow-hidden">
-          <div className="layout-container relative z-10 text-center px-4">
+        <section ref={heroRef} className="pt-40 md:pt-56 pb-24 relative overflow-hidden">
+          <motion.div style={{ y: heroTextY }} className="layout-container relative z-10 text-center px-4">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -47,8 +53,9 @@ const Services = () => {
                 one address.
               </p>
             </motion.div>
-          </div>
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#B9914A]/5 blur-[150px] -z-10 rounded-full" />
+          </motion.div>
+          <motion.div style={{ y: glowY }} className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#B9914A]/8 blur-[150px] -z-10 rounded-full" />
+          <div className="absolute bottom-0 left-0 w-[350px] h-[350px] bg-[#F5D98A]/5 blur-[130px] -z-10 rounded-full" />
         </section>
 
         {/* Domain directory */}
@@ -67,8 +74,8 @@ const Services = () => {
               {domains.map((cat, i) => (
                 <motion.div
                   key={cat.slug}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+                  whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.5, delay: i * 0.06 }}
                 >

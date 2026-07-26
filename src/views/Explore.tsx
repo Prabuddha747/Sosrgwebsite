@@ -284,7 +284,7 @@ const Explore = () => {
 
   return (
     <Layout>
-      <section className="pt-24 md:pt-32 pb-40 min-h-screen">
+      <section className="pt-24 md:pt-32 pb-40 min-h-screen bg-transparent">
         <div className="layout-container px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -326,7 +326,7 @@ const Explore = () => {
             </div>
           </motion.div>
 
-          {tab === 'casting' ? <CastingTab /> : <ArtistsTab />}
+        {tab === 'casting' ? <CastingTab /> : <ArtistsTab />}
         </div>
       </section>
     </Layout>

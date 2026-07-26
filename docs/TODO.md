@@ -182,8 +182,56 @@ reload, zero console errors throughout.
 
 ↓
 
-Next
+Done
 
-Phase 6: Chat upgrades (attachment cards), verification badges (manual,
-admin-reviewed), rule-based AI match score — see
-docs/PLATFORM_EVOLUTION_PLAN.md §11
+Phase 6: verification badge (admin toggle on profile.verified),
+rule-based AI match score (computeMatchScore in db.ts, shown on
+CastingCallDetail), chat attachment cards (portfolio/showreel/audition
+tape/availability/invitation/meeting — inline form, not window.prompt(),
+which gets silently auto-dismissed in some contexts).
+
+Found + fixed the same Firestore query/rule mismatch bug again, this
+time pre-existing in Inbox.tsx (broadcast notifications fan-out query).
+Replaced the floating WhatsApp button with the Navbar's Mail icon ->
+/inbox, live-blinking on unread via onSnapshot; added
+markAllNotificationsRead() so the badge can actually clear.
+
+Both commits pushed to origin/main after verification (per user
+instruction: push after every phase is done and verified).
+
+↓
+
+Done
+
+Visual-consistency pass on /explore, /event, /services, /about. User's
+first ask (bring the homepage's cinematic video backdrop to these pages)
+was superseded mid-task by a clearer direction: no video backdrop on
+these pages — keep the black/gold theme and add real scroll-linked
+motion instead. Landed:
+- Explore.tsx: reverted to Layout's plain bg-transparent (no backdrop).
+- Events.tsx: same revert, plus a real "Focus Pull" moment (per
+  MOTION_LANGUAGE_GUIDE.md #2) — event card images blur-to-sharp on
+  scroll via useScroll/useTransform/useMotionTemplate, gated behind
+  useReducedMotion.
+- Services.tsx / About.tsx: added the same useScroll+useTransform hero
+  parallax idiom ProblemSection/IdentitySection already use on the
+  homepage (glow-orb + headline drift), plus a blur-resolve entrance on
+  list/card items. About.tsx's closing line ("creative identity.") got
+  the site's one-and-only "Marquee Call" letter-split (per the guide's
+  explicit "reserve this for one true rallying moment" rule) — first
+  use of that pattern anywhere on the site.
+
+Real bug found along the way (not what was asked, but visibly wrong):
+user screenshotted several pages looking blue-tinted despite the
+289-occurrence blue->gold pass done earlier. Root cause — that pass
+only swapped literal #5490B4 hex usages; it missed globals.css's
+.liquid-glass/.premium-card/.form-input-premium classes (still hard-coded
+blue-slate rgba, e.g. rgba(84,144,180,...)) and the --card/--muted/
+--input/--secondary CSS vars (still hue 210, blue). These three classes
+alone are used across 15 view files (Explore's casting cards, Login,
+Signup, ChatPage, Inbox, etc.), so fixing the shared CSS once in
+globals.css fixed all of them — verified in-browser on Explore, chat,
+and profile with zero blue residue and zero console errors.
+
+Also fixed the body background gradient (was leftover blue radial
+gradients from the old theme) to gold/warm tones.

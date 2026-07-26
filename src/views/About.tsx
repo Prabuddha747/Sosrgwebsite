@@ -1,13 +1,40 @@
 "use client";
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Layout from '@/components/Layout';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { Link } from '@/lib/router-compat';
 import { ArrowRight } from 'lucide-react';
 
+// "Marquee Call" (MOTION_LANGUAGE_GUIDE.md §5) — reserved for exactly one
+// rallying-cry moment on the whole site; used only once below, on purpose.
+const MarqueeCall = ({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) => {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <span className={className} style={style} aria-label={text}>
+      {text.split('').map((ch, i) => (
+        <motion.span
+          key={i}
+          aria-hidden="true"
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: prefersReducedMotion ? 0 : i * 0.02 }}
+          style={{ display: 'inline-block' }}
+        >
+          {ch === ' ' ? ' ' : ch}
+        </motion.span>
+      ))}
+    </span>
+  );
+};
+
 const About = () => {
   const cinematicTransition: any = { duration: 0.8, ease: [] as any };
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const heroTextY = useTransform(heroProgress, [0, 1], [0, -50]);
+  const glowY = useTransform(heroProgress, [0, 1], [0, 150]);
 
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -29,8 +56,8 @@ const About = () => {
   return (
     <Layout>
       {/* Header */}
-      <section className="relative min-h-[60vh] flex items-center justify-center border-b border-white/10">
-        <div className="max-w-[1100px] mx-auto px-[5%] text-center relative z-20">
+      <section ref={heroRef} className="relative min-h-[60vh] flex items-center justify-center border-b border-white/10 overflow-hidden">
+        <motion.div style={{ y: heroTextY }} className="max-w-[1100px] mx-auto px-[5%] text-center relative z-20">
           <motion.span
             initial={{ opacity: 0, letterSpacing: '0.6em' }}
             animate={{ opacity: 1, letterSpacing: '0.4em' }}
@@ -53,7 +80,9 @@ const About = () => {
             transition={{ duration: 1.2, delay: 0.5 }}
             className="w-32 h-[1px] bg-[#B9914A] mx-auto"
           />
-        </div>
+        </motion.div>
+        <motion.div style={{ y: glowY }} className="absolute top-0 left-0 w-[450px] h-[450px] bg-[#B9914A]/8 blur-[150px] -z-10 rounded-full" />
+        <div className="absolute bottom-0 right-0 w-[350px] h-[350px] bg-[#F5D98A]/5 blur-[130px] -z-10 rounded-full" />
       </section>
 
       {/* The Essence */}
@@ -92,8 +121,8 @@ const About = () => {
             {principles.map((item, i) => (
               <motion.div
                 key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+                whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
                 className="p-8 bg-white/5 border border-white/10 rounded-2xl hover:border-[#B9914A]/40 transition-all duration-500"
@@ -148,7 +177,12 @@ const About = () => {
         <div className="max-w-[800px] mx-auto px-[5%] text-center">
           <motion.div {...fadeIn}>
             <h2 className="text-3xl md:text-6xl font-black text-white tracking-tighter mb-10">
-              This is Bihar's <span className="text-[#B9914A] italic" style={{ fontFamily: "'Cormorant Garamond', serif" }}>creative identity.</span>
+              This is Bihar's{' '}
+              <MarqueeCall
+                text="creative identity."
+                className="text-[#B9914A] italic"
+                style={{ fontFamily: "'Cormorant Garamond', serif" }}
+              />
             </h2>
             <p className="text-lg text-white/50 mb-12 max-w-xl mx-auto">
               If you're an artist, join the registry. If you're a studio, come find who you're looking for.
