@@ -77,11 +77,13 @@ const CoreBrandStorySection = () => {
       const start = CARDS_START + i * cardSlice * 0.55;
       const t = Math.min(1, Math.max(0, (progress - start) / cardSlice));
       if (t >= 1) {
-        // Hand control back to CSS once settled, so the hover:-translate-y-1
-        // class can actually move the element — an inline transform (any
-        // value, including the final one) would otherwise permanently
+        // Opacity stays inline forever (an "opacity-0" class is still on
+        // this element for the pre-JS flash guard, and inline always beats
+        // it). Only transform is released to CSS once settled, so the
+        // hover:-translate-y-1 class can actually move the element — an
+        // inline transform of any value would otherwise permanently
         // outrank it regardless of :hover.
-        el.style.opacity = '';
+        el.style.opacity = '1';
         el.style.transform = '';
       } else {
         el.style.opacity = String(t);

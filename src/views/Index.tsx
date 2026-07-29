@@ -8,6 +8,7 @@ import FAQSection from '@/components/FAQSection';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import CoreBrandStorySection from '@/components/CoreBrandStorySection';
+import BigIdeaSection from '@/components/BigIdeaSection';
 import ProblemSection from '@/components/ProblemSection';
 import FounderTimelineSection from '@/components/FounderTimelineSection';
 import IdentitySection from '@/components/IdentitySection';
@@ -32,6 +33,7 @@ const Index = () => {
     <div className="bg-stage-black min-h-screen text-ivory font-sans overflow-x-hidden relative">
       <HeroSection />
       <CoreBrandStorySection />
+      <BigIdeaSection />
       <ProblemSection />
       <IdentitySection />
       <EcosystemSection />
