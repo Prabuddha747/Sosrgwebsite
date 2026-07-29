@@ -113,6 +113,13 @@ the visitor has interacted at all).
   "ship hooks now, defer final audio" call).
 - Global mute/volume control, always visible, persisted to
   `localStorage` — Section 4's "always user-controllable," never buried.
+- **`AnalyserNode`** on the shared audio graph exposes real-time
+  amplitude data (`getByteFrequencyData`) to the `SceneManager` store
+  every frame — one shared reactive value, not a per-world analyser.
+  First consumer is Prologue's seed (audio-reactive breathing/crack-glow,
+  see its Visual Bible/Asset Manifest), but the value is generic: any
+  later world wanting audio-reactive motion reads the same store field
+  rather than standing up its own analyser.
 
 ## 5. Interaction system
 
@@ -161,6 +168,18 @@ Prologue and never redefined per-world:
 - `falloff.glsl` — soft radial-edge helper (particle glow falloff).
 - `palette.glsl` — mixes two colors by a `t` value (every world's
   core→edge color logic uses this, not inline math).
+- `morph.glsl` — layered-noise vertex displacement with three inputs
+  (constant ambient sine, audio-reactive amplitude, a 0→1 "transition
+  progress" driving directed displacement like crack-widening). Built for
+  Prologue's seed but written generically — any later world with a
+  "living," non-static hero object (not just particles) reuses this
+  rather than writing its own morph logic.
+- Fog/atmosphere: `THREE.FogExp2` (Three.js built-in, not a custom
+  include) plus a small `lightShaft.glsl` billboard shader for
+  noise-animated volumetric-looking shafts — a deliberately cheap
+  stand-in for true raymarched volumetrics (ceiling/upgrade path noted in
+  Prologue's Visual Bible), reused by any later world needing atmosphere
+  without paying raymarching's frame cost.
 
 Per-world shaders `#include` these rather than reimplementing noise/
 falloff/color math — the direct fix for "each scene becoming an isolated

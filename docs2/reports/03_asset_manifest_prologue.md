@@ -3,18 +3,26 @@
 Session 3 per `docs2/prompt/02_asset_manifest.md`. Visual Bible for
 Prologue is approved (`docs2/reports/02_visual_bible_prologue.md`).
 
-Per your direction, Prologue stays intentionally object-free — no GLBs,
-no HDRIs, no PBR textures. Everything below is either built in-engine
-(custom GLSL/React Three Fiber code, not a downloadable asset) or is the
-foundational tooling every later world will reuse. **No entries were
-added to `tools/asset-pipeline/config/manifest.yaml` and neither
-downloader script was run for this world** — there is nothing here for
-Poly Haven or Sketchfab to source.
+**Revised** per your follow-up: Prologue now centers on one symbolic
+hero form (the "Seed of Creation," see the Visual Bible's Hero object
+section) rather than a bare point light. This doesn't reopen sourcing
+externally, though — the seed is deliberately procedural (reasoning in
+the Visual Bible), so Prologue still needs no GLBs, no HDRIs, no PBR
+textures. Everything below is either built in-engine (custom GLSL/React
+Three Fiber code, not a downloadable asset) or is foundational tooling
+every later world will reuse. **No entries were added to
+`tools/asset-pipeline/config/manifest.yaml` and neither downloader
+script was run for this world** — there is nothing here for Poly Haven
+or Sketchfab to source.
 
 | Category | Item | Purpose (scene/moment + emotion/idea it serves) | Likely source |
 |---|---|---|---|
-| Particle system | Core breathing particle + sparse ambient dust field | The Prologue's sole visual subject — carries Curiosity (Creative Direction, position 1). Breathing rhythm is what makes an empty void read as "something is here," not "nothing has loaded yet." | custom-needed — GPU-instanced `Points` + GLSL, hand-built |
-| Shader | Particle vertex/fragment pair (breathing pulse, ember-core-to-parchment-edge falloff, mouse-gravity displacement) | Renders the Visual Bible palette (`#C4703A` ember core, `#E9DFC9` parchment falloff) and the "struck match in a dark room" reference — light that visibly comes from one small warm source. | custom-needed — GLSL, this world |
+| Hero geometry | "Seed of Creation" — procedural organic ellipsoid (icosphere + layered noise displacement + crack-seam mask) | The Prologue's central subject and symbol — the origin of creativity before it specializes into any of the 7 disciplines. Carries Curiosity (Creative Direction, position 1) and is the literal mechanism for the Prologue → Literature transition (cracks widen, light/particles spill out). | custom-needed — procedural geometry + displacement shader, this world |
+| Shader | Seed morph/displacement shader (ambient breathing sine + audio-reactive amplitude modulation + crack-widening driven by transition progress) | Makes the seed continuously alive from page-load (not just on interaction), and audio-reactive per your call — the seed visibly breathes with whatever tone is playing. | custom-needed — GLSL, this world, morph-target/displacement pattern reused by later worlds needing living geometry |
+| Particle system | Ambient dust field, sourced from the seed's cracks | Fills the void around the seed; at the transition band, this same field is what the seed's interior "spills out" into and reorganizes toward Literature's handwriting — one continuous system, not two. | custom-needed — GPU-instanced `Points` + GLSL, hand-built |
+| Shader | Particle vertex/fragment pair (drift, ember-core-to-parchment-edge falloff, mouse-gravity displacement) | Renders the Visual Bible palette (`#C4703A` ember core, `#E9DFC9` parchment falloff) and the "struck match in a dark room" reference — light that visibly comes from one small warm source. | custom-needed — GLSL, this world |
+| Atmosphere | Exponential depth fog (`FogExp2`) + noise-animated light-shaft billboards | Gives the void depth and lets the ember light read as volumetric without a full raymarched fog volume — deliberate cheap-technique choice, ceiling/upgrade path noted in the Visual Bible. | custom-needed — Three.js built-in fog + custom billboard shader |
+| Audio | `AnalyserNode` on the `AudioManager` graph, exposing real-time amplitude data | Drives the seed's audio-reactive breathing/crack-glow. Works identically with today's placeholder tone and tomorrow's real composed audio — same mechanism, proven now. | custom-needed — Web Audio API, this world, reused by any later world wanting audio-reactive motion |
 | Shader utility | Shared simplex/perlin noise GLSL include | Drives the ambient dust drift and breathing pulse without repeating keyframes (CLAUDE.md Section 6). Built once here, imported by every later world's shaders — this is the DoD's "no copy-pasted scene logic" requirement solved at the shader level. | custom-needed — this world, reused by all |
 | Interaction | Mouse-as-gravity field | Cursor bends nearby particle positions, per Visual Bible camera language and CLAUDE.md Section 4. Reused unmodified by every later world. | custom-needed — this world, reused by all |
 | Interaction | Scroll → camera dolly mapping (via Lenis + GSAP ScrollTrigger, one scroll source of truth) | Scroll is the narrator (Section 4) — camera push-in for Prologue specifically, but the *mapping mechanism* is the foundation every world's camera choreography sits on. | custom-needed — this world, reused by all |
