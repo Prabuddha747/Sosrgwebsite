@@ -30,12 +30,17 @@ const HeroSection = () => {
     if (!video) return;
 
     // Hold scroll until the once-through play finishes — the visitor
-    // watches it, they don't scroll past it.
-    const previousOverflow = document.body.style.overflow;
+    // watches it, they don't scroll past it. Locked on both html and body:
+    // Lenis (mounted site-wide from Index.tsx) drives window scroll, and
+    // body-only overflow:hidden doesn't reliably block that in every browser.
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     const release = () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
     };
 
     video.playbackRate = PLAYBACK_RATE;
