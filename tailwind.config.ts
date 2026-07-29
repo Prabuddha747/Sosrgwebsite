@@ -21,8 +21,15 @@ export default {
       fontFamily: {
         serif: ["Outfit", "sans-serif"],
         sans: ["Inter", "sans-serif"],
+        display: ["var(--font-fraunces)", "serif"],
       },
       colors: {
+        "stage-black": "#0B0906",
+        "card-black": "#15120D",
+        ivory: "#F5EFE4",
+        "antique-gold": "#C9A227",
+        "brass-muted": "#8C7A54",
+        "velvet-red": "#6E1F24",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

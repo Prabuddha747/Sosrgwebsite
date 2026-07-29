@@ -1,5 +1,5 @@
+"use client";
 import React from 'react';
-import PageCinematicBackdrop from '@/components/PageCinematicBackdrop';
 import AboutSection from '@/components/AboutSection';
 import FeaturedVideoSection from '@/components/FeaturedVideoSection';
 import PhilosophySection from '@/components/PhilosophySection';
@@ -14,10 +14,14 @@ import EcosystemSection from '@/components/EcosystemSection';
 import ArtistJourneySection from '@/components/ArtistJourneySection';
 import CommunitySection from '@/components/CommunitySection';
 
+// docs2's Three.js "worlds" background (WorldExperience/PersistentCanvas)
+// has been retired in favor of the docs3 plan: a GSAP + Lenis,
+// scroll-scrubbed-video, dark-neumorphism homepage (see docs3/design3.md).
+// Sections below are being rebuilt one at a time against that spec,
+// starting with HeroSection.
 const Index = () => {
   return (
-    <div className="bg-transparent min-h-screen text-white font-sans overflow-x-hidden relative">
-      <PageCinematicBackdrop />
+    <div className="bg-stage-black min-h-screen text-ivory font-sans overflow-x-hidden relative">
       <HeroSection />
       <ProblemSection />
       <IdentitySection />

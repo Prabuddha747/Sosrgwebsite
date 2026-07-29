@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/globals.css";
 import Providers from "./providers";
+import { fraunces } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "SosrG Studios",
@@ -16,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={fraunces.variable}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
