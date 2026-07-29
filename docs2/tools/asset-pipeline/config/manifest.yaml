@@ -1,0 +1,136 @@
+# SOSRG Asset Manifest
+# Defines WHAT to fetch, from WHERE, and WHERE it lands on disk.
+# Edit this file to tune search terms — no code changes needed.
+
+output_root: "./assets"
+
+# ---------------------------------------------------------------------------
+# POLY HAVEN — HDRIs, PBR textures, and a smaller set of CC0 props/models.
+# No auth required. Fully commercial-safe once downloaded (assets are CC0).
+# ---------------------------------------------------------------------------
+polyhaven:
+  hdris:
+    - query: "studio"
+      count: 3
+      resolution: "4k"
+      target: "hdri/studio"
+    - query: "theater"
+      count: 3
+      resolution: "4k"
+      target: "hdri/theatre"
+    - query: "warehouse"
+      count: 2
+      resolution: "4k"
+      target: "hdri/cinema"
+    - query: "museum"
+      count: 2
+      resolution: "4k"
+      target: "hdri/art"
+    - query: "concert"
+      count: 2
+      resolution: "4k"
+      target: "hdri/music"
+    - query: "night"
+      count: 2
+      resolution: "4k"
+      target: "hdri/common"
+
+  textures:
+    - query: "oak wood planks"
+      count: 2
+      resolution: "2k"
+      target: "textures/wood"
+    - query: "velvet fabric"
+      count: 2
+      resolution: "2k"
+      target: "textures/velvet"
+    - query: "marble"
+      count: 2
+      resolution: "2k"
+      target: "textures/marble"
+    - query: "brushed brass"
+      count: 2
+      resolution: "2k"
+      target: "textures/metal"
+    - query: "concrete"
+      count: 2
+      resolution: "2k"
+      target: "textures/concrete"
+    - query: "canvas fabric"
+      count: 2
+      resolution: "2k"
+      target: "textures/canvas"
+    - query: "leather"
+      count: 2
+      resolution: "2k"
+      target: "textures/leather"
+    - query: "paper"
+      count: 2
+      resolution: "2k"
+      target: "textures/paper"
+
+  models:
+    - query: "wooden chair"
+      count: 2
+      resolution: "2k"
+      target: "common/props"
+    - query: "vintage lamp"
+      count: 2
+      resolution: "2k"
+      target: "common/props"
+
+# ---------------------------------------------------------------------------
+# SKETCHFAB — the bulk of your GLB library. Requires a free personal API
+# token (see README). Only pulls models explicitly marked downloadable.
+# ---------------------------------------------------------------------------
+sketchfab:
+  # Restrict to licenses safe for a commercial site by default.
+  # CC0 = no attribution needed. CC-BY = attribution required (logged in manifest).
+  allowed_licenses: ["CC0", "CC-BY"]
+
+  searches:
+    - query: "victorian theatre stage"
+      count: 3
+      target: "theatre"
+    - query: "red stage curtains"
+      count: 2
+      target: "theatre"
+    - query: "theatre spotlight rig"
+      count: 2
+      target: "theatre"
+    - query: "film camera vintage"
+      count: 2
+      target: "cinema"
+    - query: "director chair"
+      count: 2
+      target: "cinema"
+    - query: "film projector"
+      count: 2
+      target: "cinema"
+    - query: "grand piano"
+      count: 2
+      target: "music"
+    - query: "violin"
+      count: 2
+      target: "music"
+    - query: "vintage microphone"
+      count: 2
+      target: "music"
+    - query: "typewriter vintage"
+      count: 2
+      target: "literature"
+    - query: "old writing desk"
+      count: 2
+      target: "literature"
+    - query: "art gallery interior"
+      count: 2
+      target: "art"
+    - query: "paint brush palette"
+      count: 2
+      target: "art"
+    - query: "pottery wheel"
+      count: 2
+      target: "craft"
+    - query: "wood carving tools"
+      count: 2
+      target: "craft"

@@ -23,3 +23,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# SOSRG asset pipeline (docs2/tools/asset-pipeline)
+docs2/tools/asset-pipeline/.venv/
+docs2/tools/asset-pipeline/.env
+docs2/tools/asset-pipeline/assets/
+__pycache__/
+*.pyc
