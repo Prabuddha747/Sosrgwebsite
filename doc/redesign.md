@@ -72,6 +72,8 @@ Worth stating plainly since it's a real design decision, not just an aesthetic p
 | Body / UI | **Inter** (variable) | Neutral, extremely legible at small sizes, huge range of weights — the workhorse for a data-dense product (casting tables, admin panel, forms). |
 | Numerals / stats | Inter, tabular-nums feature enabled | Stat counters and tables need digits that don't shift width as they change — a small detail the old build never specified and should be explicit now. |
 
+**Fraunces' variable axes (`wght`, `opsz`) are used as a motion primitive, not just a static style choice** — see §5's "section heading settle" row. Resting (unrevealed) state is `font-variation-settings: "wght" 380, "opsz" 40`; settled (revealed) state is `"wght" 620, "opsz" 72`, transitioned over ~600ms via CSS `font-variation-settings` (no JS animation library needed — an `IntersectionObserver` just toggles a class). This is deliberately the platform's *one* repeatable typographic motion idea, expressed through three triggers (load, scroll, hover/focus) rather than three unrelated effects — see §5.
+
 ### Fluid type scale (per the brief's explicit `clamp()` requirement)
 
 ```css
@@ -128,7 +130,9 @@ React Bits (reactbits.dev) is a good fit here specifically because it's a librar
 | Section | React Bits component | Why this one, specifically |
 |---|---|---|
 | Hero background | `Aurora` or `Beams` (subtle, slow-moving gradient field) | Signals "premium, alive" on first paint without competing with the headline; runs once, GPU-cheap, pauses under reduced-motion |
-| Hero headline | `SplitText` (word-by-word reveal on load) | Establishes reading order and page-load feedback in one move — the user's eye is told where to start reading, which doubles as a loading-complete signal |
+| Hero headline | `SplitText` (word-by-word reveal on load) | Establishes reading order and page-load feedback in one move — the user's eye is told where to start reading, which doubles as a loading-complete signal. This is the *only* heading that gets the shimmer treatment too (see the Primary CTA row below for the shine rule) — everywhere else, headings use the settle transition on the next row instead |
+| Section headings (every major section except the hero) | Custom: Fraunces variable-font "settle" — `wght`/`opsz` transition from a lighter, smaller resting state to full weight/optical-size over ~600ms, triggered once via `IntersectionObserver` on scroll into view (not React Bits — this is a CSS custom-property transition, no animation library involved) | Reads as the heading settling into physical presence, which is the *same* metaphor the neumorphic cards express through shadow (§2) — connecting type and surface under one idea instead of two unrelated effects. Deliberately more restrained than a moving gradient or a repeated word-by-word reveal, both of which read as generic "AI product" motion by now rather than distinctive |
+| Card titles that act as links (casting call titles, event titles) | The same Fraunces settle transition, retriggered on hover/focus instead of scroll | Reuses the one typographic motion idea rather than inventing a fourth effect — gives interactive titles a free, low-cost affordance |
 | Sector cards (Theatre/Cinema/Music/etc.) | `TiltedCard` or `SpotlightCard` on hover **and** focus | The tilt/spotlight response gives tactile feedback that reinforces the neumorphic "physical" surface metaphor from §2 — not an arbitrary animation, it's the same design idea (physicality) expressed in motion instead of just shadow |
 | Stat counters (users, casting calls, events) | `CountUp` | Turns a static number into a moment of confirmation that the number is real and current — appropriate exactly once per page, not applied to every number on screen |
 | Sector strip / trusted-organizations marquee | `Marquee` (auto-scroll, pauses on hover/focus) | Standard, well-understood pattern for showing more logos/items than fit in the viewport without a click — pause-on-interaction respects the "don't animate things a user is trying to read" rule |
@@ -137,6 +141,8 @@ React Bits (reactbits.dev) is a good fit here specifically because it's a librar
 | Loading states (casting feed, applications list, any data-fetch) | Skeleton screens built with a shimmer sweep (custom, matching neumorphic surface tone — not React Bits, since skeletons need to match elevation-1 surfaces exactly) | A shimmer that matches the actual card shape it's replacing reduces perceived load time more than a generic spinner, and previews the coming layout so there's no content jump |
 | Modal / drawer enter-exit | `AnimatedContent` (scale + fade, ~200ms) | Fast enough not to feel like friction on a repeated action (e.g. opening the application modal), matches the elevation-3 shadow's "lifted off the surface" framing |
 | Toast/confirmation | Custom slide-up-and-settle, reused as one shared component (fixing the old build's per-screen duplication flagged in `design.md` A4) | One component, one place to fix timing/positioning platform-wide |
+
+**Reduced-motion behavior for the heading settle effect specifically:** under `prefers-reduced-motion: reduce`, headings render directly at their full resting weight/optical-size (`"wght" 620, "opsz" 72`) with no transition — never stuck at the lighter, "unrevealed" state, which would otherwise read as a rendering bug rather than a deliberate style.
 
 **What does *not* get animated, on purpose:** admin panel tables, form validation states, and any text the user needs to read carefully (legal/contract text, KYC instructions) — matches the brief's own "loading speed" and "visual hierarchy" principles: motion that competes with comprehension is a bug, not a feature.
 

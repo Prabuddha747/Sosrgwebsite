@@ -53,6 +53,12 @@
     "max-width": "1440px",
     "padding-inline": "clamp(1rem, 4vw, 3rem)"
   },
+  "headingSettle": {
+    "comment": "redesign.md §3/§5 — Fraunces variable-axis motion primitive, the platform's one repeatable typographic effect (load+shimmer for the hero only, scroll for other section headings, hover/focus for interactive card titles).",
+    "resting": { "wght": 380, "opsz": 40 },
+    "settled": { "wght": 620, "opsz": 72 },
+    "durationMs": 600
+  },
   "focusRing": {
     "width": "2px",
     "style": "solid",
