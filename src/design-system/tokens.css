@@ -38,6 +38,18 @@
   --color-danger: #C0475A;
   --color-success: #5FAE82;
 
+  /* Account-tier colors — redesign.md §6 calls out the 4-tier Badge/
+     StatusPill as a first-class component, but redesign.md §1's palette
+     only defines danger/success as semantic colors (Green/Red tiers reuse
+     those directly below). Yellow and Blue tiers have no existing token,
+     so these two are new — proposed here per §1's own rule ("if a future
+     section genuinely needs a second accent, it gets proposed and
+     documented here — never invented ad hoc in a component"), each
+     measured against navy-900 the same way the existing palette was:
+     tier-yellow 6.67:1, tier-blue 5.64:1 (both pass AA 4.5:1 body text). */
+  --color-tier-yellow: #F59E0B;
+  --color-tier-blue: #60A5FA;
+
   /* Typography — redesign.md §3 */
   --font-display: "Fraunces", ui-serif, serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -66,6 +78,16 @@
   --shadow-elevation-2: 10px 10px 22px var(--sosrg-shadow-dark), -10px -10px 22px var(--sosrg-shadow-light);
   --shadow-elevation-3: 16px 16px 32px var(--sosrg-shadow-dark), -16px -16px 32px var(--sosrg-shadow-light);
   --shadow-elevation-pressed: inset 4px 4px 10px var(--sosrg-shadow-inset-dark), inset -4px -4px 10px var(--sosrg-shadow-inset-light);
+
+  /* Primary-CTA shine sweep — redesign.md §5: "reserved for the *one* most
+     important action per screen." Gated behind motion-safe: at the call
+     site so it degrades to a static gold fill under prefers-reduced-motion. */
+  --animate-sosrg-shine: sosrg-shine 1.2s ease-in-out;
+}
+
+@keyframes sosrg-shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -50% 0; }
 }
 
 /* Focus-visible ring — redesign.md §2/§9: always an explicit 2px solid

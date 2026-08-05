@@ -11,7 +11,10 @@
     "text-primary": "#F7F3E8",
     "text-muted": "#9FB0C4",
     "danger": "#C0475A",
-    "success": "#5FAE82"
+    "success": "#5FAE82",
+    "tier-yellow": "#F59E0B",
+    "tier-blue": "#60A5FA",
+    "_tier-color-note": "Green/Red account tiers reuse success/danger. Yellow/Blue are new tokens proposed for the Badge/StatusPill component per redesign.md §1's own escape hatch for a genuinely-needed second accent — measured contrast vs navy-900: tier-yellow 6.67:1, tier-blue 5.64:1 (both pass AA)."
   },
   "shadow": {
     "dark": "rgba(4, 12, 22, 0.55)",
