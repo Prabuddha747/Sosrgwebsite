@@ -2,7 +2,7 @@
 
 **Purpose:** audit trail of the redesign effort per `doc/implementation.md`'s phase plan, so a session can resume without re-deriving context. Read this, then `doc/architecture.md`, `doc/flow.md`, `doc/redesign.md`, `doc/implementation.md`, `doc/schema.md` in that order before writing any code, per the standing instructions.
 
-**Last updated:** 2026-08-05 (session paused at ~90% token budget, mid-Phase-2-planning, no Phase 2 code written yet).
+**Last updated:** 2026-08-05 
 
 ---
 
