@@ -1,0 +1,8 @@
+{
+  "name": "SosrG - AI Creative Super Platform",
+  "description": "Premium AI-driven ecosystem for Cinema, Theatre, and Cultural Arts connecting grassroots talent with global markets.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
