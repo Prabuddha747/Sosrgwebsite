@@ -27,11 +27,21 @@ const defaultLabel: Record<BadgeVariant, string> = {
 // so many badges in a list (e.g. an applicant table) don't read as a wall
 // of solid color blocks. Text color is checked against the navy-900 page
 // background, same measurement discipline as redesign.md §1's own table.
+// Exported so Avatar's account-tier ring can reuse the exact same tier
+// colors rather than redefining them (redesign.md §6: "Avatar ... reuses
+// Badge tokens").
+export const tierColorVar: Record<AccountTier, string> = {
+  yellow: 'var(--color-tier-yellow)',
+  green: 'var(--color-success)',
+  blue: 'var(--color-tier-blue)',
+  red: 'var(--color-danger)',
+};
+
 const colorVar: Record<BadgeVariant, string> = {
-  'tier-yellow': 'var(--color-tier-yellow)',
-  'tier-green': 'var(--color-success)',
-  'tier-blue': 'var(--color-tier-blue)',
-  'tier-red': 'var(--color-danger)',
+  'tier-yellow': tierColorVar.yellow,
+  'tier-green': tierColorVar.green,
+  'tier-blue': tierColorVar.blue,
+  'tier-red': tierColorVar.red,
   pending: 'var(--color-text-muted)',
   active: 'var(--color-success)',
   rejected: 'var(--color-danger)',
