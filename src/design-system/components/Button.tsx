@@ -24,11 +24,13 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-transparent text-gold-500',
     'hover:bg-navy-800/40 active:shadow-elevation-pressed',
   ),
-  // text-primary-on-danger is not in redesign.md §1's verified contrast
-  // table (only danger-on-navy-900 was measured) — flagged for an explicit
-  // contrast sign-off rather than silently assumed compliant.
+  // text-primary-on-danger measures 4.42:1 — just under AA's 4.5:1 for
+  // normal text (verified by hand using the same relative-luminance method
+  // redesign.md §1 used for its own table, which never measured this
+  // direction). Pure white measures 4.90:1 and clears it; used only here,
+  // not as a general text-primary replacement.
   destructive: cn(
-    'bg-danger text-text-primary font-semibold',
+    'bg-danger text-white font-semibold',
     'hover:shadow-elevation-2 active:shadow-elevation-pressed',
   ),
 };
