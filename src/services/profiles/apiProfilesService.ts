@@ -1,11 +1,17 @@
 import { ApiError, apiFetch } from '../httpClient';
 import type {
+  BlockedProfile,
   CreateProfileInput,
+  KycDocument,
+  KycDocumentType,
+  LanguageProficiencyInput,
+  MutedProfile,
   MyProfile,
   PrivacySettings,
   ProfileDetails,
   Profession,
   ProfilesService,
+  SkillProficiencyInput,
   SwitchProfileRoleInput,
   SwitchProfileRoleResult,
   UpdateProfileDetailsInput,
@@ -66,5 +72,58 @@ export const apiProfilesService: ProfilesService = {
 
   async switchProfileRole(input: SwitchProfileRoleInput) {
     return apiFetch<SwitchProfileRoleResult>('/v1/profiles/me/role', { method: 'PATCH', body: input });
+  },
+
+  async blockProfile(profileId: string) {
+    await apiFetch<void>(`/v1/profiles/${encodeURIComponent(profileId)}/block`, { method: 'POST' });
+  },
+
+  async unblockProfile(profileId: string) {
+    await apiFetch<void>(`/v1/profiles/${encodeURIComponent(profileId)}/block`, { method: 'DELETE' });
+  },
+
+  async muteProfile(profileId: string) {
+    await apiFetch<void>(`/v1/profiles/${encodeURIComponent(profileId)}/mute`, { method: 'POST' });
+  },
+
+  async unmuteProfile(profileId: string) {
+    await apiFetch<void>(`/v1/profiles/${encodeURIComponent(profileId)}/mute`, { method: 'DELETE' });
+  },
+
+  async listBlocked() {
+    return apiFetch<BlockedProfile[]>('/v1/profiles/me/blocked');
+  },
+
+  async listMuted() {
+    return apiFetch<MutedProfile[]>('/v1/profiles/me/muted');
+  },
+
+  async listKycDocuments() {
+    return apiFetch<KycDocument[]>('/v1/profiles/me/kyc-documents');
+  },
+
+  async submitKycDocument(documentType: KycDocumentType, storageObjectId: string) {
+    return apiFetch<KycDocument>('/v1/profiles/me/kyc-documents', {
+      method: 'POST',
+      body: { documentType, storageObjectId },
+      idempotencyKey: crypto.randomUUID(),
+    });
+  },
+
+  async deleteKycDocument(documentId: string) {
+    await apiFetch<void>(`/v1/profiles/me/kyc-documents/${encodeURIComponent(documentId)}`, { method: 'DELETE' });
+  },
+
+  // Both PUT /v1/profiles/me/skills and /languages return 500
+  // INTERNAL_ERROR on well-formed requests (curl-verified this session —
+  // valid skillId, standard "en" language code, both fail server-side).
+  // Implemented to match the published DTOs, but nothing in the UI calls
+  // these yet — see doc/API_REQUIREMENTS.md for the backend report.
+  async updateSkills(skills: SkillProficiencyInput[]) {
+    return apiFetch<MyProfile['skills']>('/v1/profiles/me/skills', { method: 'PUT', body: { skills } });
+  },
+
+  async updateLanguages(languages: LanguageProficiencyInput[]) {
+    return apiFetch<MyProfile['languages']>('/v1/profiles/me/languages', { method: 'PUT', body: { languages } });
   },
 };

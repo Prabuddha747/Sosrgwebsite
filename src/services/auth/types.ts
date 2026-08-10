@@ -31,4 +31,6 @@ export interface AuthService {
   changePassword(currentPassword: string, newPassword: string): Promise<void>;
   listSessions(): Promise<AuthSession[]>;
   revokeSession(sessionId: string): Promise<void>;
+  /** Irreversible — deletes the authenticated account. */
+  deleteAccount(currentPassword: string, reason?: string): Promise<void>;
 }

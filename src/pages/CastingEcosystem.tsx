@@ -82,7 +82,7 @@ import {
 import { cn } from '../lib/utils';
 import type { Section } from '../types';
 import { castingService } from '../services/casting';
-import type { CastingCall } from '../services/casting';
+import type { CastingCall, CastingWorkMode, CastingCompensationType } from '../services/casting';
 import { ApiError } from '../services/httpClient';
 import { useToast } from '../design-system';
 import { useAuth } from '../contexts/AuthContext';
@@ -134,6 +134,20 @@ export const CastingEcosystem = () => {
     budgetMin: '',
     budgetMax: '',
     numberOfOpenings: '1',
+    applicationDeadline: '',
+  });
+  const [showCastingCallModal, setShowCastingCallModal] = useState(false);
+  const [postingCastingCall, setPostingCastingCall] = useState(false);
+  const [castingCallForm, setCastingCallForm] = useState({
+    title: '',
+    industry: '',
+    engagementType: 'casting' as 'casting' | 'crew_hiring' | 'commission' | 'collaboration',
+    workMode: 'onsite' as CastingWorkMode,
+    description: '',
+    pincode: '',
+    compensationType: 'paid' as CastingCompensationType,
+    budgetMin: '',
+    budgetMax: '',
     applicationDeadline: '',
   });
   const [forumMode, setForumMode] = useState<'messages' | 'community'>('community');
@@ -253,6 +267,7 @@ export const CastingEcosystem = () => {
   const [liveCalls, setLiveCalls] = useState<CastingCall[]>([]);
   const [liveLoading, setLiveLoading] = useState(true);
   const [liveError, setLiveError] = useState<string | null>(null);
+  const [castingCallsRefreshKey, setCastingCallsRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -272,7 +287,7 @@ export const CastingEcosystem = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [castingCallsRefreshKey]);
 
   // Live job posts — Hiring Crew tab's "Find Jobs" mode. Same real API as
   // Casting Calls (GET/POST /v1/job-posts), just a different resource.
@@ -355,6 +370,62 @@ export const CastingEcosystem = () => {
       show(err instanceof ApiError ? err.message : 'Could not post the role.', 'error');
     } finally {
       setPostingJob(false);
+    }
+  };
+
+  // Eligibility differs from job posts (curl-verified this session):
+  // business/casting_director/arts_organisation succeed here,
+  // industry_professional does not — even though industry_professional IS
+  // eligible for job posts. The Business toggle switches to
+  // industry_professional, so it alone doesn't guarantee this succeeds; the
+  // real 403 surfaces honestly below rather than trying to pre-validate it.
+  const handleCreateCastingCall = async () => {
+    if (!user) {
+      setShowCastingCallModal(false);
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    const f = castingCallForm;
+    if (!f.title || !f.industry || !f.description || !f.applicationDeadline) {
+      show('Title, industry, description, and application deadline are required.', 'error');
+      return;
+    }
+    setPostingCastingCall(true);
+    try {
+      const created = await castingService.createCastingCall({
+        title: f.title,
+        industry: f.industry,
+        engagementType: f.engagementType,
+        workMode: f.workMode,
+        description: f.description,
+        compensationType: f.compensationType,
+        applicationDeadline: new Date(f.applicationDeadline).toISOString(),
+        pincode: f.pincode || undefined,
+        budgetMinMinor: f.budgetMin ? Math.round(Number(f.budgetMin) * 100) : undefined,
+        budgetMaxMinor: f.budgetMax ? Math.round(Number(f.budgetMax) * 100) : undefined,
+      });
+      await castingService.submitCastingCallForReview(created.id);
+      show('Casting call posted and live.', 'success');
+      setShowCastingCallModal(false);
+      setCastingCallForm({
+        title: '', industry: '', engagementType: 'casting', workMode: 'onsite', description: '',
+        pincode: '', compensationType: 'paid', budgetMin: '', budgetMax: '', applicationDeadline: '',
+      });
+      setCastingCallsRefreshKey((k) => k + 1);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setShowCastingCallModal(false);
+        show('Your session expired — please sign in again.', 'error');
+        navigate('/login', { state: { from: location } });
+        return;
+      }
+      if (err instanceof ApiError && err.code === 'PROFILE_NOT_ELIGIBLE') {
+        show('Your account type can\'t post casting calls — this needs a Business, Casting Director, or Arts Organisation profile.', 'error');
+        return;
+      }
+      show(err instanceof ApiError ? err.message : 'Could not post the casting call.', 'error');
+    } finally {
+      setPostingCastingCall(false);
     }
   };
 
@@ -737,6 +808,169 @@ export const CastingEcosystem = () => {
         )}
       </AnimatePresence>
 
+      {/* Create Casting Call Modal — POST /v1/casting-calls then submit-review, same pattern as Post a Role. */}
+      <AnimatePresence>
+        {showCastingCallModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-8 shadow-2xl no-scrollbar"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">Create Casting Call</h2>
+                  <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible on Casting Calls.</p>
+                </div>
+                <button onClick={() => setShowCastingCallModal(false)} className="text-white/40 hover:text-white p-2">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Title *</label>
+                    <input
+                      type="text"
+                      value={castingCallForm.title}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Casting for Hindi Feature Film"
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
+                    <select
+                      value={castingCallForm.industry}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, industry: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    >
+                      <option value="">Select industry</option>
+                      {TALENT_CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Engagement Type *</label>
+                    <select
+                      value={castingCallForm.engagementType}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, engagementType: e.target.value as typeof f.engagementType }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    >
+                      <option value="casting">Casting</option>
+                      <option value="crew_hiring">Crew Hiring</option>
+                      <option value="commission">Commission</option>
+                      <option value="collaboration">Collaboration</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
+                    <select
+                      value={castingCallForm.workMode}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, workMode: e.target.value as CastingWorkMode }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    >
+                      <option value="onsite">On-site</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="remote">Remote</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
+                  <textarea
+                    value={castingCallForm.description}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder="What's this project, and who are you casting?"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
+                    <input
+                      type="text"
+                      value={castingCallForm.pincode}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, pincode: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
+                    <input
+                      type="date"
+                      value={castingCallForm.applicationDeadline}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
+                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
+                    {(['paid', 'unpaid', 'negotiable'] as CastingCompensationType[]).map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setCastingCallForm((f) => ({ ...f, compensationType: c }))}
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
+                          castingCallForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
+                        )}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  {castingCallForm.compensationType === 'paid' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="number"
+                        placeholder="Min (₹)"
+                        value={castingCallForm.budgetMin}
+                        onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMin: e.target.value }))}
+                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max (₹)"
+                        value={castingCallForm.budgetMax}
+                        onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMax: e.target.value }))}
+                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4 pt-2">
+                  <button onClick={() => setShowCastingCallModal(false)} className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateCastingCall}
+                    disabled={postingCastingCall}
+                    className="flex-1 py-4 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {postingCastingCall ? 'Posting…' : 'Create Casting Call'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Advanced Filter Modal */}
       <AnimatePresence>
         {showAdvancedFilter && (
@@ -955,6 +1189,7 @@ export const CastingEcosystem = () => {
               { id: 'calls', label: isRecruiter ? 'Manage Calls' : 'Casting Calls', icon: Briefcase },
               { id: 'crew', label: 'Hiring Crew', icon: Users },
               { id: 'post-job', label: 'Create Job Post', icon: Plus },
+              { id: 'post-casting-call', label: 'Create Casting Call', icon: Plus },
               { id: 'home', label: 'Home', icon: Home },
               { id: 'register', label: 'Register', icon: UserPlus },
               { id: 'profile', label: 'My Profile', icon: User },
@@ -982,6 +1217,16 @@ export const CastingEcosystem = () => {
                     setCrewMode('jobs');
                     setView('crew');
                     setShowJobPostModal(true);
+                    return;
+                  }
+                  if (tab.id === 'post-casting-call') {
+                    if (!user) {
+                      navigate('/signup', { state: { from: location } });
+                      return;
+                    }
+                    if (!isRecruiter) handleRoleSwitch(true, true);
+                    setView('calls');
+                    setShowCastingCallModal(true);
                     return;
                   }
                   handleTabClick(tab.id);

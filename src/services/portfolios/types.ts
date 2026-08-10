@@ -21,6 +21,32 @@ export interface Portfolio {
   visibility: PortfolioAccessLevel;
 }
 
+export interface CreatePortfolioInput {
+  title: string;
+  slug?: string;
+  description?: string;
+  summary?: string;
+  visibility?: PortfolioAccessLevel;
+}
+
+export type PortfolioItemType = 'media' | 'credit' | 'work_link' | 'award' | 'training';
+
+// AddPortfolioItemDto — mediaAssetId is required for itemType "media",
+// omitted for credits/links/awards/training (verified against the live spec).
+export interface AddPortfolioItemInput {
+  itemType?: PortfolioItemType;
+  mediaAssetId?: string;
+  caption?: string;
+  title?: string;
+  sortOrder?: number;
+}
+
+export interface PortfolioItem {
+  id: string;
+}
+
 export interface PortfoliosService {
   listMyPortfolios(): Promise<Portfolio[]>;
+  createPortfolio(input: CreatePortfolioInput): Promise<Portfolio>;
+  addPortfolioItem(portfolioId: string, input: AddPortfolioItemInput): Promise<PortfolioItem>;
 }

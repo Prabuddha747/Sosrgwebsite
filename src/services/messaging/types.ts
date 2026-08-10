@@ -28,6 +28,37 @@ export interface ConversationListResult {
   nextCursor: string | null;
 }
 
+// SendMessageDto's fields are published; the response body isn't. Couldn't
+// verify against a real populated response this session — starting a NEW
+// conversation requires the two profiles to already be "connected"
+// (POST /v1/conversations/direct 403s without it, curl-verified), and
+// there's no connections/follow endpoint anywhere in the API to satisfy
+// that from a test account. Typed from SendMessageDto + REST convention;
+// flag in doc/API_REQUIREMENTS.md if a populated response shows otherwise.
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderProfileId: string;
+  body: string;
+  replyToMessageId: string | null;
+  mediaAssetIds: string[];
+  createdAt: string;
+}
+
+export interface MessageListResult {
+  items: Message[];
+  nextCursor: string | null;
+}
+
+export interface SendMessageInput {
+  body: string;
+  replyToMessageId?: string;
+  mediaAssetIds?: string[];
+}
+
 export interface MessagingService {
   listConversations(params?: { limit?: number; cursor?: string }): Promise<ConversationListResult>;
+  getMessages(conversationId: string, params?: { limit?: number; cursor?: string }): Promise<MessageListResult>;
+  sendMessage(conversationId: string, input: SendMessageInput): Promise<Message>;
+  markConversationRead(conversationId: string): Promise<void>;
 }

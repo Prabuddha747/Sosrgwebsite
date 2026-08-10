@@ -151,6 +151,45 @@ export interface SwitchProfileRoleResult {
   professionId: number | null;
 }
 
+export interface BlockedProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  headline: string | null;
+  reason: string | null;
+  blockedAt: string;
+}
+
+export interface MutedProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  headline: string | null;
+  mutedAt: string;
+}
+
+export type KycDocumentType = 'id_proof' | 'address_proof' | 'organisation_proof' | 'portfolio_sample';
+
+export interface KycDocument {
+  id: string;
+  documentType: KycDocumentType;
+  storageObjectId: string;
+  uploadedAt: string;
+}
+
+export type SkillProficiency = 'beginner' | 'intermediate' | 'advanced' | 'native';
+
+export interface SkillProficiencyInput {
+  skillId: number;
+  proficiency: SkillProficiency;
+  yearsExperience?: number;
+}
+
+export interface LanguageProficiencyInput {
+  languageCode: string;
+  proficiency: SkillProficiency;
+}
+
 export interface ProfilesService {
   createProfile(input: CreateProfileInput): Promise<MyProfile>;
   getMyProfile(): Promise<MyProfile | null>;
@@ -160,4 +199,15 @@ export interface ProfilesService {
   updateProfileDetails(input: UpdateProfileDetailsInput): Promise<ProfileDetails>;
   updatePrivacySettings(input: Partial<PrivacySettings>): Promise<PrivacySettings>;
   switchProfileRole(input: SwitchProfileRoleInput): Promise<SwitchProfileRoleResult>;
+  blockProfile(profileId: string): Promise<void>;
+  unblockProfile(profileId: string): Promise<void>;
+  muteProfile(profileId: string): Promise<void>;
+  unmuteProfile(profileId: string): Promise<void>;
+  listBlocked(): Promise<BlockedProfile[]>;
+  listMuted(): Promise<MutedProfile[]>;
+  listKycDocuments(): Promise<KycDocument[]>;
+  submitKycDocument(documentType: KycDocumentType, storageObjectId: string): Promise<KycDocument>;
+  deleteKycDocument(documentId: string): Promise<void>;
+  updateSkills(skills: SkillProficiencyInput[]): Promise<MyProfile['skills']>;
+  updateLanguages(languages: LanguageProficiencyInput[]): Promise<MyProfile['languages']>;
 }

@@ -83,7 +83,6 @@ import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const EcosystemHub = () => {
   const [activeView, setActiveView] = useState<'hierarchy' | 'revenue' | 'franchise' | 'monitoring' | 'counselling' | 'grading' | 'event-builder' | 'franchise-structure'>('hierarchy');
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   
   const CP_LEVELS = [
     { 
@@ -160,15 +159,6 @@ export const EcosystemHub = () => {
           <p className="text-white/50">Premium AI-supported multi-level creative infrastructure.</p>
         </div>
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          <button 
-            onClick={() => setIsSuperAdmin(!isSuperAdmin)}
-            className={cn(
-              "flex items-center justify-center md:justify-start gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border",
-              isSuperAdmin ? "bg-crimson text-white border-crimson shadow-lg shadow-crimson/20" : "bg-white/5 text-white/40 border-white/10"
-            )}
-          >
-            <ShieldCheck size={14} /> {isSuperAdmin ? 'Super Admin Active' : 'Switch to Super Admin'}
-          </button>
           <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
             {[
               { id: 'hierarchy', label: 'CP Hierarchy', icon: Users },

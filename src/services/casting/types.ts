@@ -52,8 +52,37 @@ export interface CastingApplication {
   status: string;
 }
 
+// CreateCastingCallDto's required fields, verified against the live spec.
+// Eligibility differs from job posts: business/casting_director/
+// arts_organisation succeed, industry_professional and artist/model get
+// 403 PROFILE_NOT_ELIGIBLE (curl-verified this session).
+export interface CreateCastingCallInput {
+  title: string;
+  industry: string;
+  engagementType: 'casting' | 'crew_hiring' | 'commission' | 'collaboration';
+  description: string;
+  workMode: CastingWorkMode;
+  compensationType: CastingCompensationType;
+  applicationDeadline: string;
+  pincode?: string;
+  budgetMinMinor?: number;
+  budgetMaxMinor?: number;
+  currency?: string;
+  auditionStartAt?: string;
+  auditionEndAt?: string;
+  organisationId?: string;
+}
+
+export interface CreatedCastingCall {
+  id: string;
+  title: string;
+  status: string;
+}
+
 export interface CastingService {
   listCastingCalls(filters?: CastingCallFilters): Promise<CastingCallListResult>;
   getCastingCall(id: string): Promise<CastingCall | null>;
   applyToCastingCall(castingCallId: string, input: ApplyCastingCallInput): Promise<CastingApplication>;
+  createCastingCall(input: CreateCastingCallInput): Promise<CreatedCastingCall>;
+  submitCastingCallForReview(castingCallId: string): Promise<{ success: boolean; status: string }>;
 }

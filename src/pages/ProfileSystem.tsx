@@ -75,7 +75,8 @@ import {
   Languages,
   ArrowUp,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  UserX
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Section, ProfileType, ExperienceLevel } from '../types';
@@ -83,11 +84,12 @@ import { ProfileSetupFlow } from '../components/profile/ProfileSetupFlow';
 import { useToast } from '../design-system';
 import { useAuth } from '../contexts/AuthContext';
 import { profilesService } from '../services/profiles';
-import type { ContactVisibility, PortfolioVisibility } from '../services/profiles';
+import type { ContactVisibility, PortfolioVisibility, BlockedProfile, MutedProfile, KycDocument, KycDocumentType } from '../services/profiles';
 import { authService } from '../services/auth';
 import type { AuthSession } from '../services/auth';
+import { mediaService } from '../services/media';
 import { messagingService } from '../services/messaging';
-import type { Conversation } from '../services/messaging';
+import type { Conversation, Message } from '../services/messaging';
 import { portfoliosService } from '../services/portfolios';
 import type { Portfolio } from '../services/portfolios';
 import { ApiError } from '../services/httpClient';
@@ -124,6 +126,51 @@ const ProfileField = ({ label, value, hint }: { label: string; value?: string | 
   </div>
 );
 
+// Collapsible sub-section for the Privacy & Security tab — it was about to
+// grow four new blocks (blocked/muted, KYC, password, danger zone) on top
+// of the two always-open panels above, so these stay collapsed until opened
+// rather than turning the tab into a wall of forms.
+const AccordionSection = ({
+  title,
+  icon: Icon,
+  isOpen,
+  onToggle,
+  danger,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  isOpen: boolean;
+  onToggle: () => void;
+  danger?: boolean;
+  children: React.ReactNode;
+}) => (
+  <div className={cn('glass-panel overflow-hidden', danger && 'border border-crimson/30')}>
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full flex items-center justify-between p-6 text-left"
+    >
+      <h3 className={cn('text-lg font-bold flex items-center gap-2', danger && 'text-crimson')}>
+        <Icon size={18} className={danger ? 'text-crimson' : 'text-gold'} /> {title}
+      </h3>
+      <ChevronDown size={18} className={cn('text-white/40 transition-transform', isOpen && 'rotate-180')} />
+    </button>
+    <AnimatePresence initial={false}>
+      {isOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="overflow-hidden"
+        >
+          <div className="px-6 pb-6 space-y-4">{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+);
+
 export const ProfileSystem = ({
   initialType = 'artist',
   realProfile,
@@ -142,8 +189,9 @@ export const ProfileSystem = ({
   // Privacy & Security tab — wired to the real Profiles/Auth APIs. Current
   // values are seeded from GET /v1/profiles/me's nested `.privacy` (see
   // doc/API_REQUIREMENTS.md §2.4a for the correction: an earlier version of
-  // this comment wrongly claimed no GET existed for these). 2FA, data
-  // export, and account deletion genuinely have no live endpoint (§2.4d).
+  // this comment wrongly claimed no GET existed for these). 2FA and data
+  // export genuinely have no live endpoint (§2.4d); account deletion does
+  // (POST /v1/auth/account-deletion) and is wired below in the Danger Zone.
   const [isDiscoverable, setIsDiscoverable] = useState(authProfile?.isDiscoverable ?? true);
   const [privacy, setPrivacy] = useState<{ contactVisibility: ContactVisibility; portfolioVisibility: PortfolioVisibility }>({
     contactVisibility: authProfile?.privacy?.contactVisibility ?? 'private',
@@ -153,6 +201,136 @@ export const ProfileSystem = ({
   const [sessions, setSessions] = useState<AuthSession[] | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+
+  // New Privacy & Security sub-sections — each collapsed by default, only
+  // fetches its data the first time it's opened (same lazy pattern as
+  // Sessions above).
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [blockedList, setBlockedList] = useState<BlockedProfile[] | null>(null);
+  const [mutedList, setMutedList] = useState<MutedProfile[] | null>(null);
+  const [blockedMutedLoading, setBlockedMutedLoading] = useState(false);
+  const [kycDocs, setKycDocs] = useState<KycDocument[] | null>(null);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycUploadType, setKycUploadType] = useState<KycDocumentType>('id_proof');
+  const [kycUploading, setKycUploading] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [loggingOutAll, setLoggingOutAll] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const toggleSection = (section: string) => {
+    const next = openSection === section ? null : section;
+    setOpenSection(next);
+    if (next === 'blocked-muted' && !blockedList) {
+      setBlockedMutedLoading(true);
+      Promise.all([profilesService.listBlocked(), profilesService.listMuted()])
+        .then(([blocked, muted]) => {
+          setBlockedList(blocked);
+          setMutedList(muted);
+        })
+        .catch((err) => show(err instanceof ApiError ? err.message : 'Could not load blocked/muted profiles.', 'error'))
+        .finally(() => setBlockedMutedLoading(false));
+    }
+    if (next === 'kyc' && !kycDocs) {
+      setKycLoading(true);
+      profilesService
+        .listKycDocuments()
+        .then(setKycDocs)
+        .catch((err) => show(err instanceof ApiError ? err.message : 'Could not load documents.', 'error'))
+        .finally(() => setKycLoading(false));
+    }
+  };
+
+  const handleUnblock = async (profileId: string) => {
+    try {
+      await profilesService.unblockProfile(profileId);
+      setBlockedList((prev) => prev?.filter((p) => p.id !== profileId) ?? null);
+      show('Unblocked.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not unblock.', 'error');
+    }
+  };
+
+  const handleUnmute = async (profileId: string) => {
+    try {
+      await profilesService.unmuteProfile(profileId);
+      setMutedList((prev) => prev?.filter((p) => p.id !== profileId) ?? null);
+      show('Unmuted.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not unmute.', 'error');
+    }
+  };
+
+  const handleKycUpload = async (file: File) => {
+    setKycUploading(true);
+    try {
+      const uploaded = await mediaService.uploadFile(file, 'kyc_document', 'document');
+      const doc = await profilesService.submitKycDocument(kycUploadType, uploaded.storageObjectId);
+      setKycDocs((prev) => [...(prev ?? []), doc]);
+      show('Document submitted for verification.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not upload document.', 'error');
+    } finally {
+      setKycUploading(false);
+    }
+  };
+
+  const handleDeleteKycDocument = async (documentId: string) => {
+    try {
+      await profilesService.deleteKycDocument(documentId);
+      setKycDocs((prev) => prev?.filter((d) => d.id !== documentId) ?? null);
+      show('Document removed.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not remove document.', 'error');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordForm.next.length < 12) {
+      show('New password must be at least 12 characters.', 'error');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authService.changePassword(passwordForm.current, passwordForm.next);
+      setPasswordForm({ current: '', next: '' });
+      show('Password changed.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not change password.', 'error');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleLogoutAllDevices = async () => {
+    setLoggingOutAll(true);
+    try {
+      await authService.logoutAllDevices();
+      show('Logged out of every device — you\'ll need to sign in again here too.', 'success');
+      onLogout?.();
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not log out other devices.', 'error');
+      setLoggingOutAll(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      show('Enter your password to confirm.', 'error');
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      await authService.deleteAccount(deletePassword);
+      show('Account deleted.', 'success');
+      onLogout?.();
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not delete account.', 'error');
+      setDeletingAccount(false);
+    }
+  };
 
   const handleTogglePublicProfile = async () => {
     const next = !isDiscoverable;
@@ -331,14 +509,55 @@ export const ProfileSystem = ({
     };
   }, []);
 
-  // Media Gallery — Portfolios is a real, live API (unlike Comfort
-  // Declaration/Availability below, which don't exist at all). Read-only:
-  // this app doesn't build the upload/create flow yet.
+  // Message thread — GET/POST .../messages and POST .../read, all real.
+  // Starting a brand-new conversation isn't wired anywhere in this app: it
+  // requires the two profiles to already be "connected" (403 without it,
+  // curl-verified), and there's no connections/follow endpoint in the API
+  // to satisfy that — so only conversations that already exist can be
+  // opened here.
+  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const [threadMessages, setThreadMessages] = useState<Message[] | null>(null);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [messageDraft, setMessageDraft] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  const handleOpenConversation = (conv: Conversation) => {
+    setActiveConversation(conv);
+    setThreadMessages(null);
+    setThreadLoading(true);
+    messagingService
+      .getMessages(conv.id, { limit: 50 })
+      .then((result) => setThreadMessages(result.items))
+      .catch((err) => show(err instanceof ApiError ? err.message : 'Could not load messages.', 'error'))
+      .finally(() => setThreadLoading(false));
+    messagingService.markConversationRead(conv.id).catch(() => {});
+  };
+
+  const handleSendMessage = async () => {
+    if (!activeConversation || !messageDraft.trim()) return;
+    setSendingMessage(true);
+    try {
+      const sent = await messagingService.sendMessage(activeConversation.id, { body: messageDraft.trim() });
+      setThreadMessages((prev) => [...(prev ?? []), sent]);
+      setMessageDraft('');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not send message.', 'error');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  // Media Gallery — Portfolios + Media upload flow, both real, verified
+  // live end to end (reserve upload -> PUT content -> create portfolio if
+  // none exists yet -> attach as an item).
   const [portfolios, setPortfolios] = useState<Portfolio[] | null>(null);
   const [portfoliosLoading, setPortfoliosLoading] = useState(true);
+  const [portfoliosRefreshKey, setPortfoliosRefreshKey] = useState(0);
+  const [mediaUploading, setMediaUploading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setPortfoliosLoading(true);
     portfoliosService
       .listMyPortfolios()
       .then((result) => {
@@ -353,7 +572,33 @@ export const ProfileSystem = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [portfoliosRefreshKey]);
+
+  const handleUploadMedia = async (file: File) => {
+    setMediaUploading(true);
+    try {
+      const assetType = file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : 'image';
+      const uploaded = await mediaService.uploadFile(file, 'portfolio_item', assetType);
+
+      let portfolioId = portfolios?.[0]?.id;
+      if (!portfolioId) {
+        const created = await portfoliosService.createPortfolio({ title: `${realProfile?.displayName ?? 'My'} Portfolio`, visibility: 'public' });
+        portfolioId = created.id;
+      }
+
+      await portfoliosService.addPortfolioItem(portfolioId, {
+        itemType: 'media',
+        mediaAssetId: uploaded.assetId,
+        caption: file.name,
+      });
+      show('Uploaded.', 'success');
+      setPortfoliosRefreshKey((k) => k + 1);
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not upload.', 'error');
+    } finally {
+      setMediaUploading(false);
+    }
+  };
   const [profile, setProfile] = useState({
     type: initialType,
     industry: 'Cinema',
@@ -748,58 +993,126 @@ export const ProfileSystem = ({
                     <HoverGlowPanel className="glass-panel-pink p-8">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold">Basic Information</h3>
-                        <button onClick={openBasicEdit} className="text-xs text-gold hover:underline flex items-center gap-1">
-                          <Settings size={14} /> Edit
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <ProfileField label="Full Name" value={authProfile?.displayName ?? profile.name} hint="Your public display name." />
-                        <ProfileField label="Gender" value={authProfile?.genderIdentity} hint="Not set — your self-described gender identity." />
-                        <ProfileField
-                          label="Profession"
-                          value={authProfile?.professions?.[0]?.name}
-                          hint="No profession added yet — this is what casting directors see you're skilled at."
-                        />
-                        <ProfileField
-                          label="Location"
-                          value={authProfile ? [authProfile.district, authProfile.state].filter(Boolean).join(', ') || undefined : profile.location}
-                          hint="No location set — helps nearby casting calls find you."
-                        />
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Bio</div>
-                        {authProfile?.bio ? (
-                          <p className="text-sm text-white/80 leading-relaxed">{authProfile.bio}</p>
-                        ) : (
-                          <p className="text-xs text-white/30 italic">
-                            {authProfile ? "No bio yet — a short introduction is the first thing people read on your profile." : profile.bio}
-                          </p>
+                        {!editingBasic && (
+                          <button onClick={openBasicEdit} className="text-xs text-gold hover:underline flex items-center gap-1">
+                            <Settings size={14} /> Edit
+                          </button>
                         )}
                       </div>
-                      <div className="mt-6">
-                        <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Skill Tags</div>
-                        {authProfile ? (
-                          authProfile.skills.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {authProfile.skills.map((skill) => (
-                                <span key={skill.id} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
-                                  {skill.name}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-white/30 italic">No skills added yet — skills help you show up in casting searches.</p>
-                          )
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {profile.skills.map((skill, i) => (
-                              <span key={i} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
-                                {skill}
-                              </span>
-                            ))}
+
+                      {!editingBasic ? (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <ProfileField label="Full Name" value={authProfile?.displayName ?? profile.name} hint="Your public display name." />
+                            <ProfileField label="Gender" value={authProfile?.genderIdentity} hint="Not set — your self-described gender identity." />
+                            <ProfileField
+                              label="Profession"
+                              value={authProfile?.professions?.[0]?.name}
+                              hint="No profession added yet — this is what casting directors see you're skilled at."
+                            />
+                            <ProfileField
+                              label="Location"
+                              value={authProfile ? [authProfile.district, authProfile.state].filter(Boolean).join(', ') || undefined : profile.location}
+                              hint="No location set — helps nearby casting calls find you."
+                            />
                           </div>
-                        )}
-                      </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Bio</div>
+                            {authProfile?.bio ? (
+                              <p className="text-sm text-white/80 leading-relaxed">{authProfile.bio}</p>
+                            ) : (
+                              <p className="text-xs text-white/30 italic">
+                                {authProfile ? "No bio yet — a short introduction is the first thing people read on your profile." : profile.bio}
+                              </p>
+                            )}
+                          </div>
+                          <div className="mt-6">
+                            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Skill Tags</div>
+                            {authProfile ? (
+                              authProfile.skills.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {authProfile.skills.map((skill) => (
+                                    <span key={skill.id} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
+                                      {skill.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-white/30 italic">No skills added yet — skills help you show up in casting searches.</p>
+                              )
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {profile.skills.map((skill, i) => (
+                                  <span key={i} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Display Name</label>
+                            <input
+                              value={basicForm.displayName}
+                              onChange={(e) => setBasicForm((f) => ({ ...f, displayName: e.target.value }))}
+                              className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Headline</label>
+                            <input
+                              value={basicForm.headline}
+                              onChange={(e) => setBasicForm((f) => ({ ...f, headline: e.target.value }))}
+                              placeholder="e.g. Lead Actor & Voice Artist"
+                              className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Bio</label>
+                            <textarea
+                              value={basicForm.bio}
+                              onChange={(e) => setBasicForm((f) => ({ ...f, bio: e.target.value }))}
+                              rows={4}
+                              className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Pincode</label>
+                              <input
+                                value={basicForm.pincode}
+                                onChange={(e) => setBasicForm((f) => ({ ...f, pincode: e.target.value }))}
+                                maxLength={6}
+                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Website</label>
+                              <input
+                                value={basicForm.websiteUrl}
+                                onChange={(e) => setBasicForm((f) => ({ ...f, websiteUrl: e.target.value }))}
+                                placeholder="https://…"
+                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-4 pt-2">
+                            <button onClick={() => setEditingBasic(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveBasic}
+                              disabled={savingBasic}
+                              className="flex-1 py-3 bg-gold text-black hover:bg-white rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50"
+                            >
+                              {savingBasic ? 'Saving…' : 'Save'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </HoverGlowPanel>
 
                     {/* Conditional Advanced Module */}
@@ -807,9 +1120,11 @@ export const ProfileSystem = ({
                       <HoverGlowPanel className="glass-panel-purple p-8">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Star size={20} className="text-gold" /> Actor/Model Advanced Module</h3>
-                          <button onClick={openDetailsEdit} className="text-xs text-gold hover:underline">
-                            Edit Module
-                          </button>
+                          {!editingDetails && (
+                            <button onClick={openDetailsEdit} className="text-xs text-gold hover:underline">
+                              Edit Module
+                            </button>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -818,28 +1133,90 @@ export const ProfileSystem = ({
                                 unfilled-value placeholder for a real field with no data yet,
                                 not a fake number. */}
                             <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Physical Attributes</h4>
-                            <div className="space-y-3">
-                              <div className="flex justify-between">
-                                <span className="text-white/40 text-sm">Height</span>
-                                <span className="font-bold text-sm">{authProfile?.details.heightCm != null ? `${authProfile.details.heightCm} cm` : 'xx'}</span>
+                            {!editingDetails ? (
+                              <div className="space-y-3">
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Height</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.heightCm != null ? `${authProfile.details.heightCm} cm` : 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Weight</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.weightKg != null ? `${authProfile.details.weightKg} kg` : 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Eye Color</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.eyeColor ?? 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Hair Color</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.hairColor ?? 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Experience</span>
+                                  <span className="font-bold text-sm">{authProfile?.yearsExperience != null ? `${authProfile.yearsExperience} yrs` : 'xx'}</span>
+                                </div>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-white/40 text-sm">Weight</span>
-                                <span className="font-bold text-sm">{authProfile?.details.weightKg != null ? `${authProfile.details.weightKg} kg` : 'xx'}</span>
+                            ) : (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Height (cm)</label>
+                                    <input
+                                      type="number"
+                                      value={detailsForm.heightCm}
+                                      onChange={(e) => setDetailsForm((f) => ({ ...f, heightCm: e.target.value }))}
+                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Weight (kg)</label>
+                                    <input
+                                      type="number"
+                                      value={detailsForm.weightKg}
+                                      onChange={(e) => setDetailsForm((f) => ({ ...f, weightKg: e.target.value }))}
+                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Eye Color</label>
+                                    <input
+                                      value={detailsForm.eyeColor}
+                                      onChange={(e) => setDetailsForm((f) => ({ ...f, eyeColor: e.target.value }))}
+                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Hair Color</label>
+                                    <input
+                                      value={detailsForm.hairColor}
+                                      onChange={(e) => setDetailsForm((f) => ({ ...f, hairColor: e.target.value }))}
+                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Years of Experience</label>
+                                  <input
+                                    type="number"
+                                    value={detailsForm.yearsExperience}
+                                    onChange={(e) => setDetailsForm((f) => ({ ...f, yearsExperience: e.target.value }))}
+                                    className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
+                                  />
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                  <button onClick={() => setEditingDetails(false)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-lg font-bold uppercase tracking-widest text-xs transition-colors">
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={handleSaveDetails}
+                                    disabled={savingDetails}
+                                    className="flex-1 py-2 bg-gold text-black hover:bg-white rounded-lg font-bold uppercase tracking-widest text-xs transition-colors disabled:opacity-50"
+                                  >
+                                    {savingDetails ? 'Saving…' : 'Save'}
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-white/40 text-sm">Eye Color</span>
-                                <span className="font-bold text-sm">{authProfile?.details.eyeColor ?? 'xx'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-white/40 text-sm">Hair Color</span>
-                                <span className="font-bold text-sm">{authProfile?.details.hairColor ?? 'xx'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-white/40 text-sm">Experience</span>
-                                <span className="font-bold text-sm">{authProfile?.yearsExperience != null ? `${authProfile.yearsExperience} yrs` : 'xx'}</span>
-                              </div>
-                            </div>
+                            )}
                           </div>
 
                           <div className="space-y-6">
@@ -982,12 +1359,18 @@ export const ProfileSystem = ({
                         </div>
                       )}
 
-                      <button
-                        onClick={() => show("This can't be edited yet — this feature is under development.", 'info')}
-                        className="w-full bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Upload size={14} /> Upload New
-                      </button>
+                      <label className={cn(
+                        "w-full bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2 cursor-pointer",
+                        mediaUploading && "opacity-50 pointer-events-none"
+                      )}>
+                        <Upload size={14} /> {mediaUploading ? 'Uploading…' : 'Upload New'}
+                        <input
+                          type="file"
+                          accept="image/*,video/*,audio/*"
+                          className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadMedia(f); e.target.value = ''; }}
+                        />
+                      </label>
                     </HoverGlowPanel>
 
                     {/* Social Links — the profile API only has one generic
@@ -1501,9 +1884,179 @@ export const ProfileSystem = ({
 
                     <div className="pt-4 border-t border-white/10 flex justify-end gap-4">
                       <button disabled className="text-xs text-white/20 cursor-not-allowed" title="Coming soon — no data-export endpoint yet">Download My Data</button>
-                      <button disabled className="text-xs text-white/20 cursor-not-allowed" title="Coming soon — no account-deletion endpoint yet">Delete Account</button>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  <AccordionSection
+                    title="Blocked & Muted"
+                    icon={UserX}
+                    isOpen={openSection === 'blocked-muted'}
+                    onToggle={() => toggleSection('blocked-muted')}
+                  >
+                    {blockedMutedLoading && [0, 1].map((i) => <ScaffoldRow key={i} className="h-12" />)}
+                    {!blockedMutedLoading && (
+                      <>
+                        <div>
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Blocked ({blockedList?.length ?? 0})</h4>
+                          {!blockedList?.length && <p className="text-xs text-white/30 italic">No one blocked.</p>}
+                          <div className="space-y-2">
+                            {blockedList?.map((p) => (
+                              <div key={p.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                                <span className="text-sm font-bold">{p.displayName} <span className="text-white/40 font-normal">@{p.username}</span></span>
+                                <button onClick={() => handleUnblock(p.id)} className="text-[10px] text-gold hover:underline uppercase tracking-widest">Unblock</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Muted ({mutedList?.length ?? 0})</h4>
+                          {!mutedList?.length && <p className="text-xs text-white/30 italic">No one muted.</p>}
+                          <div className="space-y-2">
+                            {mutedList?.map((p) => (
+                              <div key={p.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                                <span className="text-sm font-bold">{p.displayName} <span className="text-white/40 font-normal">@{p.username}</span></span>
+                                <button onClick={() => handleUnmute(p.id)} className="text-[10px] text-gold hover:underline uppercase tracking-widest">Unmute</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </AccordionSection>
+
+                  <AccordionSection
+                    title="Verification (KYC)"
+                    icon={ShieldCheck}
+                    isOpen={openSection === 'kyc'}
+                    onToggle={() => toggleSection('kyc')}
+                  >
+                    {kycLoading && <ScaffoldRow className="h-12" />}
+                    {!kycLoading && (
+                      <>
+                        <div className="space-y-2">
+                          {kycDocs?.length ? kycDocs.map((doc) => (
+                            <div key={doc.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                              <span className="text-sm font-bold capitalize">{doc.documentType.replace('_', ' ')}</span>
+                              <button onClick={() => handleDeleteKycDocument(doc.id)} className="text-[10px] text-crimson hover:underline uppercase tracking-widest">Remove</button>
+                            </div>
+                          )) : <p className="text-xs text-white/30 italic mb-2">No documents submitted yet.</p>}
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                          <select
+                            value={kycUploadType}
+                            onChange={(e) => setKycUploadType(e.target.value as KycDocumentType)}
+                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold"
+                          >
+                            <option value="id_proof">ID Proof</option>
+                            <option value="address_proof">Address Proof</option>
+                            <option value="organisation_proof">Organisation Proof</option>
+                            <option value="portfolio_sample">Portfolio Sample</option>
+                          </select>
+                          <label className={cn(
+                            "flex-1 text-center bg-gold/10 text-gold border border-gold/20 py-2 rounded-lg text-xs font-bold uppercase tracking-widest cursor-pointer hover:bg-gold/20 transition-colors",
+                            kycUploading && "opacity-50 pointer-events-none"
+                          )}>
+                            {kycUploading ? 'Uploading…' : 'Upload Document'}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleKycUpload(f); e.target.value = ''; }}
+                            />
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </AccordionSection>
+
+                  <AccordionSection
+                    title="Change Password"
+                    icon={Lock}
+                    isOpen={openSection === 'password'}
+                    onToggle={() => toggleSection('password')}
+                  >
+                    <input
+                      type="password"
+                      placeholder="Current password"
+                      value={passwordForm.current}
+                      onChange={(e) => setPasswordForm((f) => ({ ...f, current: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold"
+                    />
+                    <input
+                      type="password"
+                      placeholder="New password (min 12 characters)"
+                      value={passwordForm.next}
+                      onChange={(e) => setPasswordForm((f) => ({ ...f, next: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold"
+                    />
+                    <button
+                      onClick={handleChangePassword}
+                      disabled={changingPassword}
+                      className="bg-gold text-black px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-50"
+                    >
+                      {changingPassword ? 'Saving…' : 'Save New Password'}
+                    </button>
+
+                    <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-sm">Log Out Everywhere</h4>
+                        <p className="text-xs text-white/50">Ends every session on every device, including this one.</p>
+                      </div>
+                      <button
+                        onClick={handleLogoutAllDevices}
+                        disabled={loggingOutAll}
+                        className="text-xs text-crimson hover:underline uppercase tracking-widest disabled:opacity-50"
+                      >
+                        {loggingOutAll ? 'Logging out…' : 'Log Out All Devices'}
+                      </button>
+                    </div>
+                  </AccordionSection>
+
+                  <AccordionSection
+                    title="Danger Zone"
+                    icon={AlertCircle}
+                    danger
+                    isOpen={openSection === 'danger'}
+                    onToggle={() => toggleSection('danger')}
+                  >
+                    <p className="text-sm text-white/60">Deleting your account is permanent and can't be undone.</p>
+                    {!showDeleteAccount ? (
+                      <button
+                        onClick={() => setShowDeleteAccount(true)}
+                        className="bg-crimson/10 text-crimson border border-crimson/30 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-crimson hover:text-white transition-colors"
+                      >
+                        Delete My Account
+                      </button>
+                    ) : (
+                      <div className="space-y-3 p-4 bg-crimson/5 border border-crimson/20 rounded-xl">
+                        <p className="text-xs font-bold text-crimson">Enter your password to confirm — this can't be undone.</p>
+                        <input
+                          type="password"
+                          placeholder="Password"
+                          value={deletePassword}
+                          onChange={(e) => setDeletePassword(e.target.value)}
+                          className="w-full bg-white/5 border border-crimson/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-crimson"
+                        />
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => { setShowDeleteAccount(false); setDeletePassword(''); }}
+                            className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleDeleteAccount}
+                            disabled={deletingAccount}
+                            className="flex-1 py-2 bg-crimson text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-crimson/80 transition-colors disabled:opacity-50"
+                          >
+                            {deletingAccount ? 'Deleting…' : 'Confirm Delete'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </AccordionSection>
                 </div>
               </motion.div>
             )}
@@ -1676,7 +2229,7 @@ export const ProfileSystem = ({
                           <h4 className="font-bold text-sm mb-1">{other?.displayName ?? 'SosrG member'}</h4>
                           {other?.username && <p className="text-[10px] text-white/40 uppercase tracking-widest mb-4">@{other.username}</p>}
                           <button
-                            onClick={() => show('Opening a full conversation isn\'t wired up here yet.', 'info')}
+                            onClick={() => handleOpenConversation(conv)}
                             className="w-full py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-gold hover:text-black transition-all"
                           >
                             Message
@@ -1948,175 +2501,58 @@ export const ProfileSystem = ({
         </>
       )}
 
-      {/* Real Edit Profile forms — PATCH /v1/profiles/me and
-          /v1/profiles/me/details, both live. Styled to match this page's
-          existing dark modal (CastingEcosystem's Apply modal uses the same
-          pattern) rather than the cream design-system Modal, which would
-          look out of place on this still-dark page. */}
+      {/* Message thread — GET/POST /v1/conversations/{id}/messages, real. */}
       <AnimatePresence>
-        {editingBasic && (
+        {activeConversation && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-            onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBasic(false); }}
+            onMouseDown={(e) => { if (e.target === e.currentTarget) setActiveConversation(null); }}
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl"
+              className="bg-cinematic-gray border border-white/10 w-full max-w-lg h-[70vh] flex flex-col rounded-3xl shadow-2xl overflow-hidden"
             >
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold">Edit Profile</h2>
-                <button onClick={() => setEditingBasic(false)} className="text-white/40 hover:text-white p-2"><X size={20} /></button>
+              <div className="flex items-center justify-between p-5 border-b border-white/10">
+                <h3 className="font-bold">{activeConversation.participants?.[0]?.displayName ?? 'SosrG member'}</h3>
+                <button onClick={() => setActiveConversation(null)} className="text-white/40 hover:text-white p-1">
+                  <X size={20} />
+                </button>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Display Name</label>
-                  <input
-                    value={basicForm.displayName}
-                    onChange={(e) => setBasicForm((f) => ({ ...f, displayName: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Headline</label>
-                  <input
-                    value={basicForm.headline}
-                    onChange={(e) => setBasicForm((f) => ({ ...f, headline: e.target.value }))}
-                    placeholder="e.g. Lead Actor & Voice Artist"
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Bio</label>
-                  <textarea
-                    value={basicForm.bio}
-                    onChange={(e) => setBasicForm((f) => ({ ...f, bio: e.target.value }))}
-                    rows={4}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Pincode</label>
-                    <input
-                      value={basicForm.pincode}
-                      onChange={(e) => setBasicForm((f) => ({ ...f, pincode: e.target.value }))}
-                      maxLength={6}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Website</label>
-                    <input
-                      value={basicForm.websiteUrl}
-                      onChange={(e) => setBasicForm((f) => ({ ...f, websiteUrl: e.target.value }))}
-                      placeholder="https://…"
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-4 pt-2">
-                  <button onClick={() => setEditingBasic(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveBasic}
-                    disabled={savingBasic}
-                    className="flex-1 py-3 bg-gold text-black hover:bg-white rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50"
-                  >
-                    {savingBasic ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      <AnimatePresence>
-        {editingDetails && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-            onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingDetails(false); }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold">Edit Physical Attributes</h2>
-                <button onClick={() => setEditingDetails(false)} className="text-white/40 hover:text-white p-2"><X size={20} /></button>
+              <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                {threadLoading && [0, 1, 2].map((i) => <ScaffoldRow key={i} className="h-10 w-2/3" />)}
+                {!threadLoading && threadMessages?.length === 0 && (
+                  <p className="text-xs text-white/30 italic text-center mt-8">No messages yet — say hello.</p>
+                )}
+                {!threadLoading && threadMessages?.map((m) => (
+                  <div key={m.id} className="bg-white/5 border border-white/10 rounded-xl p-3 max-w-[80%]">
+                    <p className="text-sm">{m.body}</p>
+                    <p className="text-[10px] text-white/30 mt-1">{new Date(m.createdAt).toLocaleTimeString()}</p>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Height (cm)</label>
-                    <input
-                      type="number"
-                      value={detailsForm.heightCm}
-                      onChange={(e) => setDetailsForm((f) => ({ ...f, heightCm: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Weight (kg)</label>
-                    <input
-                      type="number"
-                      value={detailsForm.weightKg}
-                      onChange={(e) => setDetailsForm((f) => ({ ...f, weightKg: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Eye Color</label>
-                    <input
-                      value={detailsForm.eyeColor}
-                      onChange={(e) => setDetailsForm((f) => ({ ...f, eyeColor: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Hair Color</label>
-                    <input
-                      value={detailsForm.hairColor}
-                      onChange={(e) => setDetailsForm((f) => ({ ...f, hairColor: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Years of Experience</label>
-                  <input
-                    type="number"
-                    value={detailsForm.yearsExperience}
-                    onChange={(e) => setDetailsForm((f) => ({ ...f, yearsExperience: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <p className="text-[10px] text-white/30">
-                  Experience Categories, Comfort Declaration, and Availability aren't editable here yet — those fields don't exist in the profile API at all (see doc/API_REQUIREMENTS.md).
-                </p>
-                <div className="flex gap-4 pt-2">
-                  <button onClick={() => setEditingDetails(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveDetails}
-                    disabled={savingDetails}
-                    className="flex-1 py-3 bg-gold text-black hover:bg-white rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50"
-                  >
-                    {savingDetails ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
+
+              <div className="p-4 border-t border-white/10 flex gap-2">
+                <input
+                  type="text"
+                  value={messageDraft}
+                  onChange={(e) => setMessageDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !sendingMessage) handleSendMessage(); }}
+                  placeholder="Write a message…"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-gold"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage || !messageDraft.trim()}
+                  className="bg-gold text-black px-4 rounded-xl font-bold text-sm hover:bg-yellow-500 transition-colors disabled:opacity-50"
+                >
+                  Send
+                </button>
               </div>
             </motion.div>
           </motion.div>

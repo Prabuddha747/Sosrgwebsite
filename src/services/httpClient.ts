@@ -116,6 +116,40 @@ async function refreshAccessToken(): Promise<string> {
   }
 }
 
+// PUT-ing raw file bytes (media upload content) doesn't fit apiFetch's
+// JSON-only body handling, but still needs the same bearer token + 401
+// refresh-retry behavior — pulled out separately rather than duplicating
+// the auth/refresh logic in the media service.
+export async function apiUploadBinary(path: string, body: Blob, contentType: string): Promise<void> {
+  const doFetch = async (): Promise<Response> => {
+    const headers: Record<string, string> = { ...commonHeaders(), 'Content-Type': contentType };
+    const token = getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(buildUrl(path), { method: 'PUT', headers, body });
+  };
+
+  let res = await doFetch();
+
+  if (res.status === 401) {
+    try {
+      await refreshAccessToken();
+      res = await doFetch();
+    } catch {
+      // refreshAccessToken already cleared tokens + fired sessionExpiredHandler
+    }
+  }
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    const errBody = json as ApiErrorEnvelope | null;
+    throw new ApiError(
+      res.status,
+      errBody?.error?.code ?? 'UPLOAD_FAILED',
+      errBody?.error?.message ?? res.statusText,
+    );
+  }
+}
+
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   const { method = 'GET', body, query, idempotencyKey, skipAuth, signal } = options;
 

@@ -83,4 +83,12 @@ export const apiAuthService: AuthService = {
   async revokeSession(sessionId) {
     await apiFetch<void>(`/v1/auth/sessions/${encodeURIComponent(sessionId)}/revoke`, { method: 'POST' });
   },
+
+  async deleteAccount(currentPassword, reason) {
+    try {
+      await apiFetch<void>('/v1/auth/account-deletion', { method: 'POST', body: { currentPassword, reason } });
+    } finally {
+      clearTokens();
+    }
+  },
 };
