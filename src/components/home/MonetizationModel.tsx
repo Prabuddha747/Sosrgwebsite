@@ -80,6 +80,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ComingSoonTag } from '../ScaffoldUI';
+import { HoverEffect } from '../ui/hover-effect';
 
 const MODELS = [
   {
@@ -141,9 +142,9 @@ export const MonetizationModel = () => (
       <p className="text-white/40 max-w-2xl mx-auto">Transparent, value-driven revenue streams designed to support the creative ecosystem.</p>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <HoverEffect className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {MODELS.map((model, i) => (
-        <div key={i} className="relative glass-panel p-8 group hover:-translate-y-1 transition-transform duration-300">
+        <div key={i} className="relative glass-panel p-8 h-full group hover:-translate-y-1 transition-transform duration-300">
           <ComingSoonTag />
           <div className={cn("w-14 h-14 rounded-full p-[1.5px] bg-gradient-to-br mb-6", ACCENT_RING[model.accent])}>
             <div className="w-full h-full rounded-full bg-cinematic-black flex items-center justify-center">
@@ -159,6 +160,6 @@ export const MonetizationModel = () => (
           </div>
         </div>
       ))}
-    </div>
+    </HoverEffect>
   </section>
 );

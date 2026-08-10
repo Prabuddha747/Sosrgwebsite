@@ -133,12 +133,17 @@ export const DigitalEcosystemVision = () => (
           border: 'border-crimson/20'
         }
       ].map((feature, i) => (
-        <div key={i} className={cn("glass-panel-purple p-8 text-center group hover:-translate-y-2 transition-transform duration-300", feature.border)}>
-          <div className={cn("w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110", feature.bg)}>
-            <feature.icon size={32} className={feature.color} />
+        <div key={i} className="relative group">
+          {/* Offset colored backdrop, straight edges — the "creative pricing"
+              card treatment, without a title/price/ribbon since this isn't
+              a pricing section. */}
+          <div className={cn("absolute inset-0 rotate-3 transition-transform duration-300 group-hover:rotate-6", feature.bg)} />
+          <div className={cn("relative bg-cinematic-gray border p-8 text-center transition-transform duration-300 group-hover:-translate-y-1", feature.border)}>
+            <div className={cn("w-16 h-16 mx-auto flex items-center justify-center mb-6", feature.bg)}>
+              <feature.icon size={32} className={feature.color} />
+            </div>
+            <p className="text-sm text-white/60 leading-relaxed">{feature.desc}</p>
           </div>
-          <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-          <p className="text-sm text-white/60 leading-relaxed">{feature.desc}</p>
         </div>
       ))}
     </div>
