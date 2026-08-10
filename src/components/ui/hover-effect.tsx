@@ -2,6 +2,34 @@ import { useId, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 
+// Same glow, for a single standalone panel (not part of a repeating grid —
+// e.g. Profile Details' Basic Information / Media Gallery cards, which are
+// each a one-off, differently-sized block rather than array-mapped
+// siblings). No shared layoutId needed since there's nothing for the glow
+// to slide between; it just fades in on its own card.
+export function HoverGlowPanel({
+  children,
+  className,
+  glowClassName,
+}: {
+  children: ReactNode;
+  className?: string;
+  glowClassName?: string;
+}) {
+  return (
+    <div className={cn('group relative overflow-hidden', className)}>
+      <div
+        aria-hidden="true"
+        className={cn(
+          'pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-gold/10 via-gold/0 to-transparent',
+          glowClassName,
+        )}
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
 // Aceternity-style "card hover effect": a soft glow slides between grid
 // cells to whichever one is hovered, sharing a single layoutId so the
 // motion is a slide rather than a fade-in-place. Adapted as a generic grid

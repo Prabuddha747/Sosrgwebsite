@@ -92,6 +92,7 @@ import { portfoliosService } from '../services/portfolios';
 import type { Portfolio } from '../services/portfolios';
 import { ApiError } from '../services/httpClient';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
+import { HoverGlowPanel } from '../components/ui/hover-effect';
 
 // Small honest placeholder for header fields this dashboard's mock data
 // invents (platform ID, rating, industry tags, Green ID) but the live
@@ -737,7 +738,7 @@ export const ProfileSystem = ({
                     {/* Basic Info — wired to the real profile (GET /v1/profiles/me);
                         each field shows a real value or, when unfilled, a short
                         description of what it's for instead of blank space. */}
-                    <div className="glass-panel-pink p-8">
+                    <HoverGlowPanel className="glass-panel-pink p-8">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold">Basic Information</h3>
                         <button onClick={openBasicEdit} className="text-xs text-gold hover:underline flex items-center gap-1">
@@ -792,11 +793,11 @@ export const ProfileSystem = ({
                           </div>
                         )}
                       </div>
-                    </div>
+                    </HoverGlowPanel>
 
                     {/* Conditional Advanced Module */}
                     {profile.type === 'artist' && (
-                      <div className="glass-panel-purple p-8">
+                      <HoverGlowPanel className="glass-panel-purple p-8">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Star size={20} className="text-gold" /> Actor/Model Advanced Module</h3>
                           <button onClick={openDetailsEdit} className="text-xs text-gold hover:underline">
@@ -879,11 +880,11 @@ export const ProfileSystem = ({
                             <FileText size={14} /> Generate Resume
                           </button>
                         </div>
-                      </div>
+                      </HoverGlowPanel>
                     )}
 
                     {profile.type === 'business' && (
-                      <div className="relative glass-panel-blue p-8">
+                      <HoverGlowPanel className="relative glass-panel-blue p-8">
                         <ComingSoonTag />
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Briefcase size={20} className="text-gold" /> Business Profile</h3>
@@ -936,7 +937,7 @@ export const ProfileSystem = ({
                             Generate Presentation
                           </button>
                         </div>
-                      </div>
+                      </HoverGlowPanel>
                     )}
                   </div>
 
@@ -945,7 +946,7 @@ export const ProfileSystem = ({
                         (GET /v1/portfolios), so this shows real portfolios
                         when they exist. Upload/create isn't built in this
                         app yet, so that action stays a toast, not fake. */}
-                    <div className="glass-panel p-6">
+                    <HoverGlowPanel className="glass-panel p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold flex items-center gap-2"><Image size={16} className="text-gold" /> Media Gallery</h3>
                         <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
@@ -980,12 +981,12 @@ export const ProfileSystem = ({
                       >
                         <Upload size={14} /> Upload New
                       </button>
-                    </div>
+                    </HoverGlowPanel>
 
                     {/* Social Links — the profile API only has one generic
                         websiteUrl field, no per-platform handles, so only
                         that one is real (§2.4c). */}
-                    <div className="glass-panel p-6">
+                    <HoverGlowPanel className="glass-panel p-6">
                       <h3 className="font-bold mb-4 flex items-center gap-2"><Globe size={16} className="text-gold" /> Social Links</h3>
                       <div className="space-y-3">
                         {authProfile?.websiteUrl ? (
@@ -1020,7 +1021,7 @@ export const ProfileSystem = ({
                       >
                         <Plus size={14} /> Add Link
                       </button>
-                    </div>
+                    </HoverGlowPanel>
                   </div>
                 </div>
               </motion.div>
