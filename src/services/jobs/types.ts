@@ -54,8 +54,43 @@ export interface JobApplication {
   status: string;
 }
 
+// CreateJobPostDto's required fields (verified against the live OpenAPI
+// spec): title, industry, employmentType, workMode, description,
+// applicationDeadline. Everything else is optional. Curl-verified this
+// session: creating requires a `business`-type profile — `casting_director`
+// got a 403 PROFILE_NOT_ELIGIBLE, `business` succeeded.
+export interface CreateJobPostInput {
+  title: string;
+  industry: string;
+  employmentType: string;
+  workMode: JobWorkMode;
+  description: string;
+  applicationDeadline: string;
+  professionId?: number;
+  responsibilities?: string;
+  requirements?: string;
+  pincode?: string;
+  compensationType?: JobCompensationType;
+  budgetMinMinor?: number;
+  budgetMaxMinor?: number;
+  currency?: string;
+  numberOfOpenings?: number;
+  skillIds?: number[];
+}
+
+// The create response is a smaller shape than the full JobPost — verified
+// live: `{id, title, status}`, status starts as "draft".
+export interface CreatedJobPost {
+  id: string;
+  title: string;
+  status: string;
+}
+
 export interface JobsService {
   listJobPosts(filters?: JobPostFilters): Promise<JobPostListResult>;
   getJobPost(id: string): Promise<JobPost | null>;
   applyToJobPost(jobPostId: string, input: ApplyJobPostInput): Promise<JobApplication>;
+  createJobPost(input: CreateJobPostInput): Promise<CreatedJobPost>;
+  /** Moves a draft job post to review — verified live: transitions straight to "active", no separate approval step observed. */
+  submitJobPostForReview(jobPostId: string): Promise<{ success: boolean; status: string }>;
 }

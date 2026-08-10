@@ -1,5 +1,7 @@
 export type {
   ApplyJobPostInput,
+  CreatedJobPost,
+  CreateJobPostInput,
   JobApplication,
   JobCompensationType,
   JobPost,

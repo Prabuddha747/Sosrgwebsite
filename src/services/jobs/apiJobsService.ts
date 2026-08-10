@@ -1,6 +1,8 @@
 import { ApiError, apiFetch } from '../httpClient';
 import type {
   ApplyJobPostInput,
+  CreateJobPostInput,
+  CreatedJobPost,
   JobApplication,
   JobPost,
   JobPostFilters,
@@ -28,5 +30,20 @@ export const apiJobsService: JobsService = {
       body: input,
       idempotencyKey: crypto.randomUUID(),
     });
+  },
+
+  async createJobPost(input: CreateJobPostInput) {
+    return apiFetch<CreatedJobPost>('/v1/job-posts', {
+      method: 'POST',
+      body: input,
+      idempotencyKey: crypto.randomUUID(),
+    });
+  },
+
+  async submitJobPostForReview(jobPostId: string) {
+    return apiFetch<{ success: boolean; status: string }>(
+      `/v1/job-posts/${encodeURIComponent(jobPostId)}/submit-review`,
+      { method: 'POST', idempotencyKey: crypto.randomUUID() },
+    );
   },
 };

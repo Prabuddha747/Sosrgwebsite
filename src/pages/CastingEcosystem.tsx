@@ -89,8 +89,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { portfoliosService } from '../services/portfolios';
 import type { Portfolio } from '../services/portfolios';
 import { jobsService } from '../services/jobs';
-import type { JobPost } from '../services/jobs';
+import type { JobPost, JobWorkMode, JobCompensationType } from '../services/jobs';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
+import { TALENT_CATEGORIES } from '../data/mockData';
 
 const MIN_PASSWORD_LENGTH = 12;
 
@@ -113,6 +114,23 @@ export const CastingEcosystem = () => {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [builderMode, setBuilderMode] = useState<'ai' | 'manual'>('ai');
   const [crewMode, setCrewMode] = useState<'jobs' | 'professionals'>('jobs');
+  const [showJobPostModal, setShowJobPostModal] = useState(false);
+  const [postingJob, setPostingJob] = useState(false);
+  const [jobPostForm, setJobPostForm] = useState({
+    title: '',
+    industry: '',
+    employmentType: 'full_time',
+    workMode: 'onsite' as JobWorkMode,
+    description: '',
+    responsibilities: '',
+    requirements: '',
+    pincode: '',
+    compensationType: 'paid' as JobCompensationType,
+    budgetMin: '',
+    budgetMax: '',
+    numberOfOpenings: '1',
+    applicationDeadline: '',
+  });
   const [forumMode, setForumMode] = useState<'messages' | 'community'>('community');
   const [crewSector, setCrewSector] = useState('All Sectors');
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -224,6 +242,9 @@ export const CastingEcosystem = () => {
   const [liveJobs, setLiveJobs] = useState<JobPost[]>([]);
   const [liveJobsLoading, setLiveJobsLoading] = useState(true);
   const [liveJobsError, setLiveJobsError] = useState<string | null>(null);
+  // Bumped after a successful "Post a Role" so the list effect below
+  // refetches and the newly-posted role shows up without a manual reload.
+  const [jobPostsRefreshKey, setJobPostsRefreshKey] = useState(0);
 
   useEffect(() => {
     if (view !== 'crew' || crewMode !== 'jobs') return;
@@ -244,7 +265,61 @@ export const CastingEcosystem = () => {
     return () => {
       cancelled = true;
     };
-  }, [view, crewMode]);
+  }, [view, crewMode, jobPostsRefreshKey]);
+
+  const handleCreateJobPost = async () => {
+    if (!user) {
+      setShowJobPostModal(false);
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    const f = jobPostForm;
+    if (!f.title || !f.industry || !f.description || !f.applicationDeadline) {
+      show('Title, industry, description, and application deadline are required.', 'error');
+      return;
+    }
+    setPostingJob(true);
+    try {
+      const created = await jobsService.createJobPost({
+        title: f.title,
+        industry: f.industry,
+        employmentType: f.employmentType,
+        workMode: f.workMode,
+        description: f.description,
+        applicationDeadline: new Date(f.applicationDeadline).toISOString(),
+        responsibilities: f.responsibilities || undefined,
+        requirements: f.requirements || undefined,
+        pincode: f.pincode || undefined,
+        compensationType: f.compensationType,
+        budgetMinMinor: f.budgetMin ? Math.round(Number(f.budgetMin) * 100) : undefined,
+        budgetMaxMinor: f.budgetMax ? Math.round(Number(f.budgetMax) * 100) : undefined,
+        numberOfOpenings: f.numberOfOpenings ? Number(f.numberOfOpenings) : undefined,
+      });
+      await jobsService.submitJobPostForReview(created.id);
+      show('Role posted and live.', 'success');
+      setShowJobPostModal(false);
+      setJobPostForm({
+        title: '', industry: '', employmentType: 'full_time', workMode: 'onsite', description: '',
+        responsibilities: '', requirements: '', pincode: '', compensationType: 'paid',
+        budgetMin: '', budgetMax: '', numberOfOpenings: '1', applicationDeadline: '',
+      });
+      setJobPostsRefreshKey((k) => k + 1);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setShowJobPostModal(false);
+        show('Your session expired — please sign in again.', 'error');
+        navigate('/login', { state: { from: location } });
+        return;
+      }
+      if (err instanceof ApiError && err.code === 'PROFILE_NOT_ELIGIBLE') {
+        show('Your account type can\'t post jobs — this requires a Business profile.', 'error');
+        return;
+      }
+      show(err instanceof ApiError ? err.message : 'Could not post the role.', 'error');
+    } finally {
+      setPostingJob(false);
+    }
+  };
 
   const handleSubmitApplication = async () => {
     if (!selectedCall) return;
@@ -422,6 +497,201 @@ export const CastingEcosystem = () => {
                     className="flex-1 py-4 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {applying ? 'Submitting…' : 'Submit Application'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Post a Role Modal — POST /v1/job-posts then POST .../submit-review.
+          Requires a Business-type profile server-side (verified live: a
+          casting_director profile gets 403 PROFILE_NOT_ELIGIBLE). */}
+      <AnimatePresence>
+        {showJobPostModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl no-scrollbar"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">Post a Role</h2>
+                  <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible to everyone browsing Find Jobs.</p>
+                </div>
+                <button onClick={() => setShowJobPostModal(false)} className="text-white/40 hover:text-white p-2">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Role Title *</label>
+                    <input
+                      type="text"
+                      value={jobPostForm.title}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Senior Cinematographer"
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
+                    <select
+                      value={jobPostForm.industry}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, industry: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    >
+                      <option value="">Select industry</option>
+                      {TALENT_CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Employment Type *</label>
+                    <select
+                      value={jobPostForm.employmentType}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, employmentType: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    >
+                      <option value="full_time">Full-time</option>
+                      <option value="part_time">Part-time</option>
+                      <option value="contract">Contract</option>
+                      <option value="freelance">Freelance</option>
+                      <option value="internship">Internship</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
+                    <select
+                      value={jobPostForm.workMode}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, workMode: e.target.value as JobWorkMode }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    >
+                      <option value="onsite">On-site</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="remote">Remote</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
+                  <textarea
+                    value={jobPostForm.description}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder="What's this role, and what's the project?"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Responsibilities</label>
+                    <textarea
+                      value={jobPostForm.responsibilities}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, responsibilities: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Requirements</label>
+                    <textarea
+                      value={jobPostForm.requirements}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, requirements: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
+                    <input
+                      type="text"
+                      value={jobPostForm.pincode}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, pincode: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Openings</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={jobPostForm.numberOfOpenings}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, numberOfOpenings: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
+                    <input
+                      type="date"
+                      value={jobPostForm.applicationDeadline}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
+                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
+                    {(['paid', 'unpaid', 'negotiable'] as JobCompensationType[]).map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setJobPostForm((f) => ({ ...f, compensationType: c }))}
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
+                          jobPostForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
+                        )}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  {jobPostForm.compensationType === 'paid' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="number"
+                        placeholder="Min (₹)"
+                        value={jobPostForm.budgetMin}
+                        onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMin: e.target.value }))}
+                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max (₹)"
+                        value={jobPostForm.budgetMax}
+                        onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMax: e.target.value }))}
+                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4 pt-2">
+                  <button onClick={() => setShowJobPostModal(false)} className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateJobPost}
+                    disabled={postingJob}
+                    className="flex-1 py-4 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {postingJob ? 'Posting…' : 'Post Role'}
                   </button>
                 </div>
               </div>
@@ -1091,19 +1361,29 @@ export const CastingEcosystem = () => {
                   Find Jobs is real; browsing crew professionals by specialty isn't built yet.
                 </p>
               </div>
-              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit">
-                {(['jobs', 'professionals'] as const).map((mode) => (
+              <div className="flex items-center gap-3">
+                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit">
+                  {(['jobs', 'professionals'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setCrewMode(mode)}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
+                        crewMode === mode ? "bg-gold text-black" : "text-white/40 hover:text-white"
+                      )}
+                    >
+                      {mode === 'jobs' ? 'Find Jobs' : 'Find Professionals'}
+                    </button>
+                  ))}
+                </div>
+                {isRecruiter && (
                   <button
-                    key={mode}
-                    onClick={() => setCrewMode(mode)}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
-                      crewMode === mode ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                    )}
+                    onClick={() => setShowJobPostModal(true)}
+                    className="flex items-center gap-2 bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors shrink-0"
                   >
-                    {mode === 'jobs' ? 'Find Jobs' : 'Find Professionals'}
+                    <Plus size={14} /> Post a Role
                   </button>
-                ))}
+                )}
               </div>
             </div>
 

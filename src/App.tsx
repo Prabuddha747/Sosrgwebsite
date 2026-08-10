@@ -22,6 +22,7 @@ import { SosrGAcademy } from './pages/SosrGAcademy';
 import { AdminPage } from './pages/AdminPage';
 import { Sosrg7EPage } from './pages/Sosrg7EPage';
 import { ComingSoonBanner } from './components/ComingSoonBanner';
+import { BiharDocumentaryRegistration } from './pages/BiharDocumentaryRegistration';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { ProfileSetupPage } from './pages/profile/ProfileSetupPage';
@@ -107,6 +108,8 @@ export default function App() {
               </RequireProfile>
             }
           />
+
+          <Route path="/bihar-untold" element={<BiharDocumentaryRegistration />} />
 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />

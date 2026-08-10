@@ -25,6 +25,7 @@ export const sectionPath: Record<Section, string> = {
   'sosrg-7e': '/sosrg-7e',
   academy: '/academy',
   community: '/community',
+  'bihar-documentary': '/bihar-untold',
 };
 
 const pathToSectionEntries = Object.entries(sectionPath) as [Section, string][];

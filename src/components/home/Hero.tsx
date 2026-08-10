@@ -89,8 +89,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       titleHighlight: "Tech, Business & Professional Services.",
       subtitle: "The premium AI-driven national-level creative infrastructure empowering artists, writers, and creators to bridge grassroots talent with global entertainment markets.",
       joinTalent: "Join as Talent",
-      hireTalent: "Hire Talent",
-      exploreProjects: "Explore Projects",
+      hireTalent: "Casting Calls",
+      exploreProjects: "Bihar Untold",
       stat1: "Verified Artists",
       stat2: "AI Matches",
       stat3: "Projects Funded",
@@ -101,8 +101,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       titleHighlight: "तकनीक, व्यवसाय और व्यावसायिक सेवाएँ।",
       subtitle: "प्रीमियम एआई-संचालित राष्ट्रीय स्तर का रचनात्मक बुनियादी ढांचा जो कलाकारों, लेखकों और रचनाकारों को वैश्विक मनोरंजन बाजारों के साथ जमीनी स्तर की प्रतिभा को जोड़ने के लिए सशक्त बनाता है।",
       joinTalent: "टैलेंट के रूप में जुड़ें",
-      hireTalent: "टैलेंट हायर करें",
-      exploreProjects: "प्रोजेक्ट एक्सप्लोर करें",
+      hireTalent: "कास्टिंग कॉल्स",
+      exploreProjects: "Bihar Untold",
       stat1: "सत्यापित कलाकार",
       stat2: "एआई मैच",
       stat3: "वित्त पोषित परियोजनाएं",
@@ -113,8 +113,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       titleHighlight: "तंत्रज्ञान, व्यवसाय आणि व्यावसायिक सेवा.",
       subtitle: "प्रीमियम एआय-चालित राष्ट्रीय स्तरावरील रचनात्मक पायाभूत सुविधा जे कलाकार, लेखक आणि निर्मात्यांना जागतिक मनोरंजन बाजारांशी जोडण्यासाठी सक्षम करते.",
       joinTalent: "टॅलेंट म्हणून सामील व्हा",
-      hireTalent: "टॅलेंट हायर करा",
-      exploreProjects: "प्रोजेक्ट एक्सप्लोर करा",
+      hireTalent: "कास्टिंग कॉल्स",
+      exploreProjects: "Bihar Untold",
       stat1: "सत्यापित कलाकार",
       stat2: "एआय मॅचेस",
       stat3: "निधी प्राप्त प्रकल्प",
@@ -125,8 +125,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       titleHighlight: "தொழில்நுட்பம், வணிகம் மற்றும் தொழில்முறை சேவைகள்.",
       subtitle: "கலைஞர்கள், எழுத்தாளர்கள் மற்றும் படைப்பாளர்களை உலகளாவிய பொழுதுபோக்கு சந்தைகளுடன் இணைக்க அதிகாரமளிக்கும் பிரீமியம் AI-உந்துதல் தேசிய அளவிலான படைப்பு உள்கட்டமைப்பு.",
       joinTalent: "திறமையாக சேரவும்",
-      hireTalent: "திறமையை நியமிக்கவும்",
-      exploreProjects: "திட்டங்களை ஆராயுங்கள்",
+      hireTalent: "காஸ்டிங் கால்ஸ்",
+      exploreProjects: "Bihar Untold",
       stat1: "சரிபார்க்கப்பட்ட கலைஞர்கள்",
       stat2: "AI பொருத்தங்கள்",
       stat3: "நிதியளிக்கப்பட்ட திட்டங்கள்",
@@ -137,8 +137,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       titleHighlight: "టెక్, వ్యాపారం & వృత్తిపరమైన సేవలు.",
       subtitle: "కళాకారులు, రచయితలు మరియు సృష్టికర్తలను ప్రపంచ వినోద మార్కెట్‌లతో అనుసంధానించడానికి శక్తివంతం చేసే ప్రీమియం AI-ఆధారిత జాతీయ స్థాయి సృజనాత్మక మౌలిక సదుపాయాలు.",
       joinTalent: "టాలెంట్‌గా చేరండి",
-      hireTalent: "టాలెంట్‌ను నియమించుకోండి",
-      exploreProjects: "ప్రాజెక్ట్‌లను అన్వేషించండి",
+      hireTalent: "కాస్టింగ్ కాల్స్",
+      exploreProjects: "Bihar Untold",
       stat1: "ధృవీకరించబడిన కళాకారులు",
       stat2: "AI మ్యాచ్‌లు",
       stat3: "నిధులు పొందిన ప్రాజెక్ట్‌లు",
@@ -149,8 +149,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       titleHighlight: "প্রযুক্তি, ব্যবসা এবং পেশাদার পরিষেবা।",
       subtitle: "প্রিমিয়াম এআই-চালিত জাতীয় স্তরের সৃজনশীল পরিকাঠামো যা শিল্পী, লেখক এবং নির্মাতাদের বিশ্বব্যাপী বিনোদন বাজারের সাথে যুক্ত করতে ক্ষমতায়ন করে।",
       joinTalent: "ট্যালেন্ট হিসেবে যোগ দিন",
-      hireTalent: "ট্যালেন্ট নিয়োগ করুন",
-      exploreProjects: "প্রকল্প অন্বেষণ করুন",
+      hireTalent: "কাস্টিং কলস",
+      exploreProjects: "Bihar Untold",
       stat1: "যাচাইকৃত শিল্পী",
       stat2: "এআই ম্যাচ",
       stat3: "অর্থায়িত প্রকল্প",
@@ -161,8 +161,8 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
     titleHighlight: "Tech, Business & Professional Services.",
     subtitle: "The premium AI-driven national-level creative infrastructure empowering artists, writers, and creators to bridge grassroots talent with global entertainment markets.",
     joinTalent: "Join as Talent",
-    hireTalent: "Hire Talent",
-    exploreProjects: "Explore Projects",
+    hireTalent: "Casting Calls",
+    exploreProjects: "Bihar Untold",
     stat1: "Verified Artists",
     stat2: "AI Matches",
     stat3: "Projects Funded",
@@ -195,14 +195,14 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
           >
             {t.joinTalent} <ChevronRight size={18} />
           </button>
-          <button 
-            onClick={() => setActiveSection('talent')}
+          <button
+            onClick={() => setActiveSection('casting')}
             className="w-full sm:w-auto bg-white/5 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
           >
             <Users size={18} /> {t.hireTalent}
           </button>
-          <button 
-            onClick={() => setActiveSection('casting')}
+          <button
+            onClick={() => setActiveSection('bihar-documentary')}
             className="w-full sm:w-auto bg-white/5 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
           >
             <Video size={18} /> {t.exploreProjects}
