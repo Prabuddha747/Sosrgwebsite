@@ -1,10 +1,26 @@
 # SosrG Platform — Backend Data Schema
 
-**Version:** 1.0 (production baseline)
+**Version:** 1.1 — corrected engine + reality check (see §0). Previous version incorrectly targeted PostgreSQL.
 **Scope:** relational data model for the SosrG creative-industries platform — identity & accounts, artist/business profiles, the Connecting Partner franchise network, casting & auditions, talent auctions, marketplace, academy, events, community & social, messaging, wallet & payments, notifications, AI services, legal/IP, and platform administration.
-**Target engine:** PostgreSQL 15+ (UUID primary keys, native `ENUM` types, `JSONB` for flexible/extensible fields, row-level timestamps).
+**Target engine:** MySQL 8.4 (`BINARY(16)` primary keys, `utf8mb4_0900_ai_ci`, InnoDB, `JSON` columns for flexible/extensible fields, `DATETIME(6)` timestamps) — corrected from the previous "PostgreSQL 15+" framing, which was never accurate against the real backend. Every table below (`ENUM` types, `UUID`/`gen_random_uuid()` keys, `CITEXT`, `TIMESTAMPTZ`, PostGIS `GEOGRAPHY`) still uses Postgres-flavored pseudocode except §3, which has been rewritten to match the real, deployed MySQL DDL exactly. See §0 before trusting anything else in this document as buildable.
 
-This document is the source of truth for every table, relationship, and constraint the platform is built on. Application code, API contracts, and admin tooling should be generated from — and validated against — this schema, not the other way around.
+This document is the source of truth for the **intended** schema. For modules the real backend has actually implemented, treat the live migration files as authoritative over this document, not the other way around — see §0.
+
+---
+
+## 0. Schema reality check — read this before anything else
+
+This document was written as a forward-looking full-product spec. The real backend (`SosrgBackend`, 4 migrations: `000001_identity_foundation`, `000002_profiles_organisations_media`, `000003_workflows_community`, `000004_commerce_moderation_operations`) implements a **real, comprehensive, ~78-table MySQL 8.4 schema** — but it is not this document, and the gap is bigger than a SQL dialect difference.
+
+**What the real backend already has, verified from the actual migration files** (not the OpenAPI spec, not guessed): identity/auth (`users`, `user_identities`, `user_credentials`, `user_sessions`, plus outbox/idempotency/audit-log infrastructure this document doesn't mention at all — §3, rewritten below to match exactly), profiles/organisations/media/KYC (`profiles`, `profile_details`, `organisations`, `kyc_documents`, `media_assets`, `portfolios`, §4), casting & auditions (`casting_calls`, `casting_roles`, `casting_applications`, `auditions`, `application_media` — this is what powers the live `/v1/casting-calls` endpoints wired into the app, §6), events, academy-adjacent (`learning_resources`, `expert_services`, `appointments`), community & social (`connections`, `community_posts`, `post_comments`, `conversations`, `messages`), collaboration (`collaboration_projects`, `opportunities`), and payments/moderation (`payment_orders`, `payment_transactions`, `refunds`, `ledger_accounts`, `content_reports`, `escalations`, `notifications`).
+
+**What this document describes that has NO real backend table at all, confirmed by grepping every `CREATE TABLE` across all four migrations:**
+- **The Connecting Partner franchise network (§5)** — no `cp_memberships`, `cp_tiers`, or anything CP-related exists yet.
+- **The four-tier Yellow/Green/Blue/Red account-status system + independent star rating (§3 below, previously)** — the real `users.account_status` enum is `'active' | 'suspended' | 'deactivated'`, an account-standing flag, not a trust/tier ladder. There is no `star_rating` column, no `connection_count` on `users`, no `account_status_history` table. The account-tier system architecture.md flags as the platform's highest-value unbuilt infrastructure is confirmed unbuilt at the schema level too, not just the frontend.
+- **Talent Auctions (§7)** — no `auction_listings`, `auction_bids`, or `auction_contracts` tables exist.
+- **The coin/wallet economy exactly as described (§13)** — the real backend has a generic double-entry ledger (`ledger_accounts`, `ledger_transactions`, `ledger_entries`) plus payment-gateway tables (`payment_orders`, `payment_transactions`, `refunds`, `payment_webhook_events`), not the wallet/coin-balance-specific tables this document describes. The ledger pattern is more general-purpose than what's specified here — a real design decision to reconcile, not just a naming difference.
+
+**Practical implication:** if you're implementing against a module this document shares with the real migrations (identity, profiles, casting, events, messaging, community, payments-in-general), read the actual migration file first — this document may describe an earlier, unreconciled design. If you're implementing against a module absent from the real migrations (CP franchise, account tiers, auctions, the specific wallet/coin model), there is nothing built yet at any layer — schema, service code, or API — and that should be scoped as new backend work, not "already exists, just needs a frontend."
 
 ---
 
@@ -58,96 +74,152 @@ The platform is organized into fifteen modules, each detailed in its own section
 
 ## 3. Identity & Access
 
-Every account on the platform — regardless of whether it belongs to an individual artist, a business, or an administrator — is a single row in `users`. Role-specific data lives in the profile tables (§4); role-specific permissions for internal operators live in `admin_role_assignments`.
+**Rewritten to match `000001_identity_foundation.sql` exactly** — this is real, deployed DDL, not a spec. Every account is a row in `users`; a user can have multiple auth methods (`user_identities` — password, phone, Google, Apple, OIDC) but credentials for the password method live separately (`user_credentials`) so a user with only social login has no password row at all. Role-specific profile data lives in `profiles` (§4, `000002_profiles_organisations_media.sql`) — deliberately not on `users` itself.
 
 ```sql
-CREATE TYPE account_status AS ENUM ('yellow', 'green', 'blue', 'red');
-CREATE TYPE user_role AS ENUM ('artist', 'buyer', 'business', 'casting_director', 'admin');
-CREATE TYPE kyc_doc_type AS ENUM ('aadhar', 'pan', 'passport', 'other');
-CREATE TYPE kyc_status AS ENUM ('pending', 'approved', 'rejected');
-CREATE TYPE otp_purpose AS ENUM ('login', 'kyc', 'withdrawal', 'password_reset');
+-- Preconditions: MySQL 8.4, empty SosrG schema, utf8mb4_0900_ai_ci available.
+-- Forward fix: correct errors with a new migration. MySQL DDL is not transactionally rolled back.
 
 CREATE TABLE users (
-  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  platform_id       TEXT UNIQUE NOT NULL,          -- human-readable SosrG ID, e.g. SOSRG-8K3F2QZ1M
-  email             CITEXT UNIQUE,
-  phone             TEXT UNIQUE NOT NULL,
-  phone_verified_at TIMESTAMPTZ,
-  password_hash     TEXT,                          -- null when phone-OTP is the only auth factor
-  primary_role      user_role NOT NULL,
-  account_status    account_status NOT NULL DEFAULT 'yellow',
-  status_since      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  star_rating       NUMERIC(2,1) NOT NULL DEFAULT 0 CHECK (star_rating BETWEEN 0 AND 5),
-  connection_count  INTEGER NOT NULL DEFAULT 0,     -- denormalized counter, maintained by trigger on CONNECTIONS
-  name              TEXT NOT NULL,
-  name_locked_until DATE,                           -- enforces the 90-day name-change cooldown
-  date_of_birth     DATE,
-  gender            TEXT,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  deleted_at        TIMESTAMPTZ
-);
-CREATE INDEX idx_users_status ON users (account_status);
-CREATE INDEX idx_users_role ON users (primary_role);
+  id BINARY(16) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(32) NULL,
+  locale VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'en',
+  email_verified_at DATETIME(6) NULL,
+  account_status VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'active',
+  account_type VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'public_user',
+  last_seen_at DATETIME(6) NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_email_key UNIQUE (email),
+  CONSTRAINT users_phone_key UNIQUE (phone),
+  CONSTRAINT users_locale_check CHECK (locale IN ('en', 'hi')),
+  CONSTRAINT users_account_status_check CHECK (account_status IN ('active', 'suspended', 'deactivated')),
+  CONSTRAINT users_account_type_check CHECK (account_type IN ('public_user', 'staff')),
+  INDEX users_status_id_idx (account_status, id)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE otp_verifications (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id      UUID REFERENCES users(id),           -- null for pre-registration OTPs
-  phone        TEXT NOT NULL,
-  otp_hash     TEXT NOT NULL,
-  purpose      otp_purpose NOT NULL,
-  attempt_count SMALLINT NOT NULL DEFAULT 0,
-  expires_at   TIMESTAMPTZ NOT NULL,
-  verified_at  TIMESTAMPTZ,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+CREATE TABLE user_identities (
+  id BINARY(16) NOT NULL,
+  user_id BINARY(16) NOT NULL,
+  provider VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  provider_subject VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  email_at_provider VARCHAR(255) NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  last_login_at DATETIME(6) NULL,
+  CONSTRAINT user_identities_pkey PRIMARY KEY (id),
+  CONSTRAINT user_identities_provider_subject_key UNIQUE (provider, provider_subject),
+  CONSTRAINT user_identities_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT user_identities_provider_check CHECK (provider IN ('password', 'phone', 'google', 'apple', 'oidc')),
+  INDEX user_identities_user_id_idx (user_id)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE kyc_documents (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID NOT NULL REFERENCES users(id),
-  doc_type      kyc_doc_type NOT NULL,
-  file_url      TEXT NOT NULL,                       -- object-storage reference, never a public URL
-  status        kyc_status NOT NULL DEFAULT 'pending',
-  reviewed_by   UUID REFERENCES users(id),
-  reviewed_at   TIMESTAMPTZ,
-  rejection_reason TEXT,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_kyc_user ON kyc_documents (user_id);
+CREATE TABLE user_credentials (
+  user_id BINARY(16) NOT NULL,
+  password_hash VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  password_algorithm VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'argon2id-v1',
+  password_changed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  failed_attempts INT UNSIGNED NOT NULL DEFAULT 0,
+  locked_until DATETIME(6) NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  CONSTRAINT user_credentials_pkey PRIMARY KEY (user_id),
+  CONSTRAINT user_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT user_credentials_failed_attempts_check CHECK (failed_attempts <= 1000)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Every promotion or demotion between account tiers is recorded, never just overwritten in place.
-CREATE TABLE account_status_history (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID NOT NULL REFERENCES users(id),
-  from_status account_status,
-  to_status   account_status NOT NULL,
-  reason      TEXT NOT NULL,
-  changed_by  UUID REFERENCES users(id),              -- null when the change was system-automated
-  changed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+-- Refresh tokens are never stored raw — token_digest is the only lookup key.
+-- token_family_id groups all tokens descended from one login, so reuse of an
+-- already-rotated token (theft signal) can revoke the whole family at once.
+CREATE TABLE user_sessions (
+  id BINARY(16) NOT NULL,
+  user_id BINARY(16) NOT NULL,
+  token_digest BINARY(32) NOT NULL,
+  token_family_id BINARY(16) NOT NULL,
+  device_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
+  device_label VARCHAR(160) NULL,
+  ip_hash BINARY(32) NULL,
+  user_agent VARCHAR(512) NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  last_used_at DATETIME(6) NULL,
+  expires_at DATETIME(6) NOT NULL,
+  revoked_at DATETIME(6) NULL,
+  revocation_reason VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
+  replaced_by_session_id BINARY(16) NULL,
+  CONSTRAINT user_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT user_sessions_token_digest_key UNIQUE (token_digest),
+  CONSTRAINT user_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT user_sessions_replaced_by_fkey FOREIGN KEY (replaced_by_session_id) REFERENCES user_sessions(id) ON DELETE SET NULL,
+  CONSTRAINT user_sessions_expiry_check CHECK (expires_at > created_at),
+  INDEX user_sessions_user_active_idx (user_id, revoked_at, expires_at),
+  INDEX user_sessions_family_idx (token_family_id, revoked_at),
+  INDEX user_sessions_expiry_idx (expires_at)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE admin_role_assignments (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES users(id),
-  scope      TEXT NOT NULL,     -- e.g. 'casting_moderation', 'fraud', 'legal', 'platform_settings', 'super_admin'
-  granted_by UUID REFERENCES users(id),
-  granted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  revoked_at TIMESTAMPTZ
-);
+-- Transactional outbox pattern: application writes + the event row commit in
+-- the same InnoDB transaction, a separate dispatcher polls and publishes.
+-- Not in the original schema.md design at all — real backend infrastructure
+-- the frontend never needs to touch directly, listed here for completeness.
+CREATE TABLE outbox_events (
+  id BINARY(16) NOT NULL,
+  aggregate_type VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  aggregate_id BINARY(16) NOT NULL,
+  event_type VARCHAR(160) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  payload JSON NOT NULL,
+  occurred_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  available_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  attempt_count INT UNSIGNED NOT NULL DEFAULT 0,
+  max_attempts INT UNSIGNED NOT NULL DEFAULT 10,
+  locked_at DATETIME(6) NULL,
+  locked_by VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+  processed_at DATETIME(6) NULL,
+  dead_lettered_at DATETIME(6) NULL,
+  last_error VARCHAR(1024) NULL,
+  CONSTRAINT outbox_events_pkey PRIMARY KEY (id),
+  CONSTRAINT outbox_events_attempts_check CHECK (attempt_count <= max_attempts),
+  INDEX outbox_events_claim_idx (processed_at, dead_lettered_at, available_at, id),
+  INDEX outbox_events_aggregate_idx (aggregate_type, aggregate_id, occurred_at)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE auth_sessions (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID NOT NULL REFERENCES users(id),
-  refresh_token_hash TEXT NOT NULL,
-  device_label  TEXT,
-  ip_address    INET,
-  issued_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  expires_at    TIMESTAMPTZ NOT NULL,
-  revoked_at    TIMESTAMPTZ
-);
+CREATE TABLE idempotency_records (
+  id BINARY(16) NOT NULL,
+  actor_scope VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  command_name VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  idempotency_key VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  request_fingerprint BINARY(32) NOT NULL,
+  status VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'processing',
+  response_status SMALLINT UNSIGNED NULL,
+  response_body JSON NULL,
+  locked_until DATETIME(6) NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  expires_at DATETIME(6) NOT NULL,
+  CONSTRAINT idempotency_records_pkey PRIMARY KEY (id),
+  CONSTRAINT idempotency_records_scope_key UNIQUE (actor_scope, command_name, idempotency_key),
+  CONSTRAINT idempotency_records_status_check CHECK (status IN ('processing', 'completed', 'failed')),
+  INDEX idempotency_records_cleanup_idx (expires_at)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE audit_logs (
+  id BINARY(16) NOT NULL,
+  actor_user_id BINARY(16) NULL,
+  actor_type VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  action VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  target_type VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  target_id BINARY(16) NOT NULL,
+  request_id BINARY(16) NULL,
+  metadata JSON NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  CONSTRAINT audit_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT audit_logs_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT audit_logs_actor_type_check CHECK (actor_type IN ('public_user', 'staff', 'system')),
+  INDEX audit_logs_actor_created_idx (actor_user_id, created_at DESC),
+  INDEX audit_logs_target_created_idx (target_type, target_id, created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 
-**Account tiers.** `account_status` is the platform's core trust signal, independent of `primary_role`: **Yellow** is the entry tier granted at registration (name, email, DOB, gender, and profession collected, ID issued by email); **Green** requires KYC approval plus a minimum connection count and unlocks posting, commenting, Art Mart selling, paid chat, and advertisement purchase; **Blue** is earned by sustained performance history or a much larger connection count; **Red** marks a dead or policy-violating account and restricts write access platform-wide. `star_rating` is a separate, continuously-recalculated performance signal that overlays whichever tier a user currently holds — the two are shown together (e.g. a Green account at 4.5 stars) but computed independently.
+**What changed from the previous version of this section, explicitly:** no `platform_id` human-readable ID column exists; `account_status` is a standing flag (`active`/`suspended`/`deactivated`), not the Yellow/Green/Blue/Red trust-tier ladder architecture.md and the franchise spec describe — that system has no backing table anywhere in the real schema (see §0); there is no `star_rating` or `connection_count` on `users`; auth is email+password/social-first (`user_identities`/`user_credentials`), not phone+OTP-first as the previous version assumed — `phone` exists on `users` but is nullable and not the primary auth factor; KYC now lives under Profiles (§4's `kyc_documents`, tied to `profiles` not `users` directly) rather than a `users`-scoped table; role/permission data for staff isn't a separate `admin_role_assignments` table — `users.account_type` (`public_user`/`staff`) is the only role signal in this migration, with finer-grained staff permissioning apparently handled elsewhere (not yet located in these four migrations).
 
 ---
 

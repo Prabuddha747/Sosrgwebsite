@@ -10,8 +10,26 @@
   
   --color-gold: #D4AF37;
   --color-crimson: #8B0000;
-  --color-cinematic-black: #040b16; /* Deep Navy Blue */
-  --color-cinematic-gray: #0a1428; /* Lighter Navy Blue */
+  /* Warm near-black (espresso), not navy — navy's cool undertone fights
+     gold; a warm black is gold's classic pairing and reads as the dark
+     counterpart to the cream/gold light theme rather than an unrelated
+     palette. */
+  --color-cinematic-black: #140F0A;
+  --color-cinematic-gray: #241B12;
+
+  /* Marquee loop, used by the ui/marquee primitive (sector showcase, etc). */
+  --animate-marquee: marquee var(--duration, 40s) linear infinite;
+  --animate-marquee-vertical: marquee-vertical var(--duration, 40s) linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap, 1rem))); }
+}
+
+@keyframes marquee-vertical {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - var(--gap, 1rem))); }
 }
 
 @layer base {
@@ -24,9 +42,28 @@
   background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
 }
 
+/*
+ * Neumorphic card treatment, replacing the old blur-based glassmorphism —
+ * same soft-shadow-molded-from-the-surface approach as the new
+ * design-system's shadow-elevation tokens (redesign.md §2's rule: shadows
+ * tinted to the base hue, never pure black/white), applied to the OLD dark
+ * pages that keep their existing cinematic-black/navy palette. One shared
+ * recipe (dark shadow + a faint tinted highlight) across every variant, so
+ * they read as one coherent card system instead of five unrelated glow
+ * colors — only the highlight tint differs per variant, carrying forward
+ * each one's existing color identity.
+ */
+.glass-panel,
+.glass-panel-pink,
+.glass-panel-blue,
+.glass-panel-purple,
+.glass-panel-green,
+.glass-panel-orange {
+  @apply bg-cinematic-gray border border-white/5 rounded-2xl transition-shadow duration-500;
+}
+
 .glass-panel {
-  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl transition-colors duration-500;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(198, 149, 46, 0.14);
 }
 
 .gold-text {
@@ -50,28 +87,23 @@
 }
 
 .glass-panel-pink {
-  @apply bg-pink-500/5 backdrop-blur-xl border border-pink-500/20 rounded-2xl transition-colors duration-500;
-  box-shadow: 0 8px 32px 0 rgba(236, 72, 153, 0.1);
+  box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(236, 72, 153, 0.1);
 }
 
 .glass-panel-blue {
-  @apply bg-blue-500/5 backdrop-blur-xl border border-blue-500/20 rounded-2xl transition-colors duration-500;
-  box-shadow: 0 8px 32px 0 rgba(59, 130, 246, 0.1);
+  box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(59, 130, 246, 0.1);
 }
 
 .glass-panel-purple {
-  @apply bg-purple-500/5 backdrop-blur-xl border border-purple-500/20 rounded-2xl transition-colors duration-500;
-  box-shadow: 0 8px 32px 0 rgba(168, 85, 247, 0.1);
+  box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(168, 85, 247, 0.1);
 }
 
 .glass-panel-green {
-  @apply bg-emerald-500/5 backdrop-blur-xl border border-emerald-500/20 rounded-2xl transition-colors duration-500;
-  box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.1);
+  box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(16, 185, 129, 0.1);
 }
 
 .glass-panel-orange {
-  @apply bg-orange-500/5 backdrop-blur-xl border border-orange-500/20 rounded-2xl transition-colors duration-500;
-  box-shadow: 0 8px 32px 0 rgba(249, 115, 22, 0.1);
+  box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(249, 115, 22, 0.1);
 }
 
 .crimson-glow {
@@ -80,6 +112,18 @@
 
 .gold-glow {
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Used across ~20 horizontal/vertical scroll strips site-wide (pill filters,
+   tab bars, this carousel) but was never actually defined — those elements
+   were relying on a class that did nothing, so the native scrollbar showed
+   through anyway. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom scrollbar */
@@ -93,23 +137,39 @@
   @apply bg-gold/30 rounded-full hover:bg-gold/50;
 }
 
-/* Light Mode Overrides */
+/* Light Mode Overrides — retuned to the real cream/gold palette
+   (src/design-system/tokens.css: cream-100 page bg, cream-50 card surface,
+   gold-700 for AA-safe text, text-primary/-muted) instead of the generic
+   slate light theme this block originally shipped with, now that cream/gold
+   is the site's only theme (redesign.md — no more dark-mode fallback). */
 .light-mode {
-  --color-cinematic-black: #f8fafc;
-  --color-cinematic-gray: #ffffff;
-  --color-gold: #b8860b;
-  color: #0f172a;
-  background-color: #f8fafc;
+  --color-cinematic-black: #F5EDE2;
+  --color-cinematic-gray: #FFFAF0;
+  --color-gold: #8A6318;
+  color: #1C1712;
+  background-color: #F5EDE2;
+}
+
+/* Same neumorphic approach as the dark mode above, recalibrated for a light
+   base: a soft warm-gray dark side (never pure black) and a near-white
+   highlight, matching the design-system's own light-theme shadow recipe in
+   tokens.css. */
+.light-mode .glass-panel,
+.light-mode .glass-panel-pink,
+.light-mode .glass-panel-blue,
+.light-mode .glass-panel-purple,
+.light-mode .glass-panel-green,
+.light-mode .glass-panel-orange {
+  background-color: #FFFAF0 !important;
+  border-color: rgba(28, 23, 18, 0.06) !important;
 }
 
 .light-mode .glass-panel {
-  background-color: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(255, 250, 240, 0.9);
 }
 
 .light-mode .gold-text {
-  background-image: linear-gradient(to right, #b8860b, #d4af37, #b8860b);
+  background-image: linear-gradient(to right, #8A6318, #d4af37, #8A6318);
 }
 
 .light-mode .vibrant-text-1 {
@@ -129,56 +189,69 @@
 }
 
 .light-mode .glass-panel-pink {
-  background-color: rgba(236, 72, 153, 0.05) !important;
-  border-color: rgba(236, 72, 153, 0.2) !important;
+  box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(236, 72, 153, 0.12);
 }
 
 .light-mode .glass-panel-blue {
-  background-color: rgba(59, 130, 246, 0.05) !important;
-  border-color: rgba(59, 130, 246, 0.2) !important;
+  box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(59, 130, 246, 0.12);
 }
 
 .light-mode .glass-panel-purple {
-  background-color: rgba(168, 85, 247, 0.05) !important;
-  border-color: rgba(168, 85, 247, 0.2) !important;
+  box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(168, 85, 247, 0.12);
 }
 
 .light-mode .glass-panel-green {
-  background-color: rgba(16, 185, 129, 0.05) !important;
-  border-color: rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(16, 185, 129, 0.12);
 }
 
 .light-mode .glass-panel-orange {
-  background-color: rgba(249, 115, 22, 0.05) !important;
-  border-color: rgba(249, 115, 22, 0.2) !important;
+  box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(249, 115, 22, 0.12);
 }
 
-.light-mode .text-white { color: #0f172a !important; }
-.light-mode .text-white\/40 { color: rgba(15, 23, 42, 0.5) !important; }
-.light-mode .text-white\/50 { color: rgba(15, 23, 42, 0.6) !important; }
-.light-mode .text-white\/60 { color: rgba(15, 23, 42, 0.7) !important; }
-.light-mode .text-white\/80 { color: rgba(15, 23, 42, 0.9) !important; }
-.light-mode .bg-white { background-color: #0f172a !important; }
-.light-mode .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
-.light-mode .bg-white\/10 { background-color: rgba(0, 0, 0, 0.06) !important; }
-.light-mode .bg-white\/20 { background-color: rgba(0, 0, 0, 0.1) !important; }
-.light-mode .border-white\/5 { border-color: rgba(0, 0, 0, 0.05) !important; }
-.light-mode .border-white\/10 { border-color: rgba(0, 0, 0, 0.1) !important; }
-.light-mode .border-white\/20 { border-color: rgba(0, 0, 0, 0.2) !important; }
-.light-mode .border-white\/30 { border-color: rgba(0, 0, 0, 0.3) !important; }
-.light-mode .bg-cinematic-black { background-color: #f8fafc !important; }
-.light-mode .bg-cinematic-gray { background-color: #ffffff !important; }
-.light-mode .bg-black { background-color: #ffffff !important; }
-.light-mode .bg-black\/30 { background-color: rgba(255, 255, 255, 0.5) !important; }
-.light-mode .bg-black\/50 { background-color: rgba(255, 255, 255, 0.7) !important; }
-.light-mode .bg-black\/80 { background-color: rgba(255, 255, 255, 0.9) !important; }
-.light-mode .text-black { color: #ffffff !important; }
-.light-mode .border-white { border-color: #0f172a !important; }
-.light-mode .hover\:text-white:hover { color: #0f172a !important; }
-.light-mode .hover\:bg-white:hover { background-color: #0f172a !important; color: #ffffff !important; }
-.light-mode .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.05) !important; }
-.light-mode .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.1) !important; }
-.light-mode .hover\:bg-white\/20:hover { background-color: rgba(0, 0, 0, 0.15) !important; }
-.light-mode .hover\:border-white:hover { border-color: #0f172a !important; }
-.light-mode .hover\:border-white\/30:hover { border-color: rgba(0, 0, 0, 0.3) !important; }
+.light-mode .text-white { color: #1C1712 !important; }
+.light-mode .text-white\/10 { color: rgba(28, 23, 18, 0.3) !important; }
+.light-mode .text-white\/20 { color: rgba(28, 23, 18, 0.4) !important; }
+.light-mode .text-white\/30 { color: rgba(28, 23, 18, 0.55) !important; }
+.light-mode .text-white\/40 { color: rgba(28, 23, 18, 0.6) !important; }
+.light-mode .text-white\/50 { color: rgba(28, 23, 18, 0.65) !important; }
+.light-mode .text-white\/60 { color: rgba(28, 23, 18, 0.75) !important; }
+.light-mode .text-white\/70 { color: rgba(28, 23, 18, 0.82) !important; }
+.light-mode .text-white\/80 { color: rgba(28, 23, 18, 0.9) !important; }
+.light-mode .text-white\/90 { color: rgba(28, 23, 18, 0.95) !important; }
+
+/* Standard Tailwind palette colors (emerald-400, blue-400, etc.) are used
+   directly as accent text throughout the old pages — unlike gold/crimson
+   (custom --color-* tokens already redefined for light mode above), these
+   are raw utility classes with no light-mode variant, so their default
+   light, dark-bg-tuned values go nearly illegible on the light cream
+   background. Overridden here with darker, light-bg-safe equivalents of
+   the same hue, scoped to .light-mode only — dark mode is untouched. */
+.light-mode .text-emerald-400 { color: #15803d !important; }
+.light-mode .text-blue-400 { color: #1d4ed8 !important; }
+.light-mode .text-purple-400 { color: #7e22ce !important; }
+.light-mode .text-pink-500 { color: #be185d !important; }
+.light-mode .text-red-500 { color: #b91c1c !important; }
+.light-mode .bg-white { background-color: #1C1712 !important; }
+.light-mode .bg-white\/5 { background-color: rgba(28, 23, 18, 0.03) !important; }
+.light-mode .bg-white\/10 { background-color: rgba(28, 23, 18, 0.06) !important; }
+.light-mode .bg-white\/20 { background-color: rgba(28, 23, 18, 0.1) !important; }
+.light-mode .border-white\/5 { border-color: rgba(28, 23, 18, 0.05) !important; }
+.light-mode .border-white\/10 { border-color: rgba(28, 23, 18, 0.1) !important; }
+.light-mode .border-white\/20 { border-color: rgba(28, 23, 18, 0.2) !important; }
+.light-mode .border-white\/30 { border-color: rgba(28, 23, 18, 0.3) !important; }
+.light-mode .bg-cinematic-black { background-color: #F5EDE2 !important; }
+.light-mode .bg-cinematic-gray { background-color: #FFFAF0 !important; }
+.light-mode .bg-black { background-color: #FFFAF0 !important; }
+.light-mode .bg-black\/30 { background-color: rgba(255, 250, 240, 0.5) !important; }
+.light-mode .bg-black\/50 { background-color: rgba(255, 250, 240, 0.7) !important; }
+.light-mode .bg-black\/80 { background-color: rgba(255, 250, 240, 0.9) !important; }
+.light-mode .text-black { color: #FFFAF0 !important; }
+.light-mode .border-white { border-color: #1C1712 !important; }
+.light-mode .hover\:text-white:hover { color: #1C1712 !important; }
+.light-mode .hover\:bg-white:hover { background-color: #1C1712 !important; color: #FFFAF0 !important; }
+.light-mode .hover\:bg-white\/5:hover { background-color: rgba(28, 23, 18, 0.05) !important; }
+.light-mode .hover\:bg-white\/10:hover { background-color: rgba(28, 23, 18, 0.1) !important; }
+.light-mode .hover\:bg-white\/20:hover { background-color: rgba(28, 23, 18, 0.15) !important; }
+.light-mode .hover\:border-white:hover { border-color: #1C1712 !important; }
+.light-mode .hover\:border-white\/30:hover { border-color: rgba(28, 23, 18, 0.3) !important; }
 

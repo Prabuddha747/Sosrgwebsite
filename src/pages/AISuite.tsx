@@ -131,7 +131,7 @@ export const AISuite = () => {
 
   return (
     <section className="py-24 px-6 bg-cinematic-gray/50">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-serif italic mb-4">AI <span className="vibrant-text-2">Modules</span></h2>
           <p className="text-white/50 max-w-2xl mx-auto">Demonstrating the intelligent backbone of the platform to build trust in automation and fairness.</p>

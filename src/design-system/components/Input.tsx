@@ -6,10 +6,10 @@ import { cn } from '../../lib/utils';
 // identical apart from their native element.
 const fieldClasses = (hasError: boolean, className?: string) =>
   cn(
-    'sosrg-focus-ring w-full min-h-12 rounded-xl px-4 py-2 bg-navy-950',
+    'sosrg-focus-ring w-full min-h-12 rounded-xl px-4 py-2 bg-cream-50',
     'font-body text-sosrg-base text-text-primary placeholder:text-text-muted',
     'border transition-colors',
-    hasError ? 'border-danger' : 'border-navy-700 focus:border-gold-500',
+    hasError ? 'border-danger' : 'border-cream-200 focus:border-gold-500',
     'disabled:opacity-45 disabled:cursor-not-allowed',
     className,
   );

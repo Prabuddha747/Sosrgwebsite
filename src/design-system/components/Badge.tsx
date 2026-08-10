@@ -25,7 +25,7 @@ const defaultLabel: Record<BadgeVariant, string> = {
 
 // Soft pill: colored text/border on a low-opacity fill of the same color,
 // so many badges in a list (e.g. an applicant table) don't read as a wall
-// of solid color blocks. Text color is checked against the navy-900 page
+// of solid color blocks. Text color is checked against the cream-100 page
 // background, same measurement discipline as redesign.md §1's own table.
 // Exported so Avatar's account-tier ring can reuse the exact same tier
 // colors rather than redefining them (redesign.md §6: "Avatar ... reuses

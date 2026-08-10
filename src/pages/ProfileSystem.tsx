@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   Star,
   ChevronRight,
-  Play,
   Mic,
   Video,
   Menu,
@@ -81,9 +80,278 @@ import {
 import { cn } from '../lib/utils';
 import type { Section, ProfileType, ExperienceLevel } from '../types';
 import { ProfileSetupFlow } from '../components/profile/ProfileSetupFlow';
+import { useToast } from '../design-system';
+import { useAuth } from '../contexts/AuthContext';
+import { profilesService } from '../services/profiles';
+import type { ContactVisibility, PortfolioVisibility } from '../services/profiles';
+import { authService } from '../services/auth';
+import type { AuthSession } from '../services/auth';
+import { messagingService } from '../services/messaging';
+import type { Conversation } from '../services/messaging';
+import { portfoliosService } from '../services/portfolios';
+import type { Portfolio } from '../services/portfolios';
+import { ApiError } from '../services/httpClient';
+import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
-export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: ProfileType }) => {
+// Small honest placeholder for header fields this dashboard's mock data
+// invents (platform ID, rating, industry tags, Green ID) but the live
+// profile API doesn't return — used wherever realProfile has no value for a
+// field the old mock always filled in. Takes a specific description instead
+// of a bare "Missing info" so it reads like the Profile Details tab's hints.
+const MissingInfo = ({ text = 'Not set yet' }: { text?: string }) => (
+  <span className="bg-white/5 border border-white/10 border-dashed px-2 py-1 rounded text-[10px] text-white/40 italic">
+    {text}
+  </span>
+);
+
+export interface ProfileSystemRealData {
+  displayName: string;
+  profileType: string;
+  district?: string;
+  state?: string;
+}
+
+// A labeled profile field that shows the real value when present, or — when
+// empty — a short description of what the field is for instead of leaving
+// blank space. Used throughout Profile Details wherever real API data now
+// backs a field the old mock always filled in.
+const ProfileField = ({ label, value, hint }: { label: string; value?: string | null; hint: string }) => (
+  <div>
+    <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">{label}</div>
+    {value ? <div className="font-bold">{value}</div> : <p className="text-xs text-white/30 italic">{hint}</p>}
+  </div>
+);
+
+export const ProfileSystem = ({
+  initialType = 'artist',
+  realProfile,
+  onLogout,
+}: {
+  initialType?: ProfileType;
+  /** When provided, the header uses this instead of the dashboard's own mock name/type — everything else in this component is still the Phase 2/3 mock. */
+  realProfile?: ProfileSystemRealData;
+  /** When provided, renders a real Log Out control in the header instead of the mock experience-level switcher — see that switcher's removal note below. */
+  onLogout?: () => void;
+}) => {
   const [isSettingUp, setIsSettingUp] = useState(false);
+  const { show } = useToast();
+  const { profile: authProfile, refreshProfile } = useAuth();
+
+  // Privacy & Security tab — wired to the real Profiles/Auth APIs. Current
+  // values are seeded from GET /v1/profiles/me's nested `.privacy` (see
+  // doc/API_REQUIREMENTS.md §2.4a for the correction: an earlier version of
+  // this comment wrongly claimed no GET existed for these). 2FA, data
+  // export, and account deletion genuinely have no live endpoint (§2.4d).
+  const [isDiscoverable, setIsDiscoverable] = useState(authProfile?.isDiscoverable ?? true);
+  const [privacy, setPrivacy] = useState<{ contactVisibility: ContactVisibility; portfolioVisibility: PortfolioVisibility }>({
+    contactVisibility: authProfile?.privacy?.contactVisibility ?? 'private',
+    portfolioVisibility: authProfile?.privacy?.portfolioVisibility ?? 'public',
+  });
+  const [savingPrivacyField, setSavingPrivacyField] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<AuthSession[] | null>(null);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
+
+  const handleTogglePublicProfile = async () => {
+    const next = !isDiscoverable;
+    setIsDiscoverable(next);
+    setSavingPrivacyField('discoverable');
+    try {
+      await profilesService.updateProfile({ isDiscoverable: next });
+      show(next ? 'Profile is now public.' : 'Profile is now private.', 'success');
+    } catch (err) {
+      setIsDiscoverable(!next);
+      show(err instanceof ApiError ? err.message : 'Could not update profile visibility.', 'error');
+    } finally {
+      setSavingPrivacyField(null);
+    }
+  };
+
+  const handleContactVisibilityChange = async (value: ContactVisibility) => {
+    const prev = privacy.contactVisibility;
+    setPrivacy((p) => ({ ...p, contactVisibility: value }));
+    setSavingPrivacyField('contactVisibility');
+    try {
+      await profilesService.updatePrivacySettings({ contactVisibility: value });
+      show('Contact visibility updated.', 'success');
+    } catch (err) {
+      setPrivacy((p) => ({ ...p, contactVisibility: prev }));
+      show(err instanceof ApiError ? err.message : 'Could not update contact visibility.', 'error');
+    } finally {
+      setSavingPrivacyField(null);
+    }
+  };
+
+  const handlePortfolioVisibilityChange = async (value: PortfolioVisibility) => {
+    const prev = privacy.portfolioVisibility;
+    setPrivacy((p) => ({ ...p, portfolioVisibility: value }));
+    setSavingPrivacyField('portfolioVisibility');
+    try {
+      await profilesService.updatePrivacySettings({ portfolioVisibility: value });
+      show('Portfolio visibility updated.', 'success');
+    } catch (err) {
+      setPrivacy((p) => ({ ...p, portfolioVisibility: prev }));
+      show(err instanceof ApiError ? err.message : 'Could not update portfolio visibility.', 'error');
+    } finally {
+      setSavingPrivacyField(null);
+    }
+  };
+
+  const handleViewSessions = async () => {
+    setShowSessions((v) => !v);
+    if (sessions) return;
+    setSessionsLoading(true);
+    try {
+      setSessions(await authService.listSessions());
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not load sessions.', 'error');
+      setShowSessions(false);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    try {
+      await authService.revokeSession(sessionId);
+      setSessions((prev) => prev?.filter((s) => s.sessionId !== sessionId) ?? null);
+      show('Session revoked.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not revoke session.', 'error');
+    }
+  };
+
+  // Real Edit Profile — PATCH /v1/profiles/me and /v1/profiles/me/details
+  // are both real, live endpoints (updateProfile/updateProfileDetails,
+  // already built for the Privacy tab's isDiscoverable toggle). These two
+  // forms are the only "Edit" buttons in this component that now do
+  // anything real; Media Gallery's upload and Social Links' "Add Link"
+  // still show an under-development toast — those need the Media API
+  // wired in, a bigger piece of work than a field edit.
+  const [editingBasic, setEditingBasic] = useState(false);
+  const [basicForm, setBasicForm] = useState({ displayName: '', headline: '', bio: '', pincode: '', websiteUrl: '' });
+  const [savingBasic, setSavingBasic] = useState(false);
+
+  const openBasicEdit = () => {
+    if (!authProfile) return;
+    setBasicForm({
+      displayName: authProfile.displayName ?? '',
+      headline: authProfile.headline ?? '',
+      bio: authProfile.bio ?? '',
+      pincode: authProfile.pincode ?? '',
+      websiteUrl: authProfile.websiteUrl ?? '',
+    });
+    setEditingBasic(true);
+  };
+
+  const handleSaveBasic = async () => {
+    setSavingBasic(true);
+    try {
+      await profilesService.updateProfile({
+        displayName: basicForm.displayName,
+        headline: basicForm.headline || null,
+        bio: basicForm.bio || null,
+        pincode: basicForm.pincode || null,
+        websiteUrl: basicForm.websiteUrl || null,
+      });
+      await refreshProfile();
+      show('Profile updated.', 'success');
+      setEditingBasic(false);
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not save profile.', 'error');
+    } finally {
+      setSavingBasic(false);
+    }
+  };
+
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [detailsForm, setDetailsForm] = useState({ heightCm: '', weightKg: '', eyeColor: '', hairColor: '', yearsExperience: '' });
+  const [savingDetails, setSavingDetails] = useState(false);
+
+  const openDetailsEdit = () => {
+    if (!authProfile) return;
+    setDetailsForm({
+      heightCm: authProfile.details.heightCm != null ? String(authProfile.details.heightCm) : '',
+      weightKg: authProfile.details.weightKg != null ? String(authProfile.details.weightKg) : '',
+      eyeColor: authProfile.details.eyeColor ?? '',
+      hairColor: authProfile.details.hairColor ?? '',
+      yearsExperience: authProfile.yearsExperience != null ? String(authProfile.yearsExperience) : '',
+    });
+    setEditingDetails(true);
+  };
+
+  const handleSaveDetails = async () => {
+    setSavingDetails(true);
+    try {
+      await profilesService.updateProfileDetails({
+        heightCm: detailsForm.heightCm ? Number(detailsForm.heightCm) : undefined,
+        weightKg: detailsForm.weightKg ? Number(detailsForm.weightKg) : undefined,
+        eyeColor: detailsForm.eyeColor || undefined,
+        hairColor: detailsForm.hairColor || undefined,
+      });
+      if (detailsForm.yearsExperience) {
+        await profilesService.updateProfile({ yearsExperience: Number(detailsForm.yearsExperience) });
+      }
+      await refreshProfile();
+      show('Details updated.', 'success');
+      setEditingDetails(false);
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not save details.', 'error');
+    } finally {
+      setSavingDetails(false);
+    }
+  };
+
+  // My Network — wired to the real Messaging API (GET /v1/conversations).
+  // "Network" here means "people you actually have a real conversation
+  // with," replacing the old fake connection cards (Aarav Sharma, Ishani
+  // Gupta, etc. — accounts that were never real). No dedicated
+  // connections/network endpoint exists separately from messaging.
+  const [conversations, setConversations] = useState<Conversation[] | null>(null);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [conversationsError, setConversationsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    messagingService
+      .listConversations({ limit: 20 })
+      .then((result) => {
+        if (!cancelled) setConversations(result.items);
+      })
+      .catch((err) => {
+        if (!cancelled) setConversationsError(err instanceof ApiError ? err.message : 'Could not load your network.');
+      })
+      .finally(() => {
+        if (!cancelled) setConversationsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Media Gallery — Portfolios is a real, live API (unlike Comfort
+  // Declaration/Availability below, which don't exist at all). Read-only:
+  // this app doesn't build the upload/create flow yet.
+  const [portfolios, setPortfolios] = useState<Portfolio[] | null>(null);
+  const [portfoliosLoading, setPortfoliosLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    portfoliosService
+      .listMyPortfolios()
+      .then((result) => {
+        if (!cancelled) setPortfolios(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPortfolios([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPortfoliosLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [profile, setProfile] = useState({
     type: initialType,
     industry: 'Cinema',
@@ -157,7 +425,7 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
   const currentStats = stats[profile.type][profile.level] || stats.artist.intermediate;
 
   return (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
       {isSettingUp ? (
         <ProfileSetupFlow onComplete={(data) => {
           setProfile({
@@ -196,28 +464,66 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
               </div>
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
-                  <h1 className="text-3xl font-bold">{profile.name}</h1>
+                  <h1 className="text-3xl font-bold">{realProfile?.displayName ?? profile.name}</h1>
                   <ShieldCheck className="text-blue-400" size={20} />
                 </div>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-3">
-                  <span className="text-gold font-mono text-sm bg-gold/10 px-2 py-1 rounded">{profile.sosrgId}</span>
+                  {realProfile ? (
+                    authProfile?.username ? (
+                      <span className="text-gold font-mono text-sm bg-gold/10 px-2 py-1 rounded">@{authProfile.username}</span>
+                    ) : <MissingInfo text="No username set" />
+                  ) : (
+                    <span className="text-gold font-mono text-sm bg-gold/10 px-2 py-1 rounded">{profile.sosrgId}</span>
+                  )}
                   <span className="text-white/20">•</span>
-                  <span className="text-white/80 text-sm font-medium">{profile.profession}</span>
-                  <span className="text-white/20">•</span>
-                  <span className="text-gold text-xs font-bold uppercase tracking-wider">{profile.industry}</span>
-                  {profile.secondaryIndustry && (
+                  {realProfile ? (
+                    <span className="text-white/80 text-sm font-medium capitalize">{realProfile.profileType.replace('_', ' ')}</span>
+                  ) : (
+                    <span className="text-white/80 text-sm font-medium">{profile.profession}</span>
+                  )}
+                  {!realProfile && (
                     <>
                       <span className="text-white/20">•</span>
-                      <span className="text-white/40 text-xs font-bold uppercase tracking-wider">{profile.secondaryIndustry}</span>
+                      <span className="text-gold text-xs font-bold uppercase tracking-wider">{profile.industry}</span>
+                      {profile.secondaryIndustry && (
+                        <>
+                          <span className="text-white/20">•</span>
+                          <span className="text-white/40 text-xs font-bold uppercase tracking-wider">{profile.secondaryIndustry}</span>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
                 <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                  <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[10px] text-white/60">{profile.location}</span>
-                  <span className="bg-gold/10 border border-gold/20 px-2 py-1 rounded text-[10px] text-gold font-bold flex items-center gap-1">
-                    <Star size={10} className="fill-gold" /> 4.8 Rating
-                  </span>
-                  {profile.hasGreenId && (
+                  {realProfile ? (
+                    realProfile.district || realProfile.state ? (
+                      <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[10px] text-white/60">
+                        {[realProfile.district, realProfile.state].filter(Boolean).join(', ')}
+                      </span>
+                    ) : <MissingInfo text="No location set" />
+                  ) : (
+                    <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[10px] text-white/60">{profile.location}</span>
+                  )}
+                  {realProfile ? (
+                    // Ratings & Reviews has no live API yet (see that tab) —
+                    // this is the same gap, not a field the user forgot to fill in.
+                    <span className="bg-gold/10 border border-gold/20 px-2 py-1 rounded text-[10px] text-gold font-bold flex items-center gap-1">
+                      <Star size={10} className="fill-gold" /> Rating — Coming soon
+                    </span>
+                  ) : (
+                    <span className="bg-gold/10 border border-gold/20 px-2 py-1 rounded text-[10px] text-gold font-bold flex items-center gap-1">
+                      <Star size={10} className="fill-gold" /> 4.8 Rating
+                    </span>
+                  )}
+                  {realProfile ? (
+                    authProfile?.kycStatus === 'verified' ? (
+                      <span className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                        <ShieldCheck size={10} /> KYC Verified
+                      </span>
+                    ) : (
+                      <MissingInfo text={authProfile?.kycStatus ? `KYC: ${authProfile.kycStatus}` : 'KYC not started'} />
+                    )
+                  ) : profile.hasGreenId && (
                     <span className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                       <ShieldCheck size={10} /> Green ID Active
                     </span>
@@ -227,8 +533,14 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-              <button 
-                onClick={() => setIsSettingUp(true)}
+              <button
+                onClick={() => {
+                  if (realProfile) {
+                    openBasicEdit();
+                  } else {
+                    setIsSettingUp(true);
+                  }
+                }}
                 className="flex items-center justify-center gap-2 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all"
               >
                 <Settings size={14} /> Edit Profile
@@ -247,28 +559,34 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   </button>
                 ))}
               </div>
-              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                {(['fresher', 'intermediate', 'expert'] as ExperienceLevel[]).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setProfile({ ...profile, level: l })}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
-                      profile.level === l ? "bg-crimson text-white" : "text-white/40 hover:text-white"
-                    )}
-                  >
-                    {l[0]}
-                  </button>
-                ))}
-              </div>
+              {/*
+                The old Fresher/Intermediate/Expert switcher used to live
+                here, letting a user set their own experience-tier — removed
+                from user-facing UI per explicit direction: tier should be
+                something SosrG staff assess and set, not self-declared.
+                doc/API_REQUIREMENTS.md now asks for this as an admin-only
+                field. `profile.level` still exists internally (drives the
+                stat-tile mock data below) — it just isn't user-editable here anymore.
+              */}
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-all"
+                >
+                  Log Out
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {/* Stats Grid — labels are real category names, values are still
+              mock (no stats/analytics API exists), so only the number
+              scaffolds, not the label. */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-            {Object.entries(currentStats).map(([key, value]) => (
-              <div key={key} className="glass-panel p-6 text-center group hover:border-gold/30 transition-all">
-                <div className="text-2xl font-bold text-gold mb-1">{value}</div>
+            {Object.keys(currentStats).map((key) => (
+              <div key={key} className="relative glass-panel p-6 text-center group hover:border-gold/30 transition-all">
+                <ComingSoonTag />
+                <ScaffoldRow className="h-8 w-16 mx-auto mb-2" />
                 <div className="text-[10px] uppercase tracking-widest text-white/40 group-hover:text-white/60 transition-colors">{key}</div>
               </div>
             ))}
@@ -363,38 +681,30 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   </div>
                 </div>
 
+                {/* Brief box — this whole tab has no live search/discovery API
+                    behind it yet, so it's honestly described up front rather
+                    than presented as working search results. */}
+                <div className="glass-panel p-6 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
+                  <h3 className="font-bold mb-2 flex items-center gap-2"><Search size={16} className="text-blue-400" /> About Smart Discovery</h3>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Smart Discovery is meant to surface trending talent and personalized casting/collaboration
+                    suggestions based on your profile and activity. There's no discovery/search or
+                    recommendations API live yet, so the filters above are real controls with nothing behind
+                    them, and the sections below are shown as loading placeholders rather than fabricated
+                    results.
+                  </p>
+                </div>
+
                 {/* Trending Section */}
                 <div>
                   <div className="flex items-center gap-2 mb-6">
                     <TrendingUp className="text-gold" size={24} />
                     <h2 className="text-2xl font-bold">Trending Now</h2>
-                    <span className="bg-gold/10 text-gold text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded ml-2">AI Curated</span>
+                    <span className="bg-gold text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded ml-2">Coming Soon</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[
-                      { name: 'Priya Sharma', role: 'Method Actor', rating: 4.9, views: '12k', image: 'https://picsum.photos/seed/priya/400/400', verified: true },
-                      { name: 'Rahul Verma', role: 'Cinematographer', rating: 4.8, views: '8.5k', image: 'https://picsum.photos/seed/rahul/400/400', verified: true },
-                      { name: 'Aditi Desai', role: 'Screenwriter', rating: 4.7, views: '6.2k', image: 'https://picsum.photos/seed/aditi/400/400', verified: false },
-                      { name: 'Vikram Singh', role: 'Director', rating: 4.9, views: '15k', image: 'https://picsum.photos/seed/vikram/400/400', verified: true },
-                    ].map((talent, i) => (
-                      <div key={i} className="glass-panel p-4 group cursor-pointer hover:border-gold/30 transition-colors">
-                        <div className="aspect-square rounded-xl overflow-hidden mb-4 relative">
-                          <img src={talent.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={talent.name} referrerPolicy="no-referrer" />
-                          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1">
-                            <TrendingUp size={10} className="text-gold" /> {talent.views}
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-start mb-1">
-                          <h3 className="font-bold flex items-center gap-1">
-                            {talent.name}
-                            {talent.verified && <ShieldCheck size={14} className="text-emerald-400" />}
-                          </h3>
-                          <div className="flex items-center gap-1 text-xs font-bold text-gold">
-                            <Star size={10} className="fill-gold" /> {talent.rating}
-                          </div>
-                        </div>
-                        <p className="text-xs text-white/40">{talent.role}</p>
-                      </div>
+                    {[0, 1, 2, 3].map((i) => (
+                      <ScaffoldRow key={i} className="h-56" />
                     ))}
                   </div>
                 </div>
@@ -404,45 +714,11 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   <div className="flex items-center gap-2 mb-6">
                     <Zap className="text-blue-400" size={24} />
                     <h2 className="text-2xl font-bold">Suggested For You</h2>
-                    <span className="text-xs text-white/40 ml-2">Based on your recent activity</span>
+                    <span className="bg-gold text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded ml-2">Coming Soon</span>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors cursor-pointer">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <Briefcase size={20} className="text-blue-400" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold">Feature Film Casting</h4>
-                            <p className="text-xs text-white/40">Looking for Method Actors</p>
-                          </div>
-                        </div>
-                        <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded">98% Match</span>
-                      </div>
-                      <p className="text-sm text-white/60 mb-4">A major production house is looking for actors with your specific skill set for an upcoming thriller.</p>
-                      <button className="text-xs font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 flex items-center gap-1">
-                        View Details <ChevronRight size={14} />
-                      </button>
-                    </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors cursor-pointer">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center">
-                            <User size={20} className="text-gold" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold">Collaborator Suggestion</h4>
-                            <p className="text-xs text-white/40">Cinematographer</p>
-                          </div>
-                        </div>
-                        <span className="bg-gold/20 text-gold text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded">High Synergy</span>
-                      </div>
-                      <p className="text-sm text-white/60 mb-4">You frequently work on projects similar to Rahul Verma's portfolio. Connecting could lead to great collaborations.</p>
-                      <button className="text-xs font-bold uppercase tracking-widest text-gold hover:text-yellow-400 flex items-center gap-1">
-                        Connect <ChevronRight size={14} />
-                      </button>
-                    </div>
+                    <ScaffoldRow className="h-40" />
+                    <ScaffoldRow className="h-40" />
                   </div>
                 </div>
               </motion.div>
@@ -458,43 +734,63 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
               >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2 space-y-8">
-                    {/* Basic Info */}
+                    {/* Basic Info — wired to the real profile (GET /v1/profiles/me);
+                        each field shows a real value or, when unfilled, a short
+                        description of what it's for instead of blank space. */}
                     <div className="glass-panel-pink p-8">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold">Basic Information</h3>
-                        <button className="text-xs text-gold hover:underline flex items-center gap-1"><Settings size={14} /> Edit</button>
+                        <button onClick={openBasicEdit} className="text-xs text-gold hover:underline flex items-center gap-1">
+                          <Settings size={14} /> Edit
+                        </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Full Name</div>
-                          <div className="font-bold">{profile.name}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Gender</div>
-                          <div className="font-bold">{profile.gender}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Profession</div>
-                          <div className="font-bold">{profile.profession}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Location</div>
-                          <div className="font-bold">{profile.location}</div>
-                        </div>
+                        <ProfileField label="Full Name" value={authProfile?.displayName ?? profile.name} hint="Your public display name." />
+                        <ProfileField label="Gender" value={authProfile?.genderIdentity} hint="Not set — your self-described gender identity." />
+                        <ProfileField
+                          label="Profession"
+                          value={authProfile?.professions?.[0]?.name}
+                          hint="No profession added yet — this is what casting directors see you're skilled at."
+                        />
+                        <ProfileField
+                          label="Location"
+                          value={authProfile ? [authProfile.district, authProfile.state].filter(Boolean).join(', ') || undefined : profile.location}
+                          hint="No location set — helps nearby casting calls find you."
+                        />
                       </div>
                       <div>
                         <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Bio</div>
-                        <p className="text-sm text-white/80 leading-relaxed">{profile.bio}</p>
+                        {authProfile?.bio ? (
+                          <p className="text-sm text-white/80 leading-relaxed">{authProfile.bio}</p>
+                        ) : (
+                          <p className="text-xs text-white/30 italic">
+                            {authProfile ? "No bio yet — a short introduction is the first thing people read on your profile." : profile.bio}
+                          </p>
+                        )}
                       </div>
                       <div className="mt-6">
                         <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Skill Tags</div>
-                        <div className="flex flex-wrap gap-2">
-                          {profile.skills.map((skill, i) => (
-                            <span key={i} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
+                        {authProfile ? (
+                          authProfile.skills.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {authProfile.skills.map((skill) => (
+                                <span key={skill.id} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
+                                  {skill.name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-white/30 italic">No skills added yet — skills help you show up in casting searches.</p>
+                          )
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {profile.skills.map((skill, i) => (
+                              <span key={i} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -503,65 +799,83 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                       <div className="glass-panel-purple p-8">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Star size={20} className="text-gold" /> Actor/Model Advanced Module</h3>
-                          <button className="text-xs text-gold hover:underline">Edit Module</button>
+                          <button onClick={openDetailsEdit} className="text-xs text-gold hover:underline">
+                            Edit Module
+                          </button>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div>
+                            {/* Real fields (PATCH /v1/profiles/me/details) — "xx" is the
+                                unfilled-value placeholder for a real field with no data yet,
+                                not a fake number. */}
                             <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Physical Attributes</h4>
                             <div className="space-y-3">
                               <div className="flex justify-between">
                                 <span className="text-white/40 text-sm">Height</span>
-                                <span className="font-bold text-sm">{profile.physicalAttributes.height}</span>
+                                <span className="font-bold text-sm">{authProfile?.details.heightCm != null ? `${authProfile.details.heightCm} cm` : 'xx'}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-white/40 text-sm">Weight</span>
-                                <span className="font-bold text-sm">{profile.physicalAttributes.weight}</span>
+                                <span className="font-bold text-sm">{authProfile?.details.weightKg != null ? `${authProfile.details.weightKg} kg` : 'xx'}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-white/40 text-sm">Eye Color</span>
-                                <span className="font-bold text-sm">{profile.physicalAttributes.eyeColor}</span>
+                                <span className="font-bold text-sm">{authProfile?.details.eyeColor ?? 'xx'}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-white/40 text-sm">Hair Color</span>
-                                <span className="font-bold text-sm">{profile.physicalAttributes.hairColor}</span>
+                                <span className="font-bold text-sm">{authProfile?.details.hairColor ?? 'xx'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-white/40 text-sm">Experience</span>
+                                <span className="font-bold text-sm">{authProfile?.yearsExperience != null ? `${authProfile.yearsExperience} yrs` : 'xx'}</span>
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-6">
+                            {/* None of the three below exist in the profile API yet — no
+                                experience-category, comfort-declaration, or availability
+                                field anywhere in ProfileDetailsResponseDto. Scaffolded
+                                rather than shown as real, empty, or editable — flagged in
+                                doc/API_REQUIREMENTS.md §2.4b. */}
                             <div>
-                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">Experience Categories</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {profile.experienceCategories.map((cat, i) => (
-                                  <span key={i} className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                                    {cat}
-                                  </span>
-                                ))}
+                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
+                                Experience Categories
+                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                              </h4>
+                              <div className="flex gap-2">
+                                <ScaffoldRow className="h-6 w-24" />
+                                <ScaffoldRow className="h-6 w-20" />
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">Comfort Declaration</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {profile.comfortDeclaration.map((dec, i) => (
-                                  <span key={i} className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                                    {dec}
-                                  </span>
-                                ))}
+                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
+                                Comfort Declaration
+                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                              </h4>
+                              <div className="flex gap-2">
+                                <ScaffoldRow className="h-6 w-20" />
+                                <ScaffoldRow className="h-6 w-16" />
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">Availability</h4>
-                              <span className="bg-gold/10 text-gold border border-gold/20 px-3 py-1 rounded-full text-xs font-bold">
-                                {profile.availability}
-                              </span>
+                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
+                                Availability
+                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                              </h4>
+                              <ScaffoldRow className="h-6 w-28" />
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
                           <div className="text-sm text-white/60">Generate a casting-ready digital resume instantly.</div>
-                          <button className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2">
+                          <button
+                            onClick={() => show('Resume generation is coming soon.', 'info')}
+                            className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2"
+                          >
                             <FileText size={14} /> Generate Resume
                           </button>
                         </div>
@@ -569,34 +883,39 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                     )}
 
                     {profile.type === 'business' && (
-                      <div className="glass-panel-blue p-8">
+                      <div className="relative glass-panel-blue p-8">
+                        <ComingSoonTag />
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Briefcase size={20} className="text-gold" /> Business Profile</h3>
-                          {profile.hasGreenId && (
-                            <div className="bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                              <ShieldCheck size={14} /> Verified Business
-                            </div>
-                          )}
                         </div>
-                        
+
+                        {/* None of legalStatus/businessRole/address exist anywhere in
+                            OwnProfileResponseDto — there are no business-specific
+                            fields in the real schema at all, only the generic
+                            profile fields every account type shares. websiteUrl is
+                            the one real field here, same as Social Links above. */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                           <div>
                             <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Legal Status</div>
-                            <div className="font-bold">{profile.companyInfo.legalStatus}</div>
+                            <ScaffoldRow className="h-5 w-24" />
                           </div>
                           <div>
                             <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Business Role</div>
-                            <div className="font-bold">{profile.companyInfo.businessRole}</div>
+                            <ScaffoldRow className="h-5 w-32" />
                           </div>
                           <div className="md:col-span-2">
                             <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Registered Address</div>
-                            <div className="font-bold">{profile.companyInfo.address}</div>
+                            <ScaffoldRow className="h-5 w-48" />
                           </div>
                           <div className="md:col-span-2">
                             <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Website</div>
-                            <a href={`https://${profile.companyInfo.website}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-400 hover:underline flex items-center gap-1">
-                              {profile.companyInfo.website} <ExternalLink size={12} />
-                            </a>
+                            {authProfile?.websiteUrl ? (
+                              <a href={authProfile.websiteUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-400 hover:underline flex items-center gap-1">
+                                {authProfile.websiteUrl} <ExternalLink size={12} />
+                              </a>
+                            ) : (
+                              <p className="text-xs text-white/30 italic">No website added yet.</p>
+                            )}
                           </div>
                         </div>
 
@@ -610,7 +929,10 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                               <p className="text-xs text-white/60">Generate a company presentation for partnerships.</p>
                             </div>
                           </div>
-                          <button className="w-full bg-gold text-black py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white transition-colors">
+                          <button
+                            onClick={() => show('Presentation generation is coming soon.', 'info')}
+                            className="w-full bg-gold text-black py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white transition-colors"
+                          >
                             Generate Presentation
                           </button>
                         </div>
@@ -619,59 +941,83 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   </div>
 
                   <div className="space-y-8">
-                    {/* Media Uploads */}
+                    {/* Media Gallery — Portfolios is a real, live API
+                        (GET /v1/portfolios), so this shows real portfolios
+                        when they exist. Upload/create isn't built in this
+                        app yet, so that action stays a toast, not fake. */}
                     <div className="glass-panel p-6">
-                      <h3 className="font-bold mb-4 flex items-center gap-2"><Image size={16} className="text-gold" /> Media Gallery</h3>
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="aspect-square bg-white/5 rounded-xl border border-white/10 flex flex-col items-center justify-center text-white/40 hover:text-gold hover:border-gold/50 transition-colors cursor-pointer">
-                          <Image size={24} className="mb-2" />
-                          <span className="text-[10px] uppercase tracking-widest font-bold">Photos</span>
-                        </div>
-                        <div className="aspect-square bg-white/5 rounded-xl border border-white/10 flex flex-col items-center justify-center text-white/40 hover:text-gold hover:border-gold/50 transition-colors cursor-pointer">
-                          <Video size={24} className="mb-2" />
-                          <span className="text-[10px] uppercase tracking-widest font-bold">Videos</span>
-                        </div>
-                        <div className="aspect-square bg-white/5 rounded-xl border border-white/10 flex flex-col items-center justify-center text-white/40 hover:text-gold hover:border-gold/50 transition-colors cursor-pointer">
-                          <Mic size={24} className="mb-2" />
-                          <span className="text-[10px] uppercase tracking-widest font-bold">Audio</span>
-                        </div>
-                        <div className="aspect-square bg-white/5 rounded-xl border border-white/10 flex flex-col items-center justify-center text-white/40 hover:text-gold hover:border-gold/50 transition-colors cursor-pointer">
-                          <FileText size={24} className="mb-2" />
-                          <span className="text-[10px] uppercase tracking-widest font-bold">Docs</span>
-                        </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold flex items-center gap-2"><Image size={16} className="text-gold" /> Media Gallery</h3>
+                        <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
                       </div>
-                      <button className="w-full bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
+
+                      {portfoliosLoading && (
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          {[0, 1, 2, 3].map((i) => (
+                            <ScaffoldRow key={i} className="aspect-square" />
+                          ))}
+                        </div>
+                      )}
+
+                      {!portfoliosLoading && (portfolios?.length ?? 0) === 0 && (
+                        <p className="text-xs text-white/30 italic mb-4">No portfolio yet — this is where your photos, reels, and work samples will show up.</p>
+                      )}
+
+                      {!portfoliosLoading && (portfolios?.length ?? 0) > 0 && (
+                        <div className="space-y-2 mb-4">
+                          {portfolios!.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                              <span className="text-sm font-medium">{p.title}</span>
+                              <span className="text-[9px] uppercase tracking-widest text-white/40">{p.visibility}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => show("This can't be edited yet — this feature is under development.", 'info')}
+                        className="w-full bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                      >
                         <Upload size={14} /> Upload New
                       </button>
                     </div>
 
-                    {/* Social Links */}
+                    {/* Social Links — the profile API only has one generic
+                        websiteUrl field, no per-platform handles, so only
+                        that one is real (§2.4c). */}
                     <div className="glass-panel p-6">
                       <h3 className="font-bold mb-4 flex items-center gap-2"><Globe size={16} className="text-gold" /> Social Links</h3>
                       <div className="space-y-3">
-                        <a href={`https://instagram.com/${profile.socialLinks.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-colors group">
+                        {authProfile?.websiteUrl ? (
+                          <a href={authProfile.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-colors group">
+                            <div className="flex items-center gap-3">
+                              <Globe size={18} className="text-blue-400" />
+                              <span className="text-sm font-medium">{authProfile.websiteUrl}</span>
+                            </div>
+                            <ExternalLink size={14} className="text-white/20 group-hover:text-white/60" />
+                          </a>
+                        ) : (
+                          <p className="text-xs text-white/30 italic">No website added yet.</p>
+                        )}
+                        <div className="relative flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                          <span className="absolute top-2 right-2 bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
                           <div className="flex items-center gap-3">
                             <Instagram size={18} className="text-pink-500" />
-                            <span className="text-sm font-medium">{profile.socialLinks.instagram}</span>
+                            <ScaffoldRow className="h-4 w-28" />
                           </div>
-                          <ExternalLink size={14} className="text-white/20 group-hover:text-white/60" />
-                        </a>
-                        <a href={`https://youtube.com/c/${profile.socialLinks.youtube.replace(' ', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-colors group">
+                        </div>
+                        <div className="relative flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                          <span className="absolute top-2 right-2 bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
                           <div className="flex items-center gap-3">
                             <Youtube size={18} className="text-red-500" />
-                            <span className="text-sm font-medium">{profile.socialLinks.youtube}</span>
+                            <ScaffoldRow className="h-4 w-28" />
                           </div>
-                          <ExternalLink size={14} className="text-white/20 group-hover:text-white/60" />
-                        </a>
-                        <a href={`https://${profile.socialLinks.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-colors group">
-                          <div className="flex items-center gap-3">
-                            <Globe size={18} className="text-blue-400" />
-                            <span className="text-sm font-medium">{profile.socialLinks.website}</span>
-                          </div>
-                          <ExternalLink size={14} className="text-white/20 group-hover:text-white/60" />
-                        </a>
+                        </div>
                       </div>
-                      <button className="w-full mt-4 bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => show("This can't be edited yet — this feature is under development.", 'info')}
+                        className="w-full mt-4 bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                      >
                         <Plus size={14} /> Add Link
                       </button>
                     </div>
@@ -690,9 +1036,10 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Total Balance & Withdrawal */}
-                  <div className="glass-panel p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
+                  <div className="relative glass-panel p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
+                    <ComingSoonTag />
                     <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Total Balance</div>
-                    <div className="text-4xl font-bold text-gold mb-4">₹2,45,000</div>
+                    <div className="text-4xl font-bold text-gold mb-4">xxxx</div>
                     <div className="flex gap-2 mb-4">
                       <button className="flex-1 bg-gold text-black py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors">Withdraw</button>
                       <button className="flex-1 bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Add Funds</button>
@@ -703,19 +1050,21 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   </div>
 
                   {/* Pending Clearance */}
-                  <div className="glass-panel p-6">
+                  <div className="relative glass-panel p-6">
+                    <ComingSoonTag />
                     <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Pending Clearance</div>
-                    <div className="text-3xl font-bold mb-2">₹45,000</div>
+                    <div className="text-3xl font-bold mb-2">xxxx</div>
                     <p className="text-xs text-white/40">From 2 active projects. Expected clearance in 5-7 days.</p>
                   </div>
 
                   {/* SosrG Coins */}
-                  <div className="glass-panel p-6 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
+                  <div className="relative glass-panel p-6 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
+                    <ComingSoonTag />
                     <div className="flex justify-between items-start mb-2">
                       <div className="text-[10px] uppercase tracking-widest text-white/40">SosrG Coins</div>
                       <Award size={16} className="text-emerald-400" />
                     </div>
-                    <div className="text-3xl font-bold mb-2 text-emerald-400">4,500 <span className="text-sm">Coins</span></div>
+                    <div className="text-3xl font-bold mb-2 text-emerald-400">xxxx <span className="text-sm">Coins</span></div>
                     <p className="text-xs text-white/60 mb-3">Earn via referrals, votes, and platform engagement (Available for Users & CP Admins).</p>
                     <button className="w-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-emerald-500/30 transition-colors">
                       Redeem Coins
@@ -723,12 +1072,13 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   </div>
 
                   {/* Tokens */}
-                  <div className="glass-panel p-6 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+                  <div className="relative glass-panel p-6 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+                    <ComingSoonTag />
                     <div className="flex justify-between items-start mb-2">
                       <div className="text-[10px] uppercase tracking-widest text-white/40">Auction Tokens</div>
                       <Ticket size={16} className="text-blue-400" />
                     </div>
-                    <div className="text-3xl font-bold mb-2 text-blue-400">1,250 <span className="text-sm">SGT</span></div>
+                    <div className="text-3xl font-bold mb-2 text-blue-400">xxxx <span className="text-sm">SGT</span></div>
                     <p className="text-xs text-white/60 mb-3">Exclusive tokens used for bidding in premium talent auctions and exclusive events.</p>
                     <button className="w-full bg-blue-500/20 text-blue-400 border border-blue-500/30 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-blue-500/30 transition-colors">
                       Buy Tokens
@@ -738,7 +1088,8 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Transaction History */}
-                  <div className="lg:col-span-2 glass-panel p-8">
+                  <div className="relative lg:col-span-2 glass-panel p-8">
+                    <ComingSoonTag />
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="text-xl font-bold">Transaction History</h3>
                       <div className="flex gap-2">
@@ -749,70 +1100,25 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                       </div>
                     </div>
                     <div className="space-y-4">
-                      {[
-                        { type: 'Earnings', desc: 'Milestone 2: "The Silent Valley"', amount: '+₹25,000', date: 'Today, 2:30 PM', status: 'Completed', color: 'text-emerald-400' },
-                        { type: 'Withdrawal', desc: 'Bank Transfer to ****4567', amount: '-₹50,000', date: 'Yesterday', status: 'Processing', color: 'text-white' },
-                        { type: 'Token Reward', desc: 'Profile Verification Bonus', amount: '+500 SGT', date: 'Oct 12, 2023', status: 'Completed', color: 'text-blue-400' },
-                        { type: 'Coin Reward', desc: 'Referral Bonus (Rahul V.)', amount: '+200 Coins', date: 'Oct 11, 2023', status: 'Completed', color: 'text-emerald-400' },
-                        { type: 'Earnings', desc: 'Advance: "Urban Lifestyle Ad"', amount: '+₹15,000', date: 'Oct 10, 2023', status: 'Completed', color: 'text-emerald-400' },
-                      ].map((tx, i) => (
-                        <div key={i} className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/5">
-                          <div className="flex items-center gap-4">
-                            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center bg-white/5", tx.color)}>
-                              {tx.type === 'Withdrawal' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
-                            </div>
-                            <div>
-                              <div className="font-bold text-sm">{tx.desc}</div>
-                              <div className="text-xs text-white/40">{tx.date}</div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={cn("font-bold", tx.color)}>{tx.amount}</div>
-                            <div className="text-[10px] uppercase tracking-widest text-white/40">{tx.status}</div>
-                          </div>
-                        </div>
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <ScaffoldRow key={i} className="h-16" />
                       ))}
                     </div>
                   </div>
 
                   {/* Payment Methods */}
                   <div className="space-y-6">
-                    <div className="glass-panel p-6">
+                    <div className="relative glass-panel p-6">
+                      <ComingSoonTag />
                       <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-gold" /> Secure Payment</h3>
                       <p className="text-xs text-white/60 mb-6">Powered by Razorpay. Add funds securely using your preferred payment method.</p>
-                      
+
                       <div className="space-y-3">
-                        <button className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-gold/50 transition-colors group">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center">
-                              <span className="font-bold text-blue-400 text-xs">UPI</span>
-                            </div>
-                            <span className="text-sm font-bold">Pay via UPI</span>
-                          </div>
-                          <ChevronRight size={16} className="text-white/20 group-hover:text-gold" />
-                        </button>
-                        
-                        <button className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-gold/50 transition-colors group">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-purple-500/20 flex items-center justify-center">
-                              <span className="font-bold text-purple-400 text-xs">CC</span>
-                            </div>
-                            <span className="text-sm font-bold">Credit / Debit Card</span>
-                          </div>
-                          <ChevronRight size={16} className="text-white/20 group-hover:text-gold" />
-                        </button>
-                        
-                        <button className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-gold/50 transition-colors group">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-emerald-500/20 flex items-center justify-center">
-                              <span className="font-bold text-emerald-400 text-xs">NB</span>
-                            </div>
-                            <span className="text-sm font-bold">Net Banking</span>
-                          </div>
-                          <ChevronRight size={16} className="text-white/20 group-hover:text-gold" />
-                        </button>
+                        {[0, 1, 2].map((i) => (
+                          <ScaffoldRow key={i} className="h-14" />
+                        ))}
                       </div>
-                      
+
                       <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-white/40 uppercase tracking-widest">
                         <Lock size={12} /> 100% Secure Transactions
                       </div>
@@ -828,47 +1134,18 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
+                className="relative space-y-6"
               >
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Booking History</h2>
-                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                    <button className="px-4 py-2 bg-white/10 rounded-lg text-xs font-bold uppercase tracking-widest">Current</button>
-                    <button className="px-4 py-2 text-white/40 hover:text-white rounded-lg text-xs font-bold uppercase tracking-widest">Past</button>
-                    <button className="px-4 py-2 text-white/40 hover:text-white rounded-lg text-xs font-bold uppercase tracking-widest">Auctions</button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { title: 'The Silent Valley', role: 'Lead Actor', date: 'Oct 15 - Nov 30', status: 'In Progress', type: 'Direct Booking', amount: '₹1,50,000' },
-                    { title: 'Urban Lifestyle Ad', role: 'Model', date: 'Nov 5', status: 'Upcoming', type: 'Auction Won', amount: '₹45,000' },
-                  ].map((booking, i) => (
-                    <div key={i} className="glass-panel p-6 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 bg-gold text-black px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-bl-lg">
-                        {booking.status}
-                      </div>
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-xl font-bold mb-1">{booking.title}</h3>
-                          <div className="text-sm text-white/60">{booking.role}</div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Schedule</div>
-                          <div className="text-sm font-medium flex items-center gap-1"><Calendar size={14} className="text-gold" /> {booking.date}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Booking Type</div>
-                          <div className="text-sm font-medium flex items-center gap-1"><Gavel size={14} className="text-blue-400" /> {booking.type}</div>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center pt-4 border-t border-white/10">
-                        <div className="font-bold text-lg">{booking.amount}</div>
-                        <button className="text-xs text-gold hover:underline font-bold uppercase tracking-widest">View Details</button>
-                      </div>
-                    </div>
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Booking History</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  This is where confirmed direct bookings and won auctions will show up as a single
+                  timeline — current, past, and auction-sourced work, each with schedule, payment, and
+                  status in one place, instead of scattered across casting applications and messages.
+                </p>
+                <div className="space-y-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-20" />
                   ))}
                 </div>
               </motion.div>
@@ -880,44 +1157,11 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="glass-panel-pink p-8"
+                className="glass-panel-pink p-8 text-center py-16"
               >
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-bold">Notifications</h2>
-                  <button className="text-xs text-white/40 hover:text-white">Mark all as read</button>
-                </div>
-                
-                <div className="space-y-4">
-                  {[
-                    { title: 'New Audition Match', desc: 'You have a 95% match for "Cyberpunk City" feature film.', time: '10 mins ago', type: 'alert', read: false },
-                    { title: 'Bid Accepted', desc: 'Your bid of ₹45,000 for "Urban Lifestyle Ad" was accepted!', time: '2 hours ago', type: 'success', read: false },
-                    { title: 'System Update', desc: 'Platform maintenance scheduled for Oct 20, 2:00 AM IST.', time: '1 day ago', type: 'system', read: true },
-                    { title: 'Profile Verification', desc: 'Congratulations! Your Green ID verification is complete.', time: '3 days ago', type: 'success', read: true },
-                    { title: 'Message from Casting Director', desc: '"Can you send a quick self-tape for the cafe scene?"', time: '4 days ago', type: 'message', read: true },
-                  ].map((notif, i) => (
-                    <div key={i} className={cn(
-                      "p-4 rounded-xl border transition-colors flex gap-4",
-                      notif.read ? "bg-white/5 border-white/5" : "bg-gold/5 border-gold/20"
-                    )}>
-                      <div className="mt-1">
-                        {notif.type === 'alert' && <Zap size={20} className="text-gold" />}
-                        {notif.type === 'success' && <CheckCircle size={20} className="text-emerald-400" />}
-                        {notif.type === 'system' && <Settings size={20} className="text-blue-400" />}
-                        {notif.type === 'message' && <MessageSquare size={20} className="text-white" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-1">
-                          <div className={cn("font-bold text-sm", !notif.read && "text-gold")}>{notif.title}</div>
-                          <div className="text-[10px] text-white/40">{notif.time}</div>
-                        </div>
-                        <div className="text-sm text-white/60">{notif.desc}</div>
-                      </div>
-                      {!notif.read && (
-                        <div className="w-2 h-2 rounded-full bg-gold mt-2"></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <Zap className="mx-auto mb-4 text-white/20" size={40} />
+                <h2 className="text-xl font-bold mb-2">Notifications</h2>
+                <p className="text-white/40 text-sm max-w-sm mx-auto">This feature is under development — real notifications aren't wired up yet.</p>
               </motion.div>
             )}
 
@@ -933,24 +1177,35 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   <h2 className="text-3xl font-serif italic mb-4">Membership & <span className="gold-text">Subscription</span></h2>
                   <p className="text-white/60">Unlock premium benefits, priority casting, and exclusive workshops.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
                   {[
-                    { name: 'Basic', price: 'Free', features: ['Basic Profile', 'Standard Casting Access', 'Community Forum'], current: true },
-                    { name: 'Pro', price: '₹999/mo', features: ['Featured Profile', 'Priority Casting Access', '1 Free Workshop/mo', 'Advanced Analytics'], current: false },
-                    { name: 'Elite', price: '₹2499/mo', features: ['Verified Badge', 'Direct Messaging to Directors', 'Unlimited Workshops', 'Legal Support'], current: false }
+                    { name: 'Basic', price: "", current: true },
+                    { name: 'Pro', price: '', current: false },
+                    { name: 'Elite', price: '', current: false },
                   ].map((plan, i) => (
-                    <div key={i} className={cn("glass-panel p-8 relative", plan.name === 'Pro' ? "border-gold/50 shadow-[0_0_30px_rgba(255,215,0,0.1)]" : "")}>
+                    <div
+                      key={i}
+                      className={cn(
+                        'relative flex flex-col h-full glass-panel p-8',
+                        plan.name === 'Pro' ? 'border-gold/50 shadow-[0_0_30px_rgba(255,215,0,0.1)]' : '',
+                      )}
+                    >
+                      <ComingSoonTag />
                       {plan.name === 'Pro' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gold text-black px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Most Popular</div>}
                       <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                       <div className="text-3xl font-serif italic text-gold mb-6">{plan.price}</div>
-                      <ul className="space-y-4 mb-8">
-                        {plan.features.map((feature, j) => (
-                          <li key={j} className="flex items-center gap-3 text-sm text-white/80">
-                            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" /> {feature}
-                          </li>
+                      <div className="flex-1 space-y-3 mb-8">
+                        {[0, 1, 2].map((j) => (
+                          <ScaffoldRow key={j} className="h-6" />
                         ))}
-                      </ul>
-                      <button className={cn("w-full py-3 rounded-xl font-bold uppercase tracking-widest transition-all", plan.current ? "bg-white/10 text-white/50 cursor-default" : plan.name === 'Pro' ? "bg-gold text-black hover:scale-105" : "bg-white/5 border border-white/10 hover:bg-white/10")}>
+                      </div>
+                      <button
+                        onClick={() => show('Membership plans are coming soon.', 'info')}
+                        className={cn(
+                          'mt-auto w-full py-3 rounded-xl font-bold uppercase tracking-widest transition-all',
+                          plan.current ? 'bg-white/10 text-white/50 cursor-default' : plan.name === 'Pro' ? 'bg-gold text-black hover:scale-105' : 'bg-white/5 border border-white/10 hover:bg-white/10',
+                        )}
+                      >
                         {plan.current ? 'Current Plan' : 'Upgrade'}
                       </button>
                     </div>
@@ -965,43 +1220,25 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
+                className="relative space-y-8"
               >
+                <ComingSoonTag />
                 <div className="flex justify-between items-center mb-8">
                   <h2 className="text-2xl font-bold">Ratings & Reviews</h2>
                   <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl">
                     <Star className="fill-gold text-gold" size={20} />
-                    <span className="text-xl font-bold">4.8</span>
-                    <span className="text-white/40 text-sm">(124 Reviews)</span>
+                    <span className="text-xl font-bold">xx</span>
+                    <span className="text-white/40 text-sm">(xx Reviews)</span>
                   </div>
                 </div>
+                <p className="text-white/40 text-sm -mt-4 max-w-2xl">
+                  Ratings & Reviews is meant to show verified feedback from people you've worked with —
+                  casting directors, collaborators, clients — building a track record tied to real completed
+                  work rather than self-reported claims. <span className="text-white/60 font-medium">Coming soon</span>
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { author: 'Rajesh Kumar', role: 'Director', rating: 5, date: '2 days ago', text: 'Arjun is a phenomenal actor. His dedication to the method is unparalleled. Highly recommended for intense dramatic roles.' },
-                    { author: 'Priya Singh', role: 'Casting Director', rating: 4, date: '1 week ago', text: 'Great audition tape. Very professional and took direction well during the callback.' },
-                    { author: 'Amit Patel', role: 'Producer', rating: 5, date: '1 month ago', text: 'Delivered lines perfectly on the first take. Saved us a lot of time on set.' },
-                    { author: 'Sneha Reddy', role: 'Workshop Attendee', rating: 5, date: '2 months ago', text: 'The scriptwriting workshop was incredibly insightful. Learned so much about character arcs.' }
-                  ].map((review, i) => (
-                    <div key={i} className="glass-panel p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
-                            <img src={`https://picsum.photos/seed/rev${i}/100/100`} alt={review.author} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-sm">{review.author}</h4>
-                            <p className="text-[10px] text-white/40">{review.role}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          {[...Array(5)].map((_, j) => (
-                            <Star key={j} size={14} className={j < review.rating ? "fill-gold text-gold" : "text-white/20"} />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-sm text-white/80 italic">"{review.text}"</p>
-                      <p className="text-[10px] text-white/40 mt-4 text-right">{review.date}</p>
-                    </div>
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-32" />
                   ))}
                 </div>
               </motion.div>
@@ -1015,6 +1252,13 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8"
               >
+                {/*
+                  Previous mock content commented out rather than deleted, per
+                  this session's standing rule (see PROGRESS.md decision #8):
+                  hardcoded service listings, sales counts, and a fake escrow
+                  balance — none backed by a real endpoint. Restore this block
+                  once Services/Gigs has a live API to wire it to.
+
                 <div className="flex justify-between items-center mb-8">
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Monetisation & Paid Services</h2>
@@ -1044,7 +1288,7 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="glass-panel p-8 mt-12 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
                   <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                     <div>
@@ -1059,6 +1303,18 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                       <button className="bg-white/10 border border-white/20 px-6 py-2 rounded-xl text-sm font-bold hover:bg-white/20 transition-colors">Withdraw</button>
                     </div>
                   </div>
+                </div>
+                */}
+
+                <div className="glass-panel p-12 text-center max-w-2xl mx-auto bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
+                  <ShoppingCart className="mx-auto mb-6 text-gold" size={40} />
+                  <h2 className="text-2xl font-bold mb-4">Services & Gigs — Coming Soon</h2>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    This is where creators will list paid, bookable offerings — coaching sessions, script
+                    reviews, voice-over gigs, workshops — priced and sold directly through SosrG, with
+                    payment held in escrow until delivery is confirmed. It turns a profile from a portfolio
+                    into a storefront.
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -1080,29 +1336,46 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Profile Visibility */}
+                  {/* Profile Visibility — wired to PATCH /v1/profiles/me and
+                      /v1/profiles/me/privacy, both real, verified live. */}
                   <div className="glass-panel p-6 space-y-6">
                     <h3 className="text-lg font-bold border-b border-white/10 pb-4">Profile Visibility</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-bold text-sm">Public Profile</h4>
                           <p className="text-xs text-white/50">Allow anyone to view your basic profile.</p>
                         </div>
-                        <div className="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer">
-                          <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={handleTogglePublicProfile}
+                          disabled={savingPrivacyField === 'discoverable'}
+                          aria-pressed={isDiscoverable}
+                          className={cn(
+                            "w-12 h-6 rounded-full relative transition-colors disabled:opacity-50",
+                            isDiscoverable ? "bg-emerald-500" : "bg-white/10",
+                          )}
+                        >
+                          <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", isDiscoverable ? "right-1" : "left-1")}></div>
+                        </button>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-bold text-sm">Show Contact Info</h4>
-                          <p className="text-xs text-white/50">Only visible to verified casting directors.</p>
+                          <p className="text-xs text-white/50">Who can see your contact details.</p>
                         </div>
-                        <div className="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer">
-                          <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                        </div>
+                        <select
+                          value={privacy.contactVisibility}
+                          onChange={(e) => handleContactVisibilityChange(e.target.value as ContactVisibility)}
+                          disabled={savingPrivacyField === 'contactVisibility'}
+                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-gold disabled:opacity-50"
+                        >
+                          <option value="public">Everyone</option>
+                          <option value="connections">Connections Only</option>
+                          <option value="private">Private</option>
+                        </select>
                       </div>
 
                       <div className="flex justify-between items-center">
@@ -1110,50 +1383,86 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                           <h4 className="font-bold text-sm">Portfolio Visibility</h4>
                           <p className="text-xs text-white/50">Control who can see your media assets.</p>
                         </div>
-                        <select className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-gold">
-                          <option>Everyone</option>
-                          <option>Connections Only</option>
-                          <option>Private</option>
+                        <select
+                          value={privacy.portfolioVisibility}
+                          onChange={(e) => handlePortfolioVisibilityChange(e.target.value as PortfolioVisibility)}
+                          disabled={savingPrivacyField === 'portfolioVisibility'}
+                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-gold disabled:opacity-50"
+                        >
+                          <option value="public">Everyone</option>
+                          <option value="connections">Connections Only</option>
+                          <option value="private">Private</option>
                         </select>
                       </div>
                     </div>
                   </div>
 
-                  {/* Account Security */}
-                  <div className="glass-panel p-6 space-y-6">
+                  {/* Account Security — Active Sessions is real (GET/POST
+                      /v1/auth/sessions); 2FA has no live endpoint. */}
+                  <div className="relative glass-panel p-6 space-y-6">
                     <h3 className="text-lg font-bold border-b border-white/10 pb-4">Account Security</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-bold text-sm">Two-Factor Authentication (2FA)</h4>
                           <p className="text-xs text-white/50">Add an extra layer of security to your account.</p>
                         </div>
-                        <button className="bg-white/10 border border-white/20 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-white/20 transition-colors">Enable</button>
+                        <span className="bg-gold text-black px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest">Coming Soon</span>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-bold text-sm">Active Sessions</h4>
+                            <p className="text-xs text-white/50">Manage devices logged into your account.</p>
+                          </div>
+                          <button onClick={handleViewSessions} className="text-xs text-gold hover:underline">
+                            {showSessions ? 'Hide' : 'View All'}
+                          </button>
+                        </div>
+                        {showSessions && (
+                          <div className="mt-4 space-y-2">
+                            {sessionsLoading && [0, 1].map((i) => <ScaffoldRow key={i} className="h-14" />)}
+                            {!sessionsLoading && sessions?.map((s) => (
+                              <div key={s.sessionId} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                                <div>
+                                  <div className="text-xs font-bold flex items-center gap-2">
+                                    {s.deviceLabel || 'Unknown device'}
+                                    {s.isCurrent && <span className="text-emerald-400 text-[9px] uppercase tracking-widest">This device</span>}
+                                  </div>
+                                  <div className="text-[10px] text-white/40">Signed in {new Date(s.createdAt).toLocaleDateString()}</div>
+                                </div>
+                                {!s.isCurrent && (
+                                  <button onClick={() => handleRevokeSession(s.sessionId)} className="text-[10px] text-crimson hover:underline uppercase tracking-widest">
+                                    Revoke
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-bold text-sm">Active Sessions</h4>
-                          <p className="text-xs text-white/50">Manage devices logged into your account.</p>
-                        </div>
-                        <button className="text-xs text-gold hover:underline">View All</button>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <div>
                           <h4 className="font-bold text-sm">Green ID Verification</h4>
-                          <p className="text-xs text-emerald-400">Verified on Mar 1, 2026</p>
+                          <p className="text-xs text-white/50">Account-tier trust status.</p>
                         </div>
-                        <CheckCircle2 className="text-emerald-400" size={20} />
+                        {authProfile?.kycStatus === 'verified' ? (
+                          <span className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-[10px] text-emerald-400 font-bold">Verified</span>
+                        ) : (
+                          <MissingInfo text={authProfile?.kycStatus ? `KYC: ${authProfile.kycStatus}` : 'KYC not started'} />
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Data & Transactions */}
+                  {/* Data & Transactions — no live endpoint for either
+                      action below; both added to doc/API_REQUIREMENTS.md. */}
                   <div className="glass-panel p-6 lg:col-span-2 space-y-6">
                     <h3 className="text-lg font-bold border-b border-white/10 pb-4">Data & Transactions</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="flex gap-4 items-start">
                         <div className="p-3 bg-white/5 rounded-xl shrink-0">
@@ -1164,7 +1473,7 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                           <p className="text-xs text-white/60">All your direct messages and contract negotiations are encrypted and secure.</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-4 items-start">
                         <div className="p-3 bg-white/5 rounded-xl shrink-0">
                           <ShieldCheck size={20} className="text-emerald-400" />
@@ -1175,10 +1484,10 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="pt-4 border-t border-white/10 flex justify-end gap-4">
-                      <button className="text-xs text-white/40 hover:text-white transition-colors">Download My Data</button>
-                      <button className="text-xs text-crimson hover:text-red-400 transition-colors">Delete Account</button>
+                      <button disabled className="text-xs text-white/20 cursor-not-allowed" title="Coming soon — no data-export endpoint yet">Download My Data</button>
+                      <button disabled className="text-xs text-white/20 cursor-not-allowed" title="Coming soon — no account-deletion endpoint yet">Delete Account</button>
                     </div>
                   </div>
                 </div>
@@ -1287,45 +1596,15 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
             )}
 
             {activeTab === 'projects' && (
-              <motion.div
-                key="projects"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold">{profile.type === 'artist' ? 'My Projects' : 'Active Productions'}</h3>
-                  <button className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors">
-                    {profile.type === 'artist' ? 'Browse More' : 'Post New'}
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[
-                    { title: 'The Silent Valley', role: 'Lead Actor', status: 'In Production', progress: 65, budget: '₹12L' },
-                    { title: 'Urban Beats Ad', role: 'Voice Over', status: 'Post-Production', progress: 90, budget: '₹45K' },
-                    { title: 'Stage Play: Hamlet', role: 'Director', status: 'Rehearsals', progress: 30, budget: '₹2.5L' },
-                  ].map((project, i) => (
-                    <div key={i} className="glass-panel p-6 hover:border-gold/50 transition-all group">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h4 className="font-bold group-hover:text-gold transition-colors">{project.title}</h4>
-                          <p className="text-xs text-white/40">{project.role}</p>
-                        </div>
-                        <span className="text-[10px] bg-gold/10 text-gold px-2 py-1 rounded-full uppercase font-bold">
-                          {project.budget}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-[10px] uppercase tracking-widest">
-                          <span className="text-white/40">{project.status}</span>
-                          <span>{project.progress}%</span>
-                        </div>
-                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                          <div className="bg-gold h-full" style={{ width: `${project.progress}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              <motion.div key="projects" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                <div className="glass-panel p-12 text-center max-w-2xl mx-auto bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
+                  <Briefcase className="mx-auto mb-6 text-gold" size={40} />
+                  <h2 className="text-2xl font-bold mb-4">{profile.type === 'artist' ? 'My Projects' : 'Active Productions'} — Coming Soon</h2>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    {profile.type === 'artist'
+                      ? 'A real list of the projects you\'re currently working on, pulled from confirmed bookings and accepted applications, with status and progress tracked automatically.'
+                      : 'A real production dashboard for everything you\'re currently running, with status and progress tracked automatically instead of managed by hand.'}
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -1339,47 +1618,28 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { label: 'Total Earnings', value: '₹18,45,000', change: '+12%', icon: Wallet },
-                    { label: 'Pending Payments', value: '₹2,30,000', change: '-5%', icon: Clock },
-                    { label: 'Active Contracts', value: '14', change: '+2', icon: ShieldCheck },
+                    { label: 'Total Earnings', icon: Wallet },
+                    { label: 'Pending Payments', icon: Clock },
+                    { label: 'Active Contracts', icon: ShieldCheck },
                   ].map((stat, i) => (
-                    <div key={i} className="glass-panel p-6">
+                    <div key={i} className="relative glass-panel p-6">
+                      <ComingSoonTag />
                       <div className="flex justify-between items-start mb-4">
                         <div className="p-3 bg-white/5 rounded-xl">
                           <stat.icon className="text-gold" size={24} />
                         </div>
-                        <span className={cn("text-xs font-bold", stat.change.startsWith('+') ? "text-emerald-400" : "text-crimson")}>
-                          {stat.change}
-                        </span>
                       </div>
-                      <div className="text-2xl font-bold mb-1">{stat.value}</div>
+                      <div className="text-2xl font-bold mb-1">xxx</div>
                       <div className="text-xs text-white/40 uppercase tracking-widest">{stat.label}</div>
                     </div>
                   ))}
                 </div>
-                <div className="glass-panel-blue p-8">
+                <div className="relative glass-panel-blue p-8">
+                  <ComingSoonTag />
                   <h3 className="text-xl font-bold mb-6">Transaction History</h3>
                   <div className="space-y-4">
-                    {[
-                      { name: 'Studio Rental', date: 'Oct 24, 2023', amount: '-₹15,000', status: 'Completed' },
-                      { name: 'Ad Campaign Payout', date: 'Oct 22, 2023', amount: '+₹85,000', status: 'Completed' },
-                      { name: 'Equipment Insurance', date: 'Oct 20, 2023', amount: '-₹4,200', status: 'Processing' },
-                    ].map((tx, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all">
-                        <div className="flex items-center gap-4">
-                          <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", tx.amount.startsWith('+') ? "bg-emerald-400/10 text-emerald-400" : "bg-crimson/10 text-crimson")}>
-                            {tx.amount.startsWith('+') ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm">{tx.name}</div>
-                            <div className="text-[10px] text-white/40 uppercase tracking-widest">{tx.date}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={cn("font-bold text-sm", tx.amount.startsWith('+') ? "text-emerald-400" : "text-white")}>{tx.amount}</div>
-                          <div className="text-[10px] text-white/20 uppercase tracking-widest">{tx.status}</div>
-                        </div>
-                      </div>
+                    {[0, 1, 2].map((i) => (
+                      <ScaffoldRow key={i} className="h-16" />
                     ))}
                   </div>
                 </div>
@@ -1395,41 +1655,61 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
               >
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl font-bold">My Network</h3>
-                  <div className="flex gap-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" size={14} />
-                      <input 
-                        type="text" 
-                        placeholder="Search connections..." 
-                        className="bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-gold/50 w-64"
-                      />
-                    </div>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400 flex items-center gap-2">
+                    <ShieldCheck size={14} /> Live from SosrG
+                  </span>
+                </div>
+
+                {conversationsLoading && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[0, 1, 2, 3].map((i) => (
+                      <ScaffoldRow key={i} className="h-48" />
+                    ))}
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[
-                    { name: 'Aarav Sharma', role: 'Director', industry: 'Cinema', level: 'Expert', img: 'https://i.pravatar.cc/150?u=1' },
-                    { name: 'Ishani Gupta', role: 'Writer', industry: 'Literature', level: 'Intermediate', img: 'https://i.pravatar.cc/150?u=2' },
-                    { name: 'Rohan Verma', role: 'Musician', industry: 'Music', level: 'Expert', img: 'https://i.pravatar.cc/150?u=3' },
-                    { name: 'Meera Kapur', role: 'Dancer', industry: 'Dance', level: 'Fresher', img: 'https://i.pravatar.cc/150?u=4' },
-                    { name: 'Kabir Singh', role: 'Actor', industry: 'Theatre', level: 'Expert', img: 'https://i.pravatar.cc/150?u=5' },
-                    { name: 'Sanya Malhotra', role: 'Designer', industry: 'Art', level: 'Intermediate', img: 'https://i.pravatar.cc/150?u=6' },
-                  ].map((person, i) => (
-                    <div key={i} className="glass-panel p-6 text-center hover:border-gold/50 transition-all group">
-                      <div className="relative w-20 h-20 mx-auto mb-4">
-                        <img src={person.img} alt={person.name} className="w-full h-full rounded-full object-cover border-2 border-white/10 group-hover:border-gold transition-colors" />
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gold rounded-full flex items-center justify-center border-2 border-black">
-                          <ShieldCheck size={12} className="text-black" />
+                )}
+
+                {!conversationsLoading && conversationsError && (
+                  <div className="glass-panel p-8 text-center text-sm text-white/60">{conversationsError}</div>
+                )}
+
+                {!conversationsLoading && !conversationsError && (conversations?.length ?? 0) === 0 && (
+                  <div className="glass-panel p-12 text-center">
+                    <Users className="mx-auto mb-4 text-white/20" size={40} />
+                    <h4 className="font-bold mb-2">No connections yet</h4>
+                    <p className="text-white/40 text-sm max-w-sm mx-auto">
+                      Your network is built from real conversations — message someone through a casting call or job posting to start one.
+                    </p>
+                  </div>
+                )}
+
+                {!conversationsLoading && !conversationsError && (conversations?.length ?? 0) > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {conversations!.map((conv) => {
+                      const other = conv.participants?.[0];
+                      return (
+                        <div key={conv.id} className="glass-panel p-6 text-center hover:border-gold/50 transition-all group">
+                          <div className="relative w-20 h-20 mx-auto mb-4">
+                            {other?.profileImagePath ? (
+                              <img src={other.profileImagePath} alt={other.displayName ?? 'SosrG member'} className="w-full h-full rounded-full object-cover border-2 border-white/10 group-hover:border-gold transition-colors" />
+                            ) : (
+                              <div className="w-full h-full rounded-full bg-white/10 border-2 border-white/10 flex items-center justify-center text-lg font-bold">
+                                {(other?.displayName ?? '?').slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <h4 className="font-bold text-sm mb-1">{other?.displayName ?? 'SosrG member'}</h4>
+                          {other?.username && <p className="text-[10px] text-white/40 uppercase tracking-widest mb-4">@{other.username}</p>}
+                          <button
+                            onClick={() => show('Opening a full conversation isn\'t wired up here yet.', 'info')}
+                            className="w-full py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-gold hover:text-black transition-all"
+                          >
+                            Message
+                          </button>
                         </div>
-                      </div>
-                      <h4 className="font-bold text-sm mb-1">{person.name}</h4>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest mb-4">{person.role} • {person.industry}</p>
-                      <button className="w-full py-2 bg-white/5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-gold hover:text-black transition-all">
-                        Message
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -1441,7 +1721,8 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8"
               >
-                <div className="glass-panel-green p-12 text-center bg-gradient-to-br from-gold/10 to-transparent">
+                <div className="relative glass-panel-green p-12 text-center bg-gradient-to-br from-gold/10 to-transparent">
+                  <ComingSoonTag />
                   <GraduationCap className="mx-auto mb-8 text-gold" size={60} />
                   <h2 className="text-3xl font-bold mb-4">AI Career Counselling</h2>
                   <p className="text-white/40 max-w-2xl mx-auto mb-10">
@@ -1450,23 +1731,17 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                   <div className="max-w-3xl mx-auto space-y-6">
                     <div className="bg-black/30 border border-white/10 rounded-2xl p-8 text-left">
                       <h4 className="font-bold mb-4 flex items-center gap-2 text-gold"><Zap size={18} /> Career Roadmap AI</h4>
-                      <p className="text-sm text-white/80 mb-6">"Based on your current profile as an {profile.level} {profile.profession}, you are on a strong trajectory. To reach the next level, we recommend focusing on {profile.industry === 'Cinema' ? 'OTT Web Series' : 'International Theatre Festivals'} in the next quarter to maximize visibility."</p>
+                      <ScaffoldRow className="h-16 mb-6" />
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Market Demand</div>
-                          <div className="text-lg font-bold text-emerald-400">High</div>
-                        </div>
-                        <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Skill Gap</div>
-                          <div className="text-lg font-bold text-gold">{profile.type === 'artist' ? 'Action Stunts' : 'Digital Marketing'}</div>
-                        </div>
-                        <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                          <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Est. Growth</div>
-                          <div className="text-lg font-bold text-blue-400">+25% YoY</div>
-                        </div>
+                        <ScaffoldRow className="h-16" />
+                        <ScaffoldRow className="h-16" />
+                        <ScaffoldRow className="h-16" />
                       </div>
                     </div>
-                    <button className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform">
+                    <button
+                      onClick={() => show('Career reports are coming soon.', 'info')}
+                      className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform"
+                    >
                       Generate Full Career Report
                     </button>
                   </div>
@@ -1483,109 +1758,62 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
               >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2 space-y-8">
-                    <div className="glass-panel-pink p-8">
+                    <div className="relative glass-panel-pink p-8">
+                      <ComingSoonTag />
                       <div className="flex justify-between items-center mb-8">
                         <h3 className="text-xl font-bold flex items-center gap-2">
                           <Settings className="text-gold" /> Active Task Tracking
                         </h3>
                         <div className="flex gap-2">
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest">4 Active</span>
-                          <span className="text-[10px] bg-crimson/10 text-crimson px-2 py-1 rounded-full font-bold uppercase tracking-widest">2 Overdue</span>
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest">xxxxx Active</span>
+                          <span className="text-[10px] bg-crimson/10 text-crimson px-2 py-1 rounded-full font-bold uppercase tracking-widest">xxxxx Overdue</span>
                         </div>
                       </div>
                       <div className="space-y-4">
-                        {[
-                          { task: 'Dubbing for Episode 4', project: 'Urban Beats Ad', deadline: 'Today, 6 PM', status: 'overdue', priority: 'High' },
-                          { task: 'Script Review: Scene 12-15', project: 'The Silent Valley', deadline: 'Tomorrow', status: 'pending', priority: 'Medium' },
-                          { task: 'Costume Fitting', project: 'Stage Play: Hamlet', deadline: 'Oct 30', status: 'pending', priority: 'Low' },
-                        ].map((task, i) => (
-                          <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-gold/30 transition-all">
-                            <div className="flex items-center gap-4">
-                              <div className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center",
-                                task.status === 'overdue' ? "bg-crimson/10 text-crimson" : "bg-white/10 text-white/40"
-                              )}>
-                                {task.status === 'overdue' ? <AlertCircle size={18} /> : <Clock size={18} />}
-                              </div>
-                              <div>
-                                <div className="font-bold text-sm group-hover:text-gold transition-colors">{task.task}</div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest">{task.project} • {task.deadline}</div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className={cn(
-                                "text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest",
-                                task.priority === 'High' ? "text-crimson" : task.priority === 'Medium' ? "text-gold" : "text-blue-400"
-                              )}>
-                                {task.priority} Priority
-                              </div>
-                            </div>
-                          </div>
+                        {[0, 1, 2].map((i) => (
+                          <ScaffoldRow key={i} className="h-16" />
                         ))}
                       </div>
                     </div>
 
-                    <div className="glass-panel-purple p-8">
+                    <div className="relative glass-panel-purple p-8">
+                      <ComingSoonTag />
                       <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
                         <Lock className="text-gold" /> Payment Milestone Lock
                       </h3>
                       <div className="space-y-6">
-                        {[
-                          { milestone: 'Pre-production Advance', amount: '₹2,50,000', status: 'Released', date: 'Oct 15' },
-                          { milestone: 'Dubbing Completion', amount: '₹1,20,000', status: 'Locked', date: 'Pending Task' },
-                          { milestone: 'Final Delivery', amount: '₹3,00,000', status: 'Locked', date: 'Project End' },
-                        ].map((m, i) => (
-                          <div key={i} className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className={cn(
-                                "w-12 h-12 rounded-xl flex items-center justify-center border",
-                                m.status === 'Released' ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-white/20"
-                              )}>
-                                {m.status === 'Released' ? <CheckCircle size={20} /> : <Lock size={20} />}
-                              </div>
-                              <div>
-                                <div className="font-bold text-sm">{m.milestone}</div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest">{m.status} • {m.date}</div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-gold">{m.amount}</div>
-                              <button className="text-[10px] text-white/20 hover:text-white uppercase tracking-widest underline">Details</button>
-                            </div>
-                          </div>
+                        {[0, 1, 2].map((i) => (
+                          <ScaffoldRow key={i} className="h-14" />
                         ))}
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-8">
-                    <div className="glass-panel p-6 bg-gradient-to-br from-crimson/10 to-transparent border-crimson/20">
+                    <div className="relative glass-panel p-6 bg-gradient-to-br from-crimson/10 to-transparent border-crimson/20">
+                      <ComingSoonTag />
                       <div className="flex items-center gap-2 mb-4 text-crimson">
                         <AlertCircle size={18} />
                         <h3 className="font-bold">Deadline Alerts</h3>
                       </div>
                       <div className="space-y-4">
-                        <div className="p-4 bg-black/30 rounded-xl border border-crimson/20">
-                          <p className="text-xs text-white/80 mb-2">Dubbing for "Urban Beats Ad" is overdue by 2 hours.</p>
-                          <button className="w-full bg-crimson text-white py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                            Resolve Now
-                          </button>
-                        </div>
+                        <ScaffoldRow className="h-20" />
                       </div>
                     </div>
 
-                    <div className="glass-panel p-6">
+                    <div className="relative glass-panel p-6">
+                      <ComingSoonTag />
                       <h3 className="font-bold mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-gold" /> Productivity AI</h3>
                       <div className="text-center py-4">
-                        <div className="text-4xl font-bold text-gold mb-2">88%</div>
+                        <div className="text-4xl font-bold text-gold mb-2">xxxxx</div>
                         <p className="text-[10px] text-white/40 uppercase tracking-widest">Efficiency Score</p>
                         <div className="mt-6 space-y-2">
                           <div className="flex justify-between text-[10px] uppercase tracking-widest">
                             <span>Tasks Completed</span>
-                            <span>24/28</span>
+                            <span>xxxxx</span>
                           </div>
                           <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                            <div className="bg-gold h-full" style={{ width: '85%' }} />
+                            <div className="bg-gold h-full" style={{ width: '0%' }} />
                           </div>
                         </div>
                       </div>
@@ -1600,301 +1828,324 @@ export const ProfileSystem = ({ initialType = 'artist' }: { initialType?: Profil
                 key="portfolio"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
+                className="relative space-y-6"
               >
+                <ComingSoonTag />
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl font-bold">Portfolio Manager</h3>
-                  <button className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2">
+                  <button
+                    onClick={() => show('Uploading and organising media here is coming soon — use Media Gallery in Profile Details for now.', 'info')}
+                    className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2"
+                  >
                     <Plus size={14} /> Add Media
                   </button>
                 </div>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  A dedicated space to organise showreels, headshots, and clips into collections — with
+                  reordering, cover selection, and per-item visibility — instead of the flat list Media
+                  Gallery shows today.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="glass-panel p-4 group cursor-pointer">
-                      <div className="aspect-video bg-black/50 rounded-lg mb-4 overflow-hidden relative">
-                        <img src={`https://picsum.photos/seed/portfolio${i}/400/300`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Portfolio item" referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Play className="text-white" size={32} />
-                        </div>
-                      </div>
-                      <h4 className="font-bold mb-1">Showreel 202{i}</h4>
-                      <p className="text-xs text-white/40">Added 2 months ago</p>
-                    </div>
+                  {[0, 1, 2].map((i) => (
+                    <ScaffoldRow key={i} className="aspect-video" />
                   ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'auditions' && (
-              <motion.div
-                key="auditions"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h3 className="text-2xl font-bold">Auditions Applied</h3>
-                <div className="glass-panel p-6">
-                  <div className="space-y-4">
-                    {[
-                      { role: 'Lead Actor', project: 'Neon Dreams', status: 'Shortlisted', date: 'Oct 15, 2026' },
-                      { role: 'Supporting Cast', project: 'The Last Symphony', status: 'Pending', date: 'Oct 10, 2026' },
-                      { role: 'Voice Over', project: 'Galactic Wars', status: 'Rejected', date: 'Sep 28, 2026' }
-                    ].map((audition, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-                        <div>
-                          <h4 className="font-bold">{audition.role}</h4>
-                          <p className="text-sm text-white/60">{audition.project} • Applied {audition.date}</p>
-                        </div>
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest",
-                          audition.status === 'Shortlisted' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
-                          audition.status === 'Pending' ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
-                          "bg-red-500/20 text-red-400 border border-red-500/30"
-                        )}>
-                          {audition.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+              <motion.div key="auditions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Auditions Applied</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  A single tracked list of every audition you've applied to — role, project, and where it
+                  stands (pending, shortlisted, rejected) — pulled directly from your real casting
+                  applications instead of you having to check each casting call individually.
+                </p>
+                <div className="space-y-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-20" />
+                  ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'availability' && (
-              <motion.div
-                key="availability"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h3 className="text-2xl font-bold">Availability Calendar</h3>
-                <div className="glass-panel p-8 text-center">
-                  <Calendar className="mx-auto text-gold mb-4" size={48} />
-                  <h4 className="text-xl font-bold mb-2">Manage Your Schedule</h4>
-                  <p className="text-white/60 mb-6 max-w-md mx-auto">Keep your availability up to date so casting directors and clients know when you're free to work.</p>
-                  <button className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-bold transition-colors">
-                    Sync with Google Calendar
-                  </button>
+              <motion.div key="availability" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Availability Calendar</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  A real calendar of when you're free to work, kept in sync with your booked jobs, so
+                  casting directors and clients can see your availability before reaching out instead of
+                  guessing or asking directly.
+                </p>
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 35 }).map((_, i) => (
+                    <ScaffoldRow key={i} className="aspect-square" />
+                  ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'ai-insights' && (
-              <motion.div
-                key="ai-insights"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <Zap className="text-gold" size={28} />
-                  <h3 className="text-2xl font-bold">AI Match Suggestions</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="glass-panel p-6 border-gold/30">
-                    <h4 className="font-bold text-gold mb-4">Recommended Roles</h4>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 size={16} className="text-emerald-400 mt-1" />
-                        <span className="text-sm">Your profile strongly matches "Intense Antagonist" roles in upcoming thrillers.</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle2 size={16} className="text-emerald-400 mt-1" />
-                        <span className="text-sm">Consider adding more "Voice Over" samples to increase match rate by 40%.</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="glass-panel p-6">
-                    <h4 className="font-bold mb-4">Skill Gap Analysis</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span>Action Choreography</span>
-                          <span className="text-gold">Suggested</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-gold w-1/3" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span>Dialect: British</span>
-                          <span className="text-gold">High Demand</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-gold w-1/4" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <motion.div key="ai-insights" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">AI Match Suggestions</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  Roles and collaborations matched to your actual profile and skills, plus a skill-gap
+                  analysis showing what to add to appear in more searches — real recommendations from a
+                  real matching model, not a static demo.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-24" />
+                  ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'casting' && (
-              <motion.div
-                key="casting"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold">Casting Panel</h3>
-                  <button className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors">
-                    Create Call
-                  </button>
-                </div>
-                <div className="glass-panel p-6">
-                  <div className="text-center py-12">
-                    <Users className="mx-auto text-white/20 mb-4" size={48} />
-                    <h4 className="text-xl font-bold mb-2">No Active Casting Calls</h4>
-                    <p className="text-white/60">Create a casting call to start receiving auditions from verified talent.</p>
-                  </div>
+              <motion.div key="casting" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Casting Panel</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  Where you'll create and manage casting calls directly from your business profile, and
+                  track real applicants against each open role, instead of using the general Casting page alone.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[0, 1, 2].map((i) => (
+                    <ScaffoldRow key={i} className="h-32" />
+                  ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'budget' && (
-              <motion.div
-                key="budget"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h3 className="text-2xl font-bold">Budget Manager</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="glass-panel p-6">
-                    <div className="text-white/60 text-sm mb-2">Total Allocated</div>
-                    <div className="text-3xl font-bold text-gold">₹45.5L</div>
-                  </div>
-                  <div className="glass-panel p-6">
-                    <div className="text-white/60 text-sm mb-2">Spent</div>
-                    <div className="text-3xl font-bold text-emerald-400">₹12.2L</div>
-                  </div>
-                  <div className="glass-panel p-6">
-                    <div className="text-white/60 text-sm mb-2">Remaining</div>
-                    <div className="text-3xl font-bold text-blue-400">₹33.3L</div>
-                  </div>
+              <motion.div key="budget" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Budget Manager</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  Real allocated/spent/remaining tracking per production, tied to actual bookings and
+                  payments instead of a static summary.
+                </p>
+                <div className="space-y-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-16" />
+                  ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'workflow' && (
-              <motion.div
-                key="workflow"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h3 className="text-2xl font-bold">Workflow Tracker</h3>
-                <div className="glass-panel p-6">
-                  <div className="space-y-6">
-                    {['Pre-Production', 'Production', 'Post-Production', 'Distribution'].map((stage, i) => (
-                      <div key={stage} className="flex items-center gap-4">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                          i === 0 ? "bg-emerald-500 text-white" : i === 1 ? "bg-gold text-black" : "bg-white/10 text-white/40"
-                        )}>
-                          {i + 1}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className={cn("font-bold", i > 1 && "text-white/40")}>{stage}</h4>
-                          <div className="h-2 mt-2 bg-white/5 rounded-full overflow-hidden">
-                            <div className={cn("h-full", i === 0 ? "bg-emerald-500 w-full" : i === 1 ? "bg-gold w-1/2" : "w-0")} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              <motion.div key="workflow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Workflow Tracker</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  A real pre-production → production → post-production → distribution pipeline view per
+                  project, reflecting actual milestones instead of a fixed demo stage.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-28" />
+                  ))}
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'legal' && (
-              <motion.div
-                key="legal"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-8"
-              >
-                <div className="glass-panel-orange p-12 text-center relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-gold to-blue-500" />
-                  <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-8 gold-glow">
-                    <ShieldCheck size={40} className="text-blue-400" />
-                  </div>
-                  <h2 className="text-3xl font-bold mb-4">AI Legal Protection</h2>
-                  <p className="text-white/40 max-w-2xl mx-auto mb-10">
-                    Smart automated legal tools to protect your intellectual property and ensure fair contracts.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[
-                      { title: 'Auto NDA Generator', desc: 'Instant non-disclosure agreements for collaborations.', icon: FileText },
-                      { title: 'Contract Draft AI', desc: 'Generate industry-standard contracts in seconds.', icon: Scale },
-                      { title: 'Copyright Timestamp', desc: 'Secure blockchain-based proof of creation.', icon: History },
-                    ].map((tool, i) => (
-                      <div key={i} className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-blue-500/50 transition-all cursor-pointer group">
-                        <tool.icon className="mx-auto mb-4 text-blue-400 group-hover:scale-110 transition-transform" size={32} />
-                        <h3 className="font-bold mb-2">{tool.title}</h3>
-                        <p className="text-xs text-white/40">{tool.desc}</p>
-                        <button className="mt-4 text-[10px] font-bold text-blue-400 uppercase tracking-widest group-hover:underline">Launch Tool</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="glass-panel p-8">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                      <History size={20} className="text-gold" /> Recent IP Timestamps
-                    </h3>
-                    <div className="space-y-4">
-                      {[
-                        { name: 'Script: The Silent Valley (v2)', date: 'Oct 26, 2023', hash: '0x7f...3a21' },
-                        { name: 'Musical Score: Urban Beats', date: 'Oct 22, 2023', hash: '0x4c...9b88' },
-                      ].map((ip, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-                          <div>
-                            <div className="font-bold text-sm">{ip.name}</div>
-                            <div className="text-[10px] text-white/40 uppercase tracking-widest">{ip.date}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-[10px] font-mono text-gold">{ip.hash}</div>
-                            <div className="text-[10px] text-emerald-400 uppercase tracking-widest font-bold">Verified</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="glass-panel p-8">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                      <FileCheck size={20} className="text-gold" /> Active Contracts
-                    </h3>
-                    <div className="space-y-4">
-                      {[
-                        { project: 'The Silent Valley', party: 'Dharma Productions', status: 'Signed' },
-                        { project: 'Urban Beats Ad', party: 'Brand Agency', status: 'Pending Review' },
-                      ].map((c, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-                          <div>
-                            <div className="font-bold text-sm">{c.project}</div>
-                            <div className="text-[10px] text-white/40 uppercase tracking-widest">{c.party}</div>
-                          </div>
-                          <span className={cn(
-                            "text-[10px] font-bold px-3 py-1 rounded-full",
-                            c.status === 'Signed' ? "bg-emerald-500/10 text-emerald-400" : "bg-gold/10 text-gold"
-                          )}>
-                            {c.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              <motion.div key="legal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
+                <ComingSoonTag />
+                <h2 className="text-2xl font-bold">Contracts Vault</h2>
+                <p className="text-white/40 text-sm max-w-2xl">
+                  Where NDA/contract generation, IP timestamping, and your active contracts will live —
+                  real legal documents tied to your real bookings, not the AI-generated blockchain-badge
+                  claims the old build made without anything behind them.
+                </p>
+                <div className="space-y-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <ScaffoldRow key={i} className="h-16" />
+                  ))}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </>
       )}
+
+      {/* Real Edit Profile forms — PATCH /v1/profiles/me and
+          /v1/profiles/me/details, both live. Styled to match this page's
+          existing dark modal (CastingEcosystem's Apply modal uses the same
+          pattern) rather than the cream design-system Modal, which would
+          look out of place on this still-dark page. */}
+      <AnimatePresence>
+        {editingBasic && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+            onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingBasic(false); }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-cinematic-gray border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold">Edit Profile</h2>
+                <button onClick={() => setEditingBasic(false)} className="text-white/40 hover:text-white p-2"><X size={20} /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Display Name</label>
+                  <input
+                    value={basicForm.displayName}
+                    onChange={(e) => setBasicForm((f) => ({ ...f, displayName: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Headline</label>
+                  <input
+                    value={basicForm.headline}
+                    onChange={(e) => setBasicForm((f) => ({ ...f, headline: e.target.value }))}
+                    placeholder="e.g. Lead Actor & Voice Artist"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Bio</label>
+                  <textarea
+                    value={basicForm.bio}
+                    onChange={(e) => setBasicForm((f) => ({ ...f, bio: e.target.value }))}
+                    rows={4}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Pincode</label>
+                    <input
+                      value={basicForm.pincode}
+                      onChange={(e) => setBasicForm((f) => ({ ...f, pincode: e.target.value }))}
+                      maxLength={6}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Website</label>
+                    <input
+                      value={basicForm.websiteUrl}
+                      onChange={(e) => setBasicForm((f) => ({ ...f, websiteUrl: e.target.value }))}
+                      placeholder="https://…"
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-4 pt-2">
+                  <button onClick={() => setEditingBasic(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveBasic}
+                    disabled={savingBasic}
+                    className="flex-1 py-3 bg-gold text-black hover:bg-white rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50"
+                  >
+                    {savingBasic ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingDetails && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+            onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingDetails(false); }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-cinematic-gray border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold">Edit Physical Attributes</h2>
+                <button onClick={() => setEditingDetails(false)} className="text-white/40 hover:text-white p-2"><X size={20} /></button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Height (cm)</label>
+                    <input
+                      type="number"
+                      value={detailsForm.heightCm}
+                      onChange={(e) => setDetailsForm((f) => ({ ...f, heightCm: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={detailsForm.weightKg}
+                      onChange={(e) => setDetailsForm((f) => ({ ...f, weightKg: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Eye Color</label>
+                    <input
+                      value={detailsForm.eyeColor}
+                      onChange={(e) => setDetailsForm((f) => ({ ...f, eyeColor: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Hair Color</label>
+                    <input
+                      value={detailsForm.hairColor}
+                      onChange={(e) => setDetailsForm((f) => ({ ...f, hairColor: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Years of Experience</label>
+                  <input
+                    type="number"
+                    value={detailsForm.yearsExperience}
+                    onChange={(e) => setDetailsForm((f) => ({ ...f, yearsExperience: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <p className="text-[10px] text-white/30">
+                  Experience Categories, Comfort Declaration, and Availability aren't editable here yet — those fields don't exist in the profile API at all (see doc/API_REQUIREMENTS.md).
+                </p>
+                <div className="flex gap-4 pt-2">
+                  <button onClick={() => setEditingDetails(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveDetails}
+                    disabled={savingDetails}
+                    className="flex-1 py-3 bg-gold text-black hover:bg-white rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50"
+                  >
+                    {savingDetails ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

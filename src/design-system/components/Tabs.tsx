@@ -38,7 +38,7 @@ export const Tabs = ({ items, value, onChange, variant = 'underline', label, cla
   };
 
   return (
-    <div role="tablist" aria-label={label} className={cn('flex gap-1', variant === 'underline' && 'border-b border-navy-700', className)}>
+    <div role="tablist" aria-label={label} className={cn('flex gap-1', variant === 'underline' && 'border-b border-cream-200', className)}>
       {items.map((item, index) => {
         const selected = item.id === value;
         return (
@@ -60,7 +60,7 @@ export const Tabs = ({ items, value, onChange, variant = 'underline', label, cla
               ],
               variant === 'pill' && [
                 'rounded-full',
-                selected ? 'bg-gold-500 text-navy-950' : 'text-text-muted hover:bg-navy-800',
+                selected ? 'bg-gold-500 text-text-primary' : 'text-text-muted hover:bg-cream-200',
               ],
             )}
           >

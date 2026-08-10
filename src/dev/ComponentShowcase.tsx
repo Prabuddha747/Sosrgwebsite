@@ -66,7 +66,7 @@ const CardSection = () => {
         {variants.map((v) => (
           <Card key={v} variant={v}>
             <p className="font-display text-sosrg-lg mb-2">{v}</p>
-            <p className="font-body text-sosrg-sm text-text-muted">Card content on the navy-800 surface.</p>
+            <p className="font-body text-sosrg-sm text-text-muted">Card content on the cream-50 surface.</p>
           </Card>
         ))}
         <Card variant="elevation-1" interactive onClick={() => {}}>
@@ -224,7 +224,7 @@ const SkeletonSection = () => (
 
 const EmptyStateSection = () => (
   <Section title="EmptyState">
-    <Card variant="flat" className="bg-navy-900">
+    <Card variant="flat" className="bg-cream-200">
       <EmptyState icon={Inbox} message="No casting calls match your filters yet." cta={{ label: 'Clear filters', onClick: () => {} }} />
     </Card>
   </Section>
@@ -235,7 +235,7 @@ const NavbarSection = () => (
     <p className={SUBSECTION_TITLE}>
       Resize the window to see desktop mega-menu (1025px+) / tablet drawer (481-1024px) / mobile drawer + bottom tabs (320-480px).
     </p>
-    <div className="relative border border-navy-700 rounded-2xl overflow-hidden" style={{ height: 400 }}>
+    <div className="relative border border-cream-200 rounded-2xl overflow-hidden" style={{ height: 400 }}>
       <Navbar
         logo={<span className="font-display text-sosrg-xl text-gold-500">SosrG</span>}
         activeHref="/casting"
@@ -271,7 +271,7 @@ const NavbarSection = () => (
 
 export const ComponentShowcase = () => (
   <ToastProvider>
-    <div className="min-h-screen bg-navy-950 text-text-primary">
+    <div className="min-h-screen bg-cream-100 text-text-primary">
       <div className="sosrg-container py-12">
         <SettledHeading as="h1" trigger="scroll" className="text-sosrg-4xl text-gold-500 mb-2">
           SosrG Component Library

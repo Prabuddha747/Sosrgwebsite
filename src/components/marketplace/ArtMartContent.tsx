@@ -79,6 +79,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { ScaffoldRow, ComingSoonTag } from '../ScaffoldUI';
 
 export const ArtMartContent = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'sell' | 'custom-orders' | 'wishlist'>('browse');
@@ -153,54 +154,25 @@ export const ArtMartContent = () => {
                   ))}
                 </div>
               </div>
-              <div className="glass-panel p-6">
+              <div className="relative glass-panel p-6">
+                <ComingSoonTag />
                 <h3 className="font-bold mb-4 uppercase tracking-widest text-xs">AI Recommendations</h3>
-                <p className="text-[10px] text-white/40 mb-4">Based on your Cinematographer profile, you might need:</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                    <div className="w-10 h-10 bg-white/10 rounded" />
-                    <div>
-                      <div className="text-[10px] font-bold">ND Filter Set</div>
-                      <div className="text-[8px] text-emerald-400">₹4,500</div>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-[10px] text-white/40 mb-4">Based on your profile, you might need:</p>
+                <ScaffoldRow className="h-14" />
               </div>
             </div>
             <div className="lg:col-span-3">
+              {/* No live Art Mart listings API yet (doc/API_REQUIREMENTS.md)
+                  — cards are shimmer placeholders rather than the invented
+                  product catalogue this page used to show as if it were real. */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="glass-panel group overflow-hidden flex flex-col">
-                    <div className="aspect-square relative shrink-0">
-                      <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={product.name} referrerPolicy="no-referrer" />
-                      <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest">{product.condition}</div>
-                      <button 
-                        onClick={() => showToast('Added to wishlist!')}
-                        className="absolute top-3 left-3 p-2 bg-black/50 backdrop-blur-md rounded-full text-white/60 hover:text-crimson hover:bg-white/10 transition-colors"
-                      >
-                        <Heart size={14} />
-                      </button>
-                    </div>
-                    <div className="p-4 flex flex-col flex-1">
-                      <div className="text-[8px] uppercase tracking-widest text-gold mb-1">{product.type}</div>
-                      <h3 className="font-bold text-sm mb-2">{product.name}</h3>
-                      <div className="mt-auto flex items-center justify-between">
-                        <span className="font-mono text-white font-bold">{product.price}</span>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => showToast('Share link copied! Share to get referral discount.')}
-                            className="p-2 bg-white/5 rounded-lg hover:bg-blue-500 hover:text-white transition-all" title="Share for Referral Discount"
-                          >
-                            <Share2 size={14} />
-                          </button>
-                          <button 
-                            onClick={() => showToast('Added to cart!')}
-                            className="p-2 bg-white/5 rounded-lg hover:bg-gold hover:text-black transition-all"
-                          >
-                            <ShoppingBag size={14} />
-                          </button>
-                        </div>
-                      </div>
+                  <div key={product.id} className="relative glass-panel overflow-hidden flex flex-col">
+                    <ComingSoonTag />
+                    <ScaffoldRow className="aspect-square" />
+                    <div className="p-4 flex flex-col flex-1 gap-2">
+                      <ScaffoldRow className="h-4 w-2/3" />
+                      <ScaffoldRow className="h-3 w-1/3" />
                     </div>
                   </div>
                 ))}
@@ -235,22 +207,17 @@ export const ArtMartContent = () => {
                   exit={{ opacity: 0, height: 0 }}
                   className="mb-8 overflow-hidden"
                 >
-                  <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                  <div className="relative p-6 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                    <ComingSoonTag />
                     <h4 className="font-bold text-blue-400 mb-2 flex items-center gap-2"><TrendingUp size={16} /> AI Market Analysis</h4>
                     <p className="text-xs text-white/60 mb-4">Based on current market demand and recent sales in your selected category.</p>
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-black/30 p-4 rounded-lg text-center">
-                        <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Suggested Price</div>
-                        <div className="text-xl font-bold text-emerald-400">₹45,000</div>
-                      </div>
-                      <div className="bg-black/30 p-4 rounded-lg text-center">
-                        <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Demand Level</div>
-                        <div className="text-xl font-bold text-gold">High</div>
-                      </div>
-                      <div className="bg-black/30 p-4 rounded-lg text-center">
-                        <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Est. Time to Sell</div>
-                        <div className="text-xl font-bold text-blue-400">3-5 Days</div>
-                      </div>
+                      {['Suggested Price', 'Demand Level', 'Est. Time to Sell'].map((label) => (
+                        <div key={label} className="bg-black/30 p-4 rounded-lg text-center">
+                          <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">{label}</div>
+                          <ScaffoldRow className="h-6 w-16 mx-auto" />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </motion.div>
@@ -307,64 +274,17 @@ export const ArtMartContent = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-8"
           >
-            <div className="glass-panel p-8">
+            <div className="relative glass-panel p-8">
+              <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <Briefcase size={20} className="text-gold" />
                 <h2 className="text-2xl font-bold">Custom Orders & Commissions</h2>
               </div>
               <p className="text-sm text-white/60 mb-8">Manage your custom artwork commissions. Secure payments with 30% advance and milestone-based releases.</p>
-              
-              <div className="space-y-6">
-                {[
-                  { id: 'CO-1024', title: 'Custom Portrait Painting', client: 'Rahul V.', total: '₹50,000', advance: '₹15,000 (Paid)', status: 'In Progress', progress: 45 },
-                  { id: 'CO-1025', title: 'Digital Logo Design', client: 'Studio X', total: '₹20,000', advance: '₹6,000 (Pending)', status: 'Awaiting Advance', progress: 0 },
-                ].map((order) => (
-                  <div key={order.id} className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-mono text-white/40 bg-black/30 px-2 py-1 rounded">{order.id}</span>
-                          <span className={cn(
-                            "text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded",
-                            order.status === 'In Progress' ? "bg-blue-500/20 text-blue-400" : "bg-gold/20 text-gold"
-                          )}>
-                            {order.status}
-                          </span>
-                        </div>
-                        <h3 className="font-bold text-lg">{order.title}</h3>
-                        <p className="text-xs text-white/40">Client: {order.client}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-white/60">Total: <span className="font-bold text-white">{order.total}</span></div>
-                        <div className="text-xs text-emerald-400">Advance: {order.advance}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] uppercase tracking-widest text-white/40">
-                        <span>Milestone Progress</span>
-                        <span>{order.progress}%</span>
-                      </div>
-                      <div className="w-full bg-black/50 rounded-full h-2 overflow-hidden">
-                        <div className="bg-gold h-full rounded-full" style={{ width: `${order.progress}%` }} />
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 flex gap-2">
-                      <button 
-                        onClick={() => showToast('Milestone updated!')}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors"
-                      >
-                        View Milestones
-                      </button>
-                      <button 
-                        onClick={() => showToast('Message sent to client!')}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors"
-                      >
-                        Message Client
-                      </button>
-                    </div>
-                  </div>
+
+              <div className="space-y-4">
+                {[0, 1].map((i) => (
+                  <ScaffoldRow key={i} className="h-32" />
                 ))}
               </div>
             </div>
@@ -379,65 +299,35 @@ export const ArtMartContent = () => {
             exit={{ opacity: 0, y: -20 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
-            <div className="lg:col-span-2 glass-panel p-8">
+            <div className="relative lg:col-span-2 glass-panel p-8">
+              <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <Heart size={20} className="text-crimson" />
                 <h2 className="text-2xl font-bold">My Wishlist</h2>
               </div>
               <div className="space-y-4">
-                {[PRODUCTS[0], PRODUCTS[4]].map((product) => (
-                  <div key={product.id} className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/10 items-center">
-                    <img src={product.image} className="w-20 h-20 rounded-lg object-cover" alt={product.name} referrerPolicy="no-referrer" />
-                    <div className="flex-1">
-                      <div className="text-[10px] uppercase tracking-widest text-gold mb-1">{product.type}</div>
-                      <h3 className="font-bold text-sm mb-1">{product.name}</h3>
-                      <div className="font-mono text-white font-bold text-sm">{product.price}</div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <button 
-                        onClick={() => showToast('Added to cart!')}
-                        className="p-2 bg-gold text-black rounded-lg hover:bg-white transition-all text-xs font-bold flex items-center justify-center gap-2"
-                      >
-                        <ShoppingBag size={14} /> Buy
-                      </button>
-                      <button 
-                        onClick={() => showToast('Removed from wishlist')}
-                        className="p-2 bg-white/5 rounded-lg hover:bg-crimson hover:text-white transition-all text-xs font-bold flex items-center justify-center gap-2"
-                      >
-                        <X size={14} /> Remove
-                      </button>
-                    </div>
-                  </div>
+                {[0, 1].map((i) => (
+                  <ScaffoldRow key={i} className="h-20" />
                 ))}
               </div>
             </div>
-            
-            <div className="lg:col-span-1 glass-panel p-8 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+
+            <div className="relative lg:col-span-1 glass-panel p-8 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+              <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <Share2 size={20} className="text-blue-400" />
                 <h2 className="text-xl font-bold">Refer & Earn</h2>
               </div>
               <p className="text-sm text-white/60 mb-6">Share product links with your network. When someone buys through your link, you both get a discount!</p>
-              
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5 mb-6 text-center">
-                <div className="text-3xl font-bold text-blue-400 mb-1">5%</div>
-                <div className="text-[10px] uppercase tracking-widest text-white/40">Discount on next purchase</div>
-              </div>
-              
+
               <div className="space-y-2">
                 <div className="text-xs font-bold mb-2">Your Referral Stats</div>
-                <div className="flex justify-between text-sm p-2 bg-white/5 rounded">
-                  <span className="text-white/60">Links Shared</span>
-                  <span className="font-bold">12</span>
-                </div>
-                <div className="flex justify-between text-sm p-2 bg-white/5 rounded">
-                  <span className="text-white/60">Successful Purchases</span>
-                  <span className="font-bold text-emerald-400">3</span>
-                </div>
-                <div className="flex justify-between text-sm p-2 bg-white/5 rounded">
-                  <span className="text-white/60">Discounts Earned</span>
-                  <span className="font-bold text-gold">₹4,500</span>
-                </div>
+                {['Links Shared', 'Successful Purchases', 'Discounts Earned'].map((label) => (
+                  <div key={label} className="flex justify-between items-center text-sm p-2 bg-white/5 rounded">
+                    <span className="text-white/60">{label}</span>
+                    <ScaffoldRow className="h-4 w-10" />
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>

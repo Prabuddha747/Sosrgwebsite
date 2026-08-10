@@ -1,9 +1,10 @@
 /*
- * SosrG v2 design tokens — redesign.md §1-4.
- * Values must mirror src/design-system/design-tokens.json exactly (see that
- * file's header comment for why this is hand-kept-in-sync rather than generated).
+ * SosrG v3 design tokens — cream/gold light theme (redesign.md §1 changelog),
+ * superseding the v2 navy dark theme. Values must mirror
+ * src/design-system/design-tokens.json exactly (see that file's header
+ * comment for why this is hand-kept-in-sync rather than generated).
  *
- * Every new key here is deliberately namespaced (navy-*, gold-500/300/700,
+ * Every new key here is deliberately namespaced (cream-*, gold-500/300/700,
  * sosrg-*, tablet/laptop/desktop) so it never collides with or overrides the
  * legacy tokens in src/index.css that not-yet-redesigned pages still depend
  * on (gold, crimson, cinematic-black/gray, the default Tailwind text-* scale,
@@ -17,38 +18,43 @@
 :root {
   /* Raw shadow color primitives — composed into the elevation recipes below.
      Not a themed Tailwind key on their own; nothing should reference these
-     directly outside this file's elevation definitions. */
-  --sosrg-shadow-dark: rgba(4, 12, 22, 0.55);
-  --sosrg-shadow-light: rgba(90, 130, 170, 0.14);
-  --sosrg-shadow-inset-dark: rgba(4, 12, 22, 0.45);
-  --sosrg-shadow-inset-light: rgba(212, 187, 110, 0.08);
+     directly outside this file's elevation definitions. Neumorphism rule
+     unchanged from v2 (redesign.md §2): never pure black/white — a warm
+     umber-brown dark side, a warm near-white light side, recalibrated for
+     the cream base instead of navy. */
+  --sosrg-shadow-dark: rgba(120, 92, 56, 0.28);
+  --sosrg-shadow-light: rgba(255, 252, 244, 0.9);
+  --sosrg-shadow-inset-dark: rgba(120, 92, 56, 0.22);
+  --sosrg-shadow-inset-light: rgba(198, 149, 46, 0.12);
 }
 
 @theme {
-  /* Brand colors sourced from the logo — redesign.md §1 */
-  --color-navy-950: #081A2E;
-  --color-navy-900: #0F2B4A;
-  --color-navy-800: #163A5E;
-  --color-navy-700: #1D4A78;
-  --color-gold-500: #D4BB6E;
-  --color-gold-300: #F0DE9A;
-  --color-gold-700: #B89440;
-  --color-text-primary: #F7F3E8;
-  --color-text-muted: #9FB0C4;
-  --color-danger: #C0475A;
-  --color-success: #5FAE82;
+  /* Cream/gold light theme — colors pixel-sampled from the real mobile app
+     screenshots (Pillow, same discipline redesign.md §1 used for the logo),
+     then contrast-verified against cream-100 (the page bg) the same way:
+     text-primary 15.33:1, text-muted 6.74:1, gold-700 4.67:1, danger 5.15:1,
+     success 4.5:1 — all pass AA. gold-500 itself is NOT used as text on
+     cream (2.34:1, fails) — fill only, same reason v2 needed gold-700. */
+  --color-cream-50: #FFFAF0;
+  --color-cream-100: #F5EDE2;
+  --color-cream-200: #EDE1CE;
+  --color-gold-500: #C6952E;
+  --color-gold-300: #E8C878;
+  --color-gold-700: #8A6318;
+  --color-text-primary: #1C1712;
+  --color-text-muted: #5C5044;
+  --color-danger: #B0384A;
+  --color-success: #2F7A4F;
+  --color-scrim: rgba(28, 23, 18, 0.55);
 
   /* Account-tier colors — redesign.md §6 calls out the 4-tier Badge/
-     StatusPill as a first-class component, but redesign.md §1's palette
-     only defines danger/success as semantic colors (Green/Red tiers reuse
-     those directly below). Yellow and Blue tiers have no existing token,
-     so these two are new — proposed here per §1's own rule ("if a future
-     section genuinely needs a second accent, it gets proposed and
-     documented here — never invented ad hoc in a component"), each
-     measured against navy-900 the same way the existing palette was:
-     tier-yellow 6.67:1, tier-blue 5.64:1 (both pass AA 4.5:1 body text). */
-  --color-tier-yellow: #F59E0B;
-  --color-tier-blue: #60A5FA;
+     StatusPill as a first-class component. Green/Red reuse success/danger
+     directly. Yellow/Blue are dedicated tokens, re-darkened from their v2
+     values: those were tuned for a dark navy background and fail badly on
+     cream (old tier-yellow 1.85:1, old tier-blue 2.19:1) — re-verified here
+     at tier-yellow 5.12:1, tier-blue 4.91:1. */
+  --color-tier-yellow: #8F5709;
+  --color-tier-blue: #2563C7;
 
   /* Typography — redesign.md §3 */
   --font-display: "Fraunces", ui-serif, serif;
@@ -91,11 +97,14 @@
 }
 
 /* Focus-visible ring — redesign.md §2/§9: always an explicit 2px solid
-   gold-300 ring with 2px offset, independent of any neumorphic shadow.
-   Every new interactive component uses this class; never relies on the
-   elevation shadow alone to signal focus. */
+   ring with 2px offset, independent of any neumorphic shadow. v2 used
+   gold-300 (a light highlight) because it needed to stand out on dark navy;
+   on the cream base, a light gold ring is nearly invisible, so this uses
+   gold-700 instead — same accent hue, recalibrated for which end of the
+   scale actually contrasts against the new surface. Every new interactive
+   component uses this class; never relies on the elevation shadow alone. */
 .sosrg-focus-ring:focus-visible {
-  outline: 2px solid var(--color-gold-300);
+  outline: 2px solid var(--color-gold-700);
   outline-offset: 2px;
 }
 

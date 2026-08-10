@@ -2,7 +2,6 @@ import type { Section } from '../types';
 import { Hero } from '../components/home/Hero';
 import { DigitalEcosystemVision } from '../components/home/DigitalEcosystemVision';
 import { TalentGrid } from '../components/home/TalentGrid';
-import { AISuite } from './AISuite';
 import { CollaborationNetwork } from '../components/home/CollaborationNetwork';
 import { PremiumFeatures } from '../components/home/PremiumFeatures';
 import { TrustSystem } from '../components/home/TrustSystem';
@@ -14,7 +13,6 @@ export const HomePage = ({ setActiveSection, language }: { setActiveSection: (s:
     <Hero setActiveSection={setActiveSection} language={language} />
     <DigitalEcosystemVision />
     <TalentGrid setActiveSection={setActiveSection} />
-    <AISuite />
     <CollaborationNetwork />
     <PremiumFeatures />
     <TrustSystem />

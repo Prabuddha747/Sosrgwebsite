@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown, Lock } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -36,12 +37,10 @@ export interface NavbarProps {
  * expandable grouped sections.
  * Mobile (320-480px): hamburger drawer + a persistent bottom tab bar.
  *
- * This is the isolated Phase 1 component-library version, built and
- * verified in the showcase route — wiring it into the real app with actual
- * React Router <Link>s and real role-gated auth is Phase 2 scope
- * (redesign.md §7, implementation.md Phase 2). hrefs here are plain <a>
- * tags so the component is already a real, screen-reader-navigable link
- * structure regardless of which router ends up rendering it.
+ * Built in Phase 1 as an isolated, showcase-only component with plain <a>
+ * tags; wired into the real app with actual React Router <Link>s in Phase 2
+ * (redesign.md §7, implementation.md Phase 2). Requires a Router ancestor —
+ * the dev showcase wraps it in a MemoryRouter for that reason.
  */
 export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: NavbarProps) => {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -69,7 +68,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
 
   return (
     <>
-      <nav ref={navRef} className="sticky top-0 z-40 bg-navy-800 shadow-elevation-1">
+      <nav ref={navRef} className="sticky top-0 z-40 bg-cream-50 shadow-elevation-1">
         <div className="sosrg-container flex items-center justify-between h-20">
           <div className="shrink-0">{logo}</div>
 
@@ -81,7 +80,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
                   type="button"
                   className={cn(
                     'sosrg-focus-ring min-h-12 px-4 rounded-lg inline-flex items-center gap-1',
-                    'font-body text-sosrg-sm font-medium text-text-primary hover:bg-navy-700',
+                    'font-body text-sosrg-sm font-medium text-text-primary hover:bg-cream-200',
                   )}
                   aria-haspopup="true"
                   aria-expanded={openGroup === group.id}
@@ -94,23 +93,23 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
                   <ul
                     role="menu"
                     aria-label={group.label}
-                    className="absolute left-0 top-full mt-2 min-w-56 bg-navy-800 shadow-elevation-3 rounded-xl p-2"
+                    className="absolute left-0 top-full mt-2 min-w-56 bg-cream-50 shadow-elevation-3 rounded-xl p-2"
                   >
                     {group.children.map((child) => (
                       <li key={child.href} role="none">
-                        <a
+                        <Link
                           role="menuitem"
-                          href={child.href}
+                          to={child.href}
                           className={cn(
                             'sosrg-focus-ring flex items-center gap-2 min-h-12 px-3 rounded-lg',
-                            'font-body text-sosrg-sm text-text-primary hover:bg-navy-700',
+                            'font-body text-sosrg-sm text-text-primary hover:bg-cream-200',
                             activeHref === child.href && 'text-gold-500',
                           )}
                           onClick={() => setOpenGroup(null)}
                         >
                           {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
                           {child.label}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -121,13 +120,13 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
 
           <div className="hidden desktop:flex items-center gap-3">
             {adminHref && (
-              <a
-                href={adminHref}
+              <Link
+                to={adminHref}
                 className="sosrg-focus-ring min-h-12 px-4 rounded-lg inline-flex items-center gap-2 font-body text-sosrg-sm text-text-muted hover:text-text-primary"
               >
                 <Lock className="w-4 h-4" />
                 Admin
-              </a>
+              </Link>
             )}
           </div>
 
@@ -146,13 +145,13 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
 
       {/* Tablet/mobile drawer */}
       {drawerOpen && (
-        <div className="desktop:hidden fixed inset-0 z-30 bg-navy-950/70" onClick={() => setDrawerOpen(false)}>
+        <div className="desktop:hidden fixed inset-0 z-30 bg-scrim" onClick={() => setDrawerOpen(false)}>
           <div
-            className="absolute top-20 right-0 bottom-0 w-full max-w-sm bg-navy-800 shadow-elevation-3 overflow-y-auto p-4"
+            className="absolute top-20 right-0 bottom-0 w-full max-w-sm bg-cream-50 shadow-elevation-3 overflow-y-auto p-4"
             onClick={(e) => e.stopPropagation()}
           >
             {groups.map((group) => (
-              <div key={group.id} className="border-b border-navy-700 last:border-0">
+              <div key={group.id} className="border-b border-cream-200 last:border-0">
                 <button
                   type="button"
                   className="sosrg-focus-ring w-full min-h-12 flex items-center justify-between px-2 font-body text-sosrg-base text-text-primary"
@@ -166,14 +165,14 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
                   <ul className="pb-2">
                     {group.children.map((child) => (
                       <li key={child.href}>
-                        <a
-                          href={child.href}
+                        <Link
+                          to={child.href}
                           className="sosrg-focus-ring flex items-center gap-2 min-h-12 px-4 rounded-lg font-body text-sosrg-sm text-text-muted hover:text-text-primary"
                           onClick={() => setDrawerOpen(false)}
                         >
                           {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
                           {child.label}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -181,14 +180,14 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
               </div>
             ))}
             {adminHref && (
-              <a
-                href={adminHref}
+              <Link
+                to={adminHref}
                 className="sosrg-focus-ring flex items-center gap-2 min-h-12 px-2 font-body text-sosrg-base text-text-muted"
                 onClick={() => setDrawerOpen(false)}
               >
                 <Lock className="w-4 h-4" />
                 Admin
-              </a>
+              </Link>
             )}
           </div>
         </div>
@@ -197,14 +196,14 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
       {/* Mobile-only persistent bottom tab bar — thumb-zone-safe per redesign.md §7 */}
       <nav
         aria-label="Primary"
-        className="tablet:hidden fixed bottom-0 inset-x-0 z-40 bg-navy-800 shadow-elevation-2 flex"
+        className="tablet:hidden fixed bottom-0 inset-x-0 z-40 bg-cream-50 shadow-elevation-2 flex"
       >
         {bottomTabItems.map((item) => {
           const active = activeHref === item.href;
           return (
-            <a
+            <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={cn(
                 'sosrg-focus-ring flex-1 min-h-12 py-2 flex flex-col items-center justify-center gap-1',
                 'font-body text-sosrg-xs',
@@ -213,7 +212,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
             >
               <item.icon className="w-5 h-5" />
               {item.label}
-            </a>
+            </Link>
           );
         })}
       </nav>

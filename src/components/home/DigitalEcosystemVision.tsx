@@ -81,7 +81,7 @@ import {
 import { cn } from '../../lib/utils';
 
 export const DigitalEcosystemVision = () => (
-  <section className="py-24 px-6 max-w-7xl mx-auto relative overflow-hidden">
+  <section className="py-24 px-6 max-w-[1600px] mx-auto relative overflow-hidden">
     <div className="absolute inset-0 bg-gradient-to-r from-gold/5 via-transparent to-crimson/5 rounded-3xl -z-10" />
     <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
     <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-crimson/20 to-transparent" />

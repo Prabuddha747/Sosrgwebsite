@@ -11,24 +11,22 @@ const variantClasses: Record<ButtonVariant, string> = {
   // Gold fill + a reduced-motion-safe shine sweep — reserved for the single
   // most important action per screen (redesign.md §5), not every button.
   primary: cn(
-    'bg-gold-500 text-navy-950 font-semibold',
+    'bg-gold-500 text-text-primary font-semibold',
     'bg-[linear-gradient(110deg,var(--color-gold-500)_35%,var(--color-gold-300)_50%,var(--color-gold-500)_65%)] bg-[length:250%_100%]',
     'motion-safe:hover:animate-sosrg-shine motion-safe:focus-visible:animate-sosrg-shine',
     'hover:shadow-elevation-2 active:shadow-elevation-pressed',
   ),
   secondary: cn(
-    'bg-navy-800 text-text-primary shadow-elevation-1',
+    'bg-cream-50 text-text-primary shadow-elevation-1',
     'hover:shadow-elevation-2 active:shadow-elevation-pressed',
   ),
   ghost: cn(
-    'bg-transparent text-gold-500',
-    'hover:bg-navy-800/40 active:shadow-elevation-pressed',
+    'bg-transparent text-gold-700',
+    'hover:bg-cream-200/60 active:shadow-elevation-pressed',
   ),
-  // text-primary-on-danger measures 4.42:1 — just under AA's 4.5:1 for
-  // normal text (verified by hand using the same relative-luminance method
-  // redesign.md §1 used for its own table, which never measured this
-  // direction). Pure white measures 4.90:1 and clears it; used only here,
-  // not as a general text-primary replacement.
+  // text-primary-on-danger measures 2.97:1 on the v3 (darker) danger red —
+  // fails AA. Pure white measures 5.98:1 and clears it comfortably; used
+  // only here, not as a general text-primary replacement.
   destructive: cn(
     'bg-danger text-white font-semibold',
     'hover:shadow-elevation-2 active:shadow-elevation-pressed',

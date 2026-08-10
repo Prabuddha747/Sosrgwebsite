@@ -79,6 +79,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const SmartSearchAndDiscovery = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,7 +115,7 @@ export const SmartSearchAndDiscovery = () => {
   );
 
   return (
-    <div className="pt-32 pb-32 px-6 max-w-7xl mx-auto min-h-screen">
+    <div className="pt-32 pb-32 px-6 max-w-[1600px] mx-auto min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
         <div>
           <h1 className="text-5xl font-serif italic mb-4">Talent <span className="vibrant-text-1">Directory</span></h1>
@@ -257,56 +258,22 @@ export const SmartSearchAndDiscovery = () => {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
               {filteredTalent.map((artist) => (
-                <div key={artist.id} className="glass-panel p-4 group cursor-pointer hover:border-gold/30 transition-colors flex flex-col h-full">
-                  <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-4 shrink-0">
-                    <img src={artist.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={artist.name} referrerPolicy="no-referrer" />
-                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                      <Star size={12} className="text-gold fill-gold" /> {artist.rating}
-                    </div>
-                    <div className="absolute top-2 left-2">
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border",
-                        artist.available ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-black/60 text-white/60 border-white/10 backdrop-blur-md"
-                      )}>
-                        {artist.available ? 'Available' : 'Busy'}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4">
-                      <div className="text-gold text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1">
-                        <TrendingUp size={10} /> {artist.trending}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 flex flex-col">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-lg">{artist.name}</h3>
-                        {artist.verified && <ShieldCheck size={16} className="text-emerald-400" />}
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-white/80 mb-1">{artist.role}</div>
-                    
-                    <div className="flex items-center justify-between text-xs text-white/40 mb-4">
-                      <span className="flex items-center gap-1"><MapPin size={12} /> {artist.location}</span>
-                      <span className="font-mono text-emerald-400 font-bold">{artist.rate}</span>
-                    </div>
-
-                    <div className="space-y-2 mb-4 flex-1">
-                      <div className="text-[10px] uppercase tracking-widest text-white/40">Recent Work</div>
-                      <div className="flex flex-wrap gap-2">
-                        {artist.portfolio.map((work, i) => (
-                          <span key={i} className="text-xs bg-white/5 border border-white/10 px-2 py-1 rounded text-white/80">{work}</span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 mt-auto">
-                      <button className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors">
+                // Talent Directory has no live search/profile-listing API yet
+                // (see doc/API_REQUIREMENTS.md) — every card is a shimmer
+                // placeholder rather than the invented name/rating/rate data
+                // this page used to show as if it were real.
+                <div key={artist.id} className="relative glass-panel p-4 flex flex-col h-full">
+                  <ComingSoonTag />
+                  <ScaffoldRow className="aspect-[4/5] rounded-xl mb-4 shrink-0" />
+                  <div className="flex-1 flex flex-col gap-2">
+                    <ScaffoldRow className="h-5 w-3/4" />
+                    <ScaffoldRow className="h-4 w-1/2" />
+                    <ScaffoldRow className="h-4 w-full" />
+                    <div className="flex gap-2 mt-auto pt-2">
+                      <button disabled className="flex-1 py-2 bg-white/5 rounded-lg text-xs font-bold text-white/30 cursor-not-allowed">
                         View Profile
                       </button>
-                      <button className="flex-1 py-2 bg-gold text-black hover:bg-white rounded-lg text-xs font-bold transition-colors">
+                      <button disabled className="flex-1 py-2 bg-white/5 rounded-lg text-xs font-bold text-white/30 cursor-not-allowed">
                         Hire Now
                       </button>
                     </div>

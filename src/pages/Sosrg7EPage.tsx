@@ -1,5 +1,5 @@
 export const Sosrg7EPage = () => (
-  <div className="pt-32 pb-32 px-6 max-w-7xl mx-auto min-h-screen space-y-24">
+  <div className="pt-32 pb-32 px-6 max-w-[1600px] mx-auto min-h-screen space-y-24">
     {/* Education */}
     <div>
       <h1 className="text-5xl font-serif italic mb-12"><span className="gold-text">Education</span> (Learning)</h1>
@@ -45,19 +45,25 @@ export const Sosrg7EPage = () => (
     {/* Events */}
     <div>
       <h1 className="text-5xl font-serif italic mb-12"><span className="gold-text">Events</span> (Organise & Participate)</h1>
-      <p className="text-white/70 mb-8">Comprehensive event management and participation platform.</p>
+      <div className="glass-panel p-8">
+        <p className="text-white/70">Comprehensive event management and participation platform.</p>
+      </div>
     </div>
 
     {/* E-Commerce */}
     <div>
       <h1 className="text-5xl font-serif italic mb-12"><span className="gold-text">E-Commerce</span> (Services)</h1>
-      <p className="text-white/70 mb-8">Art Mart and Talent Auction services.</p>
+      <div className="glass-panel p-8">
+        <p className="text-white/70">Art Mart and Talent Auction services.</p>
+      </div>
     </div>
 
     {/* E-Branding */}
     <div>
       <h1 className="text-5xl font-serif italic mb-12"><span className="gold-text">E-Branding</span> (Digital Identity)</h1>
-      <p className="text-white/70 mb-8">Digital portfolio and profile system.</p>
+      <div className="glass-panel p-8">
+        <p className="text-white/70">Digital portfolio and profile system.</p>
+      </div>
     </div>
 
     {/* Explore */}

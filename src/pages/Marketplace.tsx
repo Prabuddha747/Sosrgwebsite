@@ -80,13 +80,13 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ArtMartContent } from '../components/marketplace/ArtMartContent';
+import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const Marketplace = () => {
   const [activeTab, setActiveTab] = useState<'assets' | 'gigs' | 'collaborations' | 'licensing' | 'art-mart'>('art-mart');
   const [selectedSector, setSelectedSector] = useState('All');
   const [showPostModal, setShowPostModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState('');
 
   const showToast = (msg: string) => {
@@ -106,11 +106,16 @@ export const Marketplace = () => {
   const filteredItems = selectedSector === 'All' ? ORIGINAL_ITEMS : ORIGINAL_ITEMS.filter(item => item.type === selectedSector);
 
   return (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-serif italic mb-2">The <span className="vibrant-text-4">Marketplace</span></h1>
-          <p className="text-white/50">Buy, sell, and collaborate across the 7 Core Creative Sectors.</p>
+          <p className="text-white/50 mb-2">Buy, sell, and collaborate across the 7 Core Creative Sectors.</p>
+          <p className="text-white/40 text-sm max-w-2xl">
+            A real listings marketplace for assets, gigs, collaborations, and IP licensing, backed by
+            actual postings and secure payment handling — what you see below is a preview of the
+            layout, not live listings yet.
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <button 
@@ -187,27 +192,14 @@ export const Marketplace = () => {
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
             {filteredItems.map((item, i) => (
-              <div 
-                key={i} 
-                onClick={() => setSelectedItem(item)}
-                className="glass-panel p-8 flex justify-between items-start group hover:border-gold/30 transition-colors cursor-pointer"
-              >
-                <div>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-gold mb-2 block">{item.type}</span>
-                  <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
-                  <p className="text-white/40 text-sm mb-4">{item.desc}</p>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-emerald-400 font-bold">{item.price}</span>
-                    <span className={cn(
-                      "text-xs px-2 py-1 rounded font-bold uppercase tracking-widest",
-                      item.status === 'Available' ? "bg-emerald-500/20 text-emerald-400" : 
-                      item.status === 'Bidding' ? "bg-blue-500/20 text-blue-400" : "bg-gold/20 text-gold"
-                    )}>{item.status}</span>
-                  </div>
+              <div key={i} className="relative glass-panel p-8">
+                <ComingSoonTag />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gold mb-2 block">{item.type}</span>
+                <div className="space-y-3">
+                  <ScaffoldRow className="h-6 w-2/3" />
+                  <ScaffoldRow className="h-4 w-full" />
+                  <ScaffoldRow className="h-4 w-1/3" />
                 </div>
-                <button className="p-3 rounded-full bg-white/5 group-hover:bg-gold group-hover:text-black transition-colors shrink-0">
-                  <ChevronRight size={20} />
-                </button>
               </div>
             ))}
             {filteredItems.length === 0 && (
@@ -226,29 +218,13 @@ export const Marketplace = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            {[
-              { title: 'Lead Actor for Indie Feature', sector: 'Cinema', budget: '₹50,000 - ₹1,00,000', deadline: '15 Oct 2025', applicants: 45 },
-              { title: 'Choreographer for Music Video', sector: 'Dance', budget: '₹30,000', deadline: '20 Oct 2025', applicants: 12 },
-              { title: 'Set Designer for Stage Play', sector: 'Theatre', budget: '₹75,000', deadline: '05 Nov 2025', applicants: 8 },
-            ].filter(item => selectedSector === 'All' || item.sector === selectedSector).map((gig, i) => (
-              <div key={i} className="glass-panel p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:border-white/30 transition-colors cursor-pointer">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded">{gig.sector}</span>
-                    <span className="text-[10px] text-white/40 flex items-center gap-1"><Clock size={12} /> Ends {gig.deadline}</span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{gig.title}</h3>
-                  <div className="flex items-center gap-4 text-sm text-white/60">
-                    <span className="flex items-center gap-1"><Wallet size={14} /> {gig.budget}</span>
-                    <span className="flex items-center gap-1"><Users size={14} /> {gig.applicants} Applicants</span>
-                  </div>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="relative glass-panel p-6">
+                <ComingSoonTag />
+                <div className="space-y-3">
+                  <ScaffoldRow className="h-5 w-1/2" />
+                  <ScaffoldRow className="h-4 w-full" />
                 </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); showToast('Application submitted successfully!'); }}
-                  className="w-full md:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold transition-colors"
-                >
-                  Apply Now
-                </button>
               </div>
             ))}
           </motion.div>
@@ -262,31 +238,13 @@ export const Marketplace = () => {
             exit={{ opacity: 0, y: -20 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
-            {[
-              { title: 'Sci-Fi Short Film', lookingFor: ['VFX Artist', 'Sound Designer'], sector: 'Cinema', type: 'Revenue Share' },
-              { title: 'Experimental Dance Video', lookingFor: ['Cinematographer', 'Editor'], sector: 'Dance', type: 'Passion Project' },
-              { title: 'Folk Music Fusion Album', lookingFor: ['Flutist', 'Percussionist'], sector: 'Music', type: 'Equal Split' },
-            ].filter(item => selectedSector === 'All' || item.sector === selectedSector).map((collab, i) => (
-              <div key={i} className="glass-panel p-6 flex flex-col h-full hover:-translate-y-1 transition-transform cursor-pointer">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">{collab.sector}</span>
-                  <span className="text-[10px] font-bold text-white/60 bg-white/10 px-2 py-1 rounded">{collab.type}</span>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="relative glass-panel p-6 flex flex-col h-full">
+                <ComingSoonTag />
+                <div className="space-y-3 flex-1">
+                  <ScaffoldRow className="h-5 w-2/3" />
+                  <ScaffoldRow className="h-16" />
                 </div>
-                <h3 className="text-lg font-bold mb-4 flex-1">{collab.title}</h3>
-                <div className="space-y-2 mb-6">
-                  <div className="text-[10px] uppercase tracking-widest text-white/40">Looking For:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {collab.lookingFor.map((role, j) => (
-                      <span key={j} className="text-xs bg-black/50 px-2 py-1 rounded text-white/80">{role}</span>
-                    ))}
-                  </div>
-                </div>
-                <button 
-                  onClick={() => showToast('Connection request sent!')}
-                  className="w-full py-2 border border-white/20 hover:bg-white hover:text-black rounded-lg text-xs font-bold transition-colors"
-                >
-                  Connect
-                </button>
               </div>
             ))}
           </motion.div>
@@ -309,32 +267,13 @@ export const Marketplace = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { title: 'Remake Rights: "The Last Train"', type: 'Literature', price: '₹15,00,000', terms: 'Exclusive, 5 Years', royalty: '5% Box Office' },
-                { title: 'Sync License: "Monsoon Melody"', type: 'Music', price: '₹50,000', terms: 'Non-Exclusive, Perpetual', royalty: 'None' },
-              ].filter(item => selectedSector === 'All' || item.type === selectedSector).map((license, i) => (
-                <div key={i} className="glass-panel p-6 hover:border-gold/30 transition-colors">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] uppercase tracking-widest text-gold">{license.type}</span>
-                    <span className="font-mono text-emerald-400 font-bold">{license.price}</span>
+              {[0, 1].map((i) => (
+                <div key={i} className="relative glass-panel p-6">
+                  <ComingSoonTag />
+                  <div className="space-y-3">
+                    <ScaffoldRow className="h-5 w-2/3" />
+                    <ScaffoldRow className="h-20" />
                   </div>
-                  <h3 className="text-xl font-bold mb-4">{license.title}</h3>
-                  <div className="space-y-2 mb-6 bg-black/30 p-4 rounded-lg">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-white/40">Terms</span>
-                      <span className="font-bold">{license.terms}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-white/40">Royalty</span>
-                      <span className="font-bold">{license.royalty}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => showToast('License acquisition initiated. Redirecting to Smart Contract...')}
-                    className="w-full py-3 bg-gold text-black rounded-xl text-sm font-bold hover:bg-white transition-colors"
-                  >
-                    Acquire License
-                  </button>
                 </div>
               ))}
             </div>
@@ -492,75 +431,6 @@ export const Marketplace = () => {
                     Apply Filters
                   </button>
                 </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Item Details Modal */}
-      <AnimatePresence>
-        {selectedItem && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-            onClick={() => setSelectedItem(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="bg-cinematic-gray border border-white/10 rounded-2xl p-8 max-w-2xl w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-gold mb-2 block">{selectedItem.type}</span>
-                  <h2 className="text-3xl font-bold mb-2">{selectedItem.title}</h2>
-                  <span className={cn(
-                    "text-xs px-2 py-1 rounded font-bold uppercase tracking-widest inline-block",
-                    selectedItem.status === 'Available' ? "bg-emerald-500/20 text-emerald-400" : 
-                    selectedItem.status === 'Bidding' ? "bg-blue-500/20 text-blue-400" : "bg-gold/20 text-gold"
-                  )}>{selectedItem.status}</span>
-                </div>
-                <button onClick={() => setSelectedItem(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="bg-black/30 p-6 rounded-xl mb-6 border border-white/5">
-                <p className="text-white/80 leading-relaxed mb-6">{selectedItem.desc}</p>
-                <div className="flex items-center justify-between border-t border-white/10 pt-6">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Asking Price</div>
-                    <div className="font-mono text-2xl text-emerald-400 font-bold">{selectedItem.price}</div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => { showToast('Added to wishlist!'); setSelectedItem(null); }}
-                      className="p-3 rounded-xl border border-white/20 hover:bg-white/10 transition-colors"
-                    >
-                      <Heart size={20} />
-                    </button>
-                    <button 
-                      onClick={() => { showToast('Purchase initiated!'); setSelectedItem(null); }}
-                      className="px-8 py-3 bg-gold text-black rounded-xl font-bold hover:bg-white transition-colors"
-                    >
-                      Buy Now
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-4">
-                <button className="flex-1 py-3 border border-white/20 rounded-xl text-sm font-bold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-                  <MessageCircle size={16} /> Contact Seller
-                </button>
-                <button className="flex-1 py-3 border border-white/20 rounded-xl text-sm font-bold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-                  <Share2 size={16} /> Share Listing
-                </button>
               </div>
             </motion.div>
           </motion.div>

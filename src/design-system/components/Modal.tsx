@@ -60,7 +60,7 @@ export const Modal = ({ open, onClose, variant = 'standard', titleId, children, 
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export const Modal = ({ open, onClose, variant = 'standard', titleId, children, 
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'sosrg-focus-ring bg-navy-800 text-text-primary shadow-elevation-3 rounded-2xl p-6',
+              'sosrg-focus-ring bg-cream-50 text-text-primary shadow-elevation-3 rounded-2xl p-6',
               'w-full max-w-lg max-h-[90vh] overflow-y-auto',
               'max-tablet:max-w-none max-tablet:h-full max-tablet:max-h-full max-tablet:rounded-none max-tablet:m-0',
               variant === 'fullscreen' && 'max-w-none h-full max-h-full rounded-none',

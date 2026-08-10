@@ -81,7 +81,7 @@ import {
 import { cn } from '../../lib/utils';
 
 export const MobileAppStructure = () => (
-  <section className="py-24 px-6 max-w-7xl mx-auto">
+  <section className="py-24 px-6 max-w-[1600px] mx-auto">
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
       <div className="order-2 lg:order-1 relative">
         <div className="absolute inset-0 bg-gold/5 rounded-full blur-[100px]" />

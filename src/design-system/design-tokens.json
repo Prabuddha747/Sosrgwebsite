@@ -1,26 +1,28 @@
 {
-  "comment": "SosrG v2 design tokens — redesign.md §1-4. Canonical source per redesign.md §11 (app-readiness for a future native app). src/design-system/tokens.css must be kept in sync with these same values by hand — the token set is small enough that a codegen step would be overhead, not a safeguard.",
+  "comment": "SosrG v3 design tokens — cream/gold light theme, superseding the v2 navy dark theme (see redesign.md §1 changelog). Canonical source per redesign.md §11 (app-readiness for a future native app). src/design-system/tokens.css must be kept in sync with these same values by hand — the token set is small enough that a codegen step would be overhead, not a safeguard.",
   "color": {
-    "navy-950": "#081A2E",
-    "navy-900": "#0F2B4A",
-    "navy-800": "#163A5E",
-    "navy-700": "#1D4A78",
-    "gold-500": "#D4BB6E",
-    "gold-300": "#F0DE9A",
-    "gold-700": "#B89440",
-    "text-primary": "#F7F3E8",
-    "text-muted": "#9FB0C4",
-    "danger": "#C0475A",
-    "success": "#5FAE82",
-    "tier-yellow": "#F59E0B",
-    "tier-blue": "#60A5FA",
-    "_tier-color-note": "Green/Red account tiers reuse success/danger. Yellow/Blue are new tokens proposed for the Badge/StatusPill component per redesign.md §1's own escape hatch for a genuinely-needed second accent — measured contrast vs navy-900: tier-yellow 6.67:1, tier-blue 5.64:1 (both pass AA)."
+    "cream-50": "#FFFAF0",
+    "cream-100": "#F5EDE2",
+    "cream-200": "#EDE1CE",
+    "gold-500": "#C6952E",
+    "gold-300": "#E8C878",
+    "gold-700": "#8A6318",
+    "text-primary": "#1C1712",
+    "text-muted": "#5C5044",
+    "danger": "#B0384A",
+    "success": "#2F7A4F",
+    "scrim": "rgba(28, 23, 18, 0.55)",
+    "tier-yellow": "#8F5709",
+    "tier-blue": "#2563C7",
+    "_light_theme_note": "Values measured by sampling the real mobile app screenshots (pixel-sampled with Pillow, same discipline redesign.md §1 used for the logo), then contrast-verified against cream-100 (page bg) with the same relative-luminance method: text-primary 15.33:1, text-muted 6.74:1, gold-700 4.67:1, danger 5.15:1, success 4.5:1, tier-yellow 5.12:1, tier-blue 4.91:1 — all pass AA (4.5:1 body text). gold-500 itself is NOT used as text on cream (2.34:1, fails) — only as a fill, exactly mirroring why v2 needed a separate gold-700 for text-on-light.",
+    "_tier-color-note": "Green/Red account tiers reuse success/danger. Yellow/Blue are dedicated tokens per redesign.md §1's own escape hatch for a genuinely-needed second accent — both re-darkened from their v2 values, which were tuned for a dark navy background and fail badly on cream (old tier-yellow 1.85:1, old tier-blue 2.19:1)."
   },
   "shadow": {
-    "dark": "rgba(4, 12, 22, 0.55)",
-    "light": "rgba(90, 130, 170, 0.14)",
-    "inset-dark": "rgba(4, 12, 22, 0.45)",
-    "inset-light": "rgba(212, 187, 110, 0.08)"
+    "dark": "rgba(120, 92, 56, 0.28)",
+    "light": "rgba(255, 252, 244, 0.9)",
+    "inset-dark": "rgba(120, 92, 56, 0.22)",
+    "inset-light": "rgba(198, 149, 46, 0.12)",
+    "_comment": "Neumorphism shadow-tinting rule unchanged from v2 (redesign.md §2): never pure black/white. Recalibrated for a light cream base — warm umber-brown for the dark side (not black), a warm near-white for the light side (not pure white), faint gold tint on the pressed/inset-light state."
   },
   "elevation": {
     "0": "none",
@@ -62,8 +64,9 @@
   "focusRing": {
     "width": "2px",
     "style": "solid",
-    "color": "gold-300",
-    "offset": "2px"
+    "color": "gold-700",
+    "offset": "2px",
+    "_comment": "v2 used gold-300 (a light highlight) because it needed to stand out on dark navy. On the cream base that's now the page background, a light gold ring is nearly invisible — gold-700 (the deep, text-on-light gold) is the correct analog: same accent hue, recalibrated for which end of the scale actually contrasts against the new surface."
   },
   "spacing": {
     "comment": "No custom spacing scale defined — Tailwind v4's default scale (p-1..p-32 etc.) already produces exactly the 4/8/12/16/24/32/48/64/96/128px scale specified in redesign.md §4, so component code just uses Tailwind's built-in spacing utilities directly."

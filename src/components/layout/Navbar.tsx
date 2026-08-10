@@ -19,7 +19,6 @@ import {
   Menu,
   X,
   Zap,
-  Lock,
   Globe,
   Award,
   TrendingUp,
@@ -80,6 +79,15 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Section } from '../../types';
+import logo from '../../assets/logo.jpg';
+import {
+  MotionNavigationMenu,
+  MotionNavigationMenuContent,
+  MotionNavigationMenuItem,
+  MotionNavigationMenuList,
+  MotionNavigationMenuTrigger,
+} from '../ui/motion-navigation-menu';
+import { HighlightItem } from '../ui/highlight';
 
 export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, language, setLanguage }: { activeSection: Section, setActiveSection: (s: Section) => void, theme: 'dark' | 'light', setTheme: (t: 'dark' | 'light') => void, language: string, setLanguage: (l: string) => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -166,13 +174,6 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
         { id: 'academy', label: t.academy, icon: BookOpen },
         { id: 'sosrg-7e', label: t.sosrg, icon: Star },
       ]
-    },
-    {
-      label: t.profile,
-      items: [
-        { id: 'creator-profile', label: t.creatorProfile, icon: User },
-        { id: 'business-profile', label: t.businessProfile, icon: Briefcase },
-      ]
     }
   ];
 
@@ -181,62 +182,67 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
       "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 sm:px-6 py-3 sm:py-4",
       isScrolled || isMenuOpen ? "bg-cinematic-black/95 backdrop-blur-xl border-b border-white/10" : "bg-transparent"
     )}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="max-w-[1600px] mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer z-50" onClick={() => { setActiveSection('home'); setIsMenuOpen(false); }}>
-          <img 
-            src="https://picsum.photos/seed/sosrg-logo/100/100" 
-            alt="SosrG Logo" 
+          <img
+            src={logo}
+            alt="SosrG Logo"
             className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover"
-            referrerPolicy="no-referrer"
           />
           <span className="text-xl sm:text-2xl font-bold tracking-tight gold-text">SosrG</span>
         </div>
 
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-6">
-          {navGroups.map((group) => (
-            <div key={group.label} className="relative group">
-              <button className="text-sm font-medium tracking-widest uppercase transition-colors text-white/60 hover:text-gold flex items-center gap-1 py-2">
-                {group.label}
-                <ChevronDown size={14} className="opacity-50 group-hover:opacity-100 transition-opacity" />
-              </button>
-              <div className="absolute top-full left-0 mt-2 w-48 bg-cinematic-black/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all overflow-hidden flex flex-col py-2">
-                {group.items.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id as Section)}
-                    className={cn(
-                      "text-left px-4 py-2 text-sm font-medium tracking-wide transition-colors flex items-center gap-3 hover:bg-white/10",
-                      activeSection === item.id ? "text-gold bg-white/5" : "text-white/80"
-                    )}
-                  >
-                    <item.icon size={16} className={activeSection === item.id ? "text-gold" : "text-white/40"} />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          <MotionNavigationMenu viewportClassName="min-w-48">
+            <MotionNavigationMenuList>
+              {navGroups.map((group) => (
+                <MotionNavigationMenuItem key={group.label} value={group.label}>
+                  <MotionNavigationMenuTrigger className="text-white/60 tracking-widest uppercase">
+                    {group.label}
+                  </MotionNavigationMenuTrigger>
+                  <MotionNavigationMenuContent>
+                    <div className="flex flex-col gap-1 w-48">
+                      {group.items.map((item) => (
+                        <HighlightItem key={item.id}>
+                          <button
+                            onClick={() => setActiveSection(item.id as Section)}
+                            className={cn(
+                              "text-left px-3 py-2 text-sm font-medium tracking-wide transition-colors flex items-center gap-3 rounded-sm",
+                              activeSection === item.id ? "text-gold" : "text-white/80"
+                            )}
+                          >
+                            <item.icon size={16} className={activeSection === item.id ? "text-gold" : "text-white/40"} />
+                            {item.label}
+                          </button>
+                        </HighlightItem>
+                      ))}
+                    </div>
+                  </MotionNavigationMenuContent>
+                </MotionNavigationMenuItem>
+              ))}
+            </MotionNavigationMenuList>
+          </MotionNavigationMenu>
 
           <button
-            onClick={() => setActiveSection('admin')}
+            onClick={() => setActiveSection('profile')}
             className={cn(
               "text-sm font-medium tracking-widest uppercase transition-colors hover:text-gold flex items-center gap-1",
-              activeSection === 'admin' ? "text-gold" : "text-white/60"
+              activeSection === 'profile' ? "text-gold" : "text-white/60"
             )}
           >
-            <Lock size={14} className="mb-[2px]" /> {t.admin}
+            <User size={14} className="mb-[2px]" /> {t.profile}
           </button>
-          
+
           <div className="flex items-center gap-2 border-l border-white/20 pl-6 ml-2">
-            <button 
+            <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-gold"
               title="Toggle Theme"
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            
+
             <div className="relative group">
               <button className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-gold flex items-center gap-1">
                 <Languages size={18} />
@@ -305,31 +311,31 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               ))}
               
               <div className="mb-2">
-                <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 px-2">System</div>
+                <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 px-2">{t.profile}</div>
                 <div className="flex flex-col gap-1">
                   <button
-                    onClick={() => { setActiveSection('admin'); setIsMenuOpen(false); }}
+                    onClick={() => { setActiveSection('profile'); setIsMenuOpen(false); }}
                     className={cn(
                       "text-left text-base font-medium py-2 px-3 rounded-lg flex items-center gap-3 transition-colors",
-                      activeSection === 'admin' ? "text-gold bg-white/5" : "text-white/70 hover:bg-white/5"
+                      activeSection === 'profile' ? "text-gold bg-white/5" : "text-white/70 hover:bg-white/5"
                     )}
                   >
-                    <Lock size={18} className={activeSection === 'admin' ? "text-gold" : "text-white/40"} />
-                    Admin
+                    <User size={18} className={activeSection === 'profile' ? "text-gold" : "text-white/40"} />
+                    {t.profile}
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between py-4 border-b border-white/5">
                 <span className="text-white/60 font-medium">Theme</span>
-                <button 
+                <button
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors text-white"
                 >
                   {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
               </div>
-              
+
               <div className="py-2 border-b border-white/5">
                 <span className="text-white/60 font-medium block mb-3">Language</span>
                 <div className="flex flex-wrap gap-2">

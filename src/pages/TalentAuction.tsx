@@ -79,6 +79,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const TalentAuction = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'create' | 'analytics' | 'contracts' | 'upcoming' | 'wallet'>('browse');
@@ -97,11 +98,16 @@ export const TalentAuction = () => {
   const filteredAuctions = selectedSector === 'All Sectors' ? AUCTIONS : AUCTIONS.filter(a => a.sector === selectedSector);
 
   return (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-serif italic mb-2">Talent <span className="vibrant-text-3">Auction</span></h1>
-          <p className="text-white/50">Bid on top talent across the 7 Core Creative Sectors.</p>
+          <p className="text-white/50 mb-2">Bid on top talent across the 7 Core Creative Sectors.</p>
+          <p className="text-white/40 text-sm max-w-2xl">
+            Real-time bidding on talent and creative rights, with live auction state, verified wallets,
+            and binding contracts on close — what you see below is a preview of the layout, not a live
+            auction yet.
+          </p>
         </div>
         <div className="flex flex-col items-start md:items-end gap-4 w-full md:w-auto">
           <button 
@@ -170,12 +176,12 @@ export const TalentAuction = () => {
                     className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm h-32 resize-none focus:outline-none focus:border-gold"
                   />
                 </div>
-                <button className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform">
-                  Predict Market Value
+                <button disabled className="w-full bg-white/10 border border-white/10 text-white/50 py-4 rounded-xl font-bold uppercase tracking-widest cursor-not-allowed">
+                  Predict Market Value — Coming Soon
                 </button>
                 <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-center">
                   <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Estimated Value Range</p>
-                  <div className="text-2xl font-bold text-emerald-400">₹ 45,000 - ₹ 60,000</div>
+                  <ScaffoldRow className="h-8 w-40 mx-auto" />
                 </div>
               </div>
             </motion.div>
@@ -208,44 +214,19 @@ export const TalentAuction = () => {
               ))}
             </div>
 
+            {/* No live auction API yet (doc/API_REQUIREMENTS.md) — cards are
+                shimmer placeholders rather than the invented listings this
+                page used to show as if they were real, active auctions. */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredAuctions.map((auction) => (
-                <div key={auction.id} className="glass-panel group overflow-hidden flex flex-col">
-                  <div className="h-48 relative shrink-0">
-                    <img src={auction.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={auction.title} referrerPolicy="no-referrer" />
-                    <div className="absolute top-4 right-4 bg-crimson px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
-                    </div>
-                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
-                      {auction.sector}
-                    </div>
-                  </div>
-                  <div className="p-6 flex flex-col flex-1">
-                    <h3 className="text-xl font-bold mb-1">{auction.title}</h3>
-                    <p className="text-xs text-white/40 mb-4">By {auction.artist}</p>
-                    <div className="flex justify-between items-end mb-6">
-                      <div>
-                        <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Current Bid</div>
-                        <div className="text-xl font-mono font-bold text-gold">{auction.currentBid}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Ends In</div>
-                        <div className="text-sm font-bold text-crimson">{auction.endsIn}</div>
-                      </div>
-                    </div>
+                <div key={auction.id} className="relative glass-panel overflow-hidden flex flex-col">
+                  <ComingSoonTag />
+                  <ScaffoldRow className="h-48" />
+                  <div className="p-6 flex flex-col flex-1 gap-3">
+                    <ScaffoldRow className="h-5 w-3/4" />
+                    <ScaffoldRow className="h-3 w-1/3" />
                     <div className="mt-auto space-y-3">
-                      <div className="flex gap-2">
-                        <input type="text" placeholder="Enter amount" className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold" />
-                        <button className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-xs font-bold transition-colors">Manual Bid</button>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 bg-gold/10 text-gold border border-gold/20 py-2 rounded-lg text-xs font-bold hover:bg-gold hover:text-black transition-colors flex items-center justify-center gap-2">
-                          <Zap size={14} /> Auto Bid
-                        </button>
-                        <button className="flex-1 bg-white text-black py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">
-                          Buy Now ({auction.buyNow})
-                        </button>
-                      </div>
+                      <button disabled className="w-full bg-white/10 border border-white/10 text-white/50 py-2 rounded-lg text-xs font-bold cursor-not-allowed">Bidding not open yet</button>
                     </div>
                   </div>
                 </div>
@@ -308,52 +289,24 @@ export const TalentAuction = () => {
             className="space-y-8"
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="glass-panel p-6 border-gold/20 bg-gradient-to-br from-gold/5 to-transparent">
-                <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Total Auction Revenue</div>
-                <div className="text-4xl font-bold text-gold mb-2">₹12,45,000</div>
-                <div className="text-xs text-emerald-400 flex items-center gap-1"><TrendingUp size={12} /> +15% this month</div>
-              </div>
-              <div className="glass-panel p-6">
-                <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Active Auctions</div>
-                <div className="text-4xl font-bold mb-2">3</div>
-                <div className="text-xs text-white/40">Across 2 sectors</div>
-              </div>
-              <div className="glass-panel p-6">
-                <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Average Bid Increase</div>
-                <div className="text-4xl font-bold mb-2">24%</div>
-                <div className="text-xs text-white/40">Above minimum bid</div>
-              </div>
+              {['Total Auction Revenue', 'Active Auctions', 'Average Bid Increase'].map((label) => (
+                <div key={label} className="relative glass-panel p-6">
+                  <ComingSoonTag />
+                  <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">{label}</div>
+                  <ScaffoldRow className="h-9 w-24 mb-2" />
+                </div>
+              ))}
             </div>
 
-            <div className="glass-panel-orange p-8">
+            <div className="relative glass-panel-orange p-8">
+              <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <Trophy size={20} className="text-gold" />
                 <h3 className="text-xl font-bold">Weekly Leaderboard</h3>
               </div>
               <div className="space-y-4">
-                {[
-                  { rank: 1, name: 'Rajesh K.', sector: 'Acting', revenue: '₹4,50,000', trend: 'up' },
-                  { rank: 2, name: 'Amit S.', sector: 'Music', revenue: '₹3,20,000', trend: 'up' },
-                  { rank: 3, name: 'Meera V.', sector: 'Writing', revenue: '₹2,80,000', trend: 'down' },
-                ].map((user) => (
-                  <div key={user.rank} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                        user.rank === 1 ? "bg-gold text-black" : "bg-white/10 text-white"
-                      )}>
-                        #{user.rank}
-                      </div>
-                      <div>
-                        <div className="font-bold">{user.name}</div>
-                        <div className="text-xs text-white/40">{user.sector}</div>
-                      </div>
-                    </div>
-                    <div className="text-right flex items-center gap-4">
-                      <div className="font-bold font-mono">{user.revenue}</div>
-                      {user.trend === 'up' ? <TrendingUp size={16} className="text-emerald-400" /> : <ArrowDownRight size={16} className="text-crimson" />}
-                    </div>
-                  </div>
+                {[0, 1, 2].map((i) => (
+                  <ScaffoldRow key={i} className="h-16" />
                 ))}
               </div>
             </div>
@@ -369,69 +322,40 @@ export const TalentAuction = () => {
             className="grid grid-cols-1 lg:grid-cols-2 gap-8"
           >
             {/* Digital Contracts */}
-            <div className="glass-panel-blue p-8">
+            <div className="relative glass-panel-blue p-8">
+              <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <FileText size={20} className="text-blue-400" />
                 <h3 className="text-xl font-bold">Digital Contracts</h3>
               </div>
               <p className="text-sm text-white/60 mb-6">Auto-generated agreements for won auctions.</p>
               <div className="space-y-4">
-                {[
-                  { title: 'Lead Role: "The Silent Valley"', date: 'Oct 15, 2023', status: 'Signed' },
-                  { title: 'Cinematography: "Urban Ad"', date: 'Oct 10, 2023', status: 'Pending Signature' },
-                ].map((contract, i) => (
-                  <div key={i} className="p-4 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center">
-                    <div>
-                      <div className="font-bold text-sm mb-1">{contract.title}</div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest">{contract.date}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded",
-                        contract.status === 'Signed' ? "bg-emerald-500/20 text-emerald-400" : "bg-gold/20 text-gold"
-                      )}>
-                        {contract.status}
-                      </span>
-                      <button className="text-white/40 hover:text-white"><ChevronRight size={16} /></button>
-                    </div>
-                  </div>
+                {[0, 1].map((i) => (
+                  <ScaffoldRow key={i} className="h-16" />
                 ))}
               </div>
             </div>
 
             {/* Calendar & Reviews */}
             <div className="space-y-8">
-              <div className="glass-panel-green p-8">
+              <div className="relative glass-panel-green p-8">
+                <ComingSoonTag />
                 <div className="flex items-center gap-2 mb-6">
                   <Calendar size={20} className="text-gold" />
                   <h3 className="text-xl font-bold">Calendar Integration</h3>
                 </div>
                 <p className="text-sm text-white/60 mb-4">Bookings from won auctions are automatically added to your schedule.</p>
-                <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex items-start gap-4">
-                  <div className="w-12 h-12 rounded bg-gold/20 flex flex-col items-center justify-center shrink-0">
-                    <span className="text-[10px] font-bold uppercase text-gold">Oct</span>
-                    <span className="text-lg font-bold text-gold">24</span>
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm mb-1">Shoot: "The Silent Valley"</div>
-                    <div className="text-xs text-white/40">Mumbai Studio • 9:00 AM - 6:00 PM</div>
-                  </div>
-                </div>
+                <ScaffoldRow className="h-16" />
               </div>
 
-              <div className="glass-panel p-8">
+              <div className="relative glass-panel p-8">
+                <ComingSoonTag />
                 <div className="flex items-center gap-2 mb-6">
                   <Star size={20} className="text-gold" />
                   <h3 className="text-xl font-bold">Ratings & Reviews</h3>
                 </div>
                 <p className="text-sm text-white/60 mb-4">Mutual ratings impact future auction visibility and trust scores.</p>
-                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-bold text-sm">Review from Studio X</div>
-                    <div className="flex text-gold"><Star size={12} className="fill-gold" /><Star size={12} className="fill-gold" /><Star size={12} className="fill-gold" /><Star size={12} className="fill-gold" /><Star size={12} className="fill-gold" /></div>
-                  </div>
-                  <p className="text-xs text-white/60 italic">"Exceptional talent, highly professional on set. Looking forward to working together again."</p>
-                </div>
+                <ScaffoldRow className="h-16" />
               </div>
             </div>
           </motion.div>
@@ -458,34 +382,32 @@ export const TalentAuction = () => {
             exit={{ opacity: 0, scale: 0.95 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
-            <div className="lg:col-span-1 glass-panel p-8">
+            <div className="relative lg:col-span-1 glass-panel p-8">
+              <ComingSoonTag />
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 bg-gold/20 rounded-2xl flex items-center justify-center">
                   <Wallet className="text-gold" size={32} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold">₹45,200</h3>
+                  <ScaffoldRow className="h-7 w-24 mb-2" />
                   <p className="text-xs text-white/40">Available Balance</p>
                 </div>
               </div>
               <div className="space-y-4">
-                <button className="w-full bg-gold text-black py-4 rounded-xl font-bold text-sm">Add Funds</button>
-                <button className="w-full bg-white/5 border border-white/10 py-4 rounded-xl font-bold text-sm">Withdraw</button>
+                <button disabled className="w-full bg-white/10 border border-white/10 text-white/50 py-4 rounded-xl font-bold text-sm cursor-not-allowed">Add Funds</button>
+                <button disabled className="w-full bg-white/5 border border-white/10 text-white/30 py-4 rounded-xl font-bold text-sm cursor-not-allowed">Withdraw</button>
               </div>
             </div>
-            <div className="lg:col-span-2 glass-panel p-8">
+            <div className="relative lg:col-span-2 glass-panel p-8">
+              <ComingSoonTag />
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Trophy size={20} className="text-gold" /> Rewards & Gamification</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                  <div className="text-3xl font-bold text-gold mb-1">1,240</div>
-                  <div className="text-[10px] uppercase tracking-widest text-white/40">SosrG Coins</div>
-                  <p className="text-[10px] text-emerald-400 mt-2">Convert to ₹124 Voucher</p>
-                </div>
-                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                  <div className="text-3xl font-bold text-crimson mb-1">#12</div>
-                  <div className="text-[10px] uppercase tracking-widest text-white/40">Weekly Leaderboard</div>
-                  <p className="text-[10px] text-white/40 mt-2">Top 10 get 500 Coins</p>
-                </div>
+                {['SosrG Coins', 'Weekly Leaderboard'].map((label) => (
+                  <div key={label} className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                    <ScaffoldRow className="h-8 w-16 mb-2" />
+                    <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>

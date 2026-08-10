@@ -79,15 +79,14 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import logo from '../../assets/logo.jpg';
 
 export const Footer = () => (
   <footer className="bg-cinematic-black/80 backdrop-blur-xl border-t border-white/10 py-16 px-6">
-    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+    <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
       <div className="col-span-1 md:col-span-2">
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-crimson rounded flex items-center justify-center">
-            <span className="text-lg font-bold italic">S</span>
-          </div>
+          <img src={logo} alt="SosrG Logo" className="w-8 h-8 rounded object-cover" />
           <span className="text-xl font-bold tracking-tighter gold-text">SosrG</span>
         </div>
         <p className="text-white/40 max-w-md mb-8">
@@ -118,7 +117,7 @@ export const Footer = () => (
         </ul>
       </div>
     </div>
-    <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/20">
+    <div className="max-w-[1600px] mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/20">
       <p>© 2026 SosrG Creative Industry Platform. All rights reserved.</p>
       <div className="flex gap-8">
         <a href="#">Privacy Policy</a>

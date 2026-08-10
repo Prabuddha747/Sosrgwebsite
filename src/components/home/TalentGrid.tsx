@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   Film,
   Theater,
   PenTool,
@@ -80,10 +79,24 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Section } from '../../types';
-import { TALENT_CATEGORIES, FEATURED_TALENT } from '../../data/mockData';
+import { TALENT_CATEGORIES } from '../../data/mockData';
+import { SectorShowcase } from '../ui/sector-showcase';
+import { RoleCarousel, type RoleCard } from '../ui/role-carousel';
+
+// Placeholder slots for real member profiles — photos and bios get uploaded
+// per-person later, so these stay scaffolded (shimmer, not stock photos)
+// rather than showing invented names/descriptions as if they were real.
+const FEATURED_ROLE_CATEGORIES: RoleCard[] = [
+  { id: 'performers', tag: 'Cinema · Theatre' },
+  { id: 'directors', tag: 'Cinema' },
+  { id: 'music', tag: 'Music' },
+  { id: 'choreo', tag: 'Dance' },
+  { id: 'writers', tag: 'Literature' },
+  { id: 'design', tag: 'Art & Design' },
+];
 
 export const TalentGrid = ({ setActiveSection }: { setActiveSection: (s: Section) => void }) => (
-  <section className="py-24 px-6 max-w-7xl mx-auto">
+  <section className="py-24 px-6 max-w-[1600px] mx-auto">
     <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
       <div>
         <h2 className="text-3xl md:text-4xl font-serif italic mb-2">7 Core Creative <span className="vibrant-text-1">Sectors</span></h2>
@@ -110,96 +123,24 @@ export const TalentGrid = ({ setActiveSection }: { setActiveSection: (s: Section
     </div>
 
     {/* Category Visual Showcase */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-24">
-      {TALENT_CATEGORIES.map((cat, i) => (
-        <motion.div
-          key={cat.id}
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.05 }}
-          viewport={{ once: true }}
-          onClick={() => setActiveSection('talent')}
-          className={cn(
-            "group relative h-80 overflow-hidden rounded-3xl cursor-pointer",
-            i === 0 || i === 3 ? "md:col-span-2 lg:col-span-2 xl:col-span-2" : ""
-          )}
-        >
-          <img 
-            src={cat.image} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-            alt={cat.name}
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-          <div className="absolute bottom-6 left-6 right-6">
-            <div className="flex items-center gap-2 mb-2">
-              <cat.icon size={18} className={cat.color} />
-              <span className="text-xs font-bold uppercase tracking-widest text-white/60">Ecosystem Hub</span>
-            </div>
-            <h3 className="text-2xl font-bold mb-2">{cat.name}</h3>
-            <p className="text-sm text-white/70 line-clamp-2">{cat.desc}</p>
-          </div>
-          <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-              <ChevronRight size={20} />
-            </div>
-          </div>
-        </motion.div>
-      ))}
+    <div className="mb-24">
+      <SectorShowcase onSelect={() => setActiveSection('talent')} />
     </div>
 
     <div className="mb-12">
-      <h3 className="text-2xl font-serif italic mb-8 flex items-center gap-3">
-        <TrendingUp className="text-gold" /> Featured Professionals
-      </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {FEATURED_TALENT.map((talent, i) => (
-          <motion.div
-            key={talent.id}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            viewport={{ once: true }}
-            className="group relative"
-          >
-            <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4 relative border border-white/10 group-hover:border-gold/50 transition-colors">
-              <img 
-                src={talent.image} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                alt={talent.name}
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-cinematic-black via-transparent to-transparent opacity-60" />
-              
-              {/* Premium Badge */}
-              {talent.isPremium && (
-                <div className="absolute top-4 left-4 bg-gold/90 backdrop-blur-md px-2 py-1 rounded text-black flex items-center gap-1 shadow-lg">
-                  <Star size={10} className="fill-black" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Premium</span>
-                </div>
-              )}
-
-              {/* Rating Badge */}
-              <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-2 py-1 rounded flex items-center gap-1 border border-white/10">
-                <Star size={12} className="text-gold fill-gold" />
-                <span className="text-xs font-bold">{talent.rating}</span>
-              </div>
-
-              <button className="absolute bottom-4 left-4 right-4 bg-gold text-black py-3 rounded-xl font-bold text-sm opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-xl">
-                View Portfolio
-              </button>
-            </div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xl font-bold">{talent.name}</h3>
-              {talent.isVerified && <ShieldCheck size={16} className="text-blue-400" />}
-            </div>
-            <div className="flex items-center justify-between text-white/50 text-sm">
-              <span className="text-gold/80 font-medium">{talent.role}</span>
-              <span className="flex items-center gap-1"><Globe size={12} /> {talent.location}</span>
-            </div>
-          </motion.div>
-        ))}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <h3 className="text-2xl font-serif italic flex items-center gap-3">
+          <TrendingUp className="text-gold" /> Featured Professionals
+        </h3>
+        <span className="bg-gold text-black px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest shadow-lg shrink-0">
+          Coming Soon
+        </span>
       </div>
+      <p className="text-white/50 text-sm mb-8 max-w-2xl">
+        There's no live "featured talent" directory yet — these are the role categories the platform is
+        built around, not real member profiles.
+      </p>
+      <RoleCarousel items={FEATURED_ROLE_CATEGORIES} scaffold />
     </div>
   </section>
 );

@@ -25,11 +25,11 @@ export const Avatar = ({ src, alt, fallback, tier, size = 'md', className, ...pr
     <div
       className={cn(
         'relative inline-flex items-center justify-center shrink-0 rounded-full',
-        'bg-navy-700 text-text-primary font-body font-medium overflow-hidden',
+        'bg-cream-200 text-text-primary font-body font-medium overflow-hidden',
         sizeClasses[size],
         className,
       )}
-      style={ringColor ? { boxShadow: `0 0 0 2px var(--color-navy-800), 0 0 0 4px ${ringColor}` } : undefined}
+      style={ringColor ? { boxShadow: `0 0 0 2px var(--color-cream-50), 0 0 0 4px ${ringColor}` } : undefined}
       {...props}
     >
       {src && !imgFailed ? (

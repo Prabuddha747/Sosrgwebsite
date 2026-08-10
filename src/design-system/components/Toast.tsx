@@ -26,8 +26,8 @@ const variantIcon: Record<ToastVariant, React.ComponentType<React.SVGProps<SVGSV
   info: Info,
 };
 
-// text-primary-on-danger/success (icon+text color choice below) carries the
-// same unverified-pairing flag as Badge.tsx — see that file's comment.
+// danger/success/tier-blue as icon color on the cream-50 toast surface:
+// 5.75:1 / 5.02:1 / 5.47:1 — all pass AA (redesign.md §1 methodology).
 const variantColorVar: Record<ToastVariant, string> = {
   success: 'var(--color-success)',
   error: 'var(--color-danger)',
@@ -76,7 +76,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.2 }}
-                  className="sosrg-focus-ring flex items-center gap-3 bg-navy-800 shadow-elevation-2 rounded-xl px-4 py-3 min-w-[280px] max-w-sm"
+                  className="sosrg-focus-ring flex items-center gap-3 bg-cream-50 shadow-elevation-2 rounded-xl px-4 py-3 min-w-[280px] max-w-sm"
                   role="status"
                 >
                   <Icon className="shrink-0 w-5 h-5" style={{ color }} />
