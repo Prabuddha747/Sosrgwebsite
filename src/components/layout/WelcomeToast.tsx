@@ -97,11 +97,11 @@ export const WelcomeToast = () => {
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -50 }}
-          className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-emerald-500/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 font-bold text-sm"
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md sm:max-w-none sm:w-auto bg-gold text-black backdrop-blur-md px-5 py-3 sm:px-6 rounded-2xl sm:rounded-full shadow-2xl flex items-center gap-3 font-bold text-xs sm:text-sm"
         >
-          <CheckCircle2 size={18} />
-          Welcome to SosrG - The Ultimate Platform for Creative Professionals!
-          <button onClick={() => setIsVisible(false)} className="ml-2 hover:text-black transition-colors">
+          <CheckCircle2 size={18} className="shrink-0" />
+          <span>Welcome to SosrG - The Ultimate Platform for Creative Professionals!</span>
+          <button onClick={() => setIsVisible(false)} className="ml-auto sm:ml-2 shrink-0 hover:text-white transition-colors">
             <X size={16} />
           </button>
         </motion.div>

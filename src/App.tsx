@@ -22,7 +22,9 @@ import { SosrGAcademy } from './pages/SosrGAcademy';
 import { AdminPage } from './pages/AdminPage';
 import { Sosrg7EPage } from './pages/Sosrg7EPage';
 import { ComingSoonBanner } from './components/ComingSoonBanner';
+import { AppLoader } from './components/layout/AppLoader';
 import { BiharDocumentaryRegistration } from './pages/BiharDocumentaryRegistration';
+import { useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { ProfileSetupPage } from './pages/profile/ProfileSetupPage';
@@ -39,6 +41,7 @@ export default function App() {
   const [language, setLanguage] = useState('en');
   const location = useLocation();
   const navigate = useNavigate();
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
     document.body.classList.toggle('light-mode', theme === 'light');
@@ -49,6 +52,10 @@ export default function App() {
   // that onto real navigation without having to rewrite those components.
   const setActiveSection = (s: Section) => navigate(sectionPath[s]);
   const activeSection = pathToSection(location.pathname);
+
+  if (authLoading) {
+    return <AppLoader />;
+  }
 
   return (
     <div className="min-h-screen selection:bg-gold selection:text-black">

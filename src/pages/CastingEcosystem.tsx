@@ -86,6 +86,7 @@ import type { CastingCall } from '../services/casting';
 import { ApiError } from '../services/httpClient';
 import { useToast } from '../design-system';
 import { useAuth } from '../contexts/AuthContext';
+import { profilesService } from '../services/profiles';
 import { portfoliosService } from '../services/portfolios';
 import type { Portfolio } from '../services/portfolios';
 import { jobsService } from '../services/jobs';
@@ -109,7 +110,11 @@ function formatCastingBudget(call: { compensationType: string; budgetMinMinor: n
 }
 
 export const CastingEcosystem = () => {
-  const [view, setView] = useState<'home' | 'register' | 'profile' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants'>('home');
+  // Casting Calls is the only tab with real listings behind it, so it's
+  // the landing view now instead of the decorative Home tab — arriving at
+  // /casting (from the hero CTA, navbar, anywhere) drops straight into
+  // real data rather than a preview screen you then have to click through.
+  const [view, setView] = useState<'home' | 'register' | 'profile' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants'>('calls');
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [builderMode, setBuilderMode] = useState<'ai' | 'manual'>('ai');
@@ -138,8 +143,40 @@ export const CastingEcosystem = () => {
   const [coverNote, setCoverNote] = useState('');
   const [applying, setApplying] = useState(false);
   const { show } = useToast();
-  const { user, profile: authProfile, register } = useAuth();
+  const { user, profile: authProfile, register, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const [switchingRole, setSwitchingRole] = useState(false);
+
+  // Artist/Business is a real account setting, not just a local view
+  // toggle — PATCH /v1/profiles/me/role actually switches the profile
+  // (verified live, works from any starting profileType). Logged-out
+  // visitors just get the local UI toggle since there's no profile to
+  // switch yet.
+  const handleRoleSwitch = async (nextIsRecruiter: boolean, silent = false) => {
+    if (nextIsRecruiter === isRecruiter) return;
+    setIsRecruiter(nextIsRecruiter);
+    if (!user || !authProfile) return;
+    setSwitchingRole(true);
+    try {
+      await profilesService.switchProfileRole({
+        profileType: nextIsRecruiter ? 'industry_professional' : 'artist',
+        professionId: authProfile.professions?.[0]?.id,
+      });
+      await refreshProfile();
+      // The Create Job Post tab switches to Business as a side effect of
+      // getting you to the form — no popup there, same as Bihar Untold's
+      // tab click just opening its section without an announcement. The
+      // explicit Artist/Business toggle still confirms the switch.
+      if (!silent) {
+        show(nextIsRecruiter ? 'Switched to Business — you can now post jobs and casting calls.' : 'Switched to Artist.', 'success');
+      }
+    } catch (err) {
+      setIsRecruiter(!nextIsRecruiter);
+      show(err instanceof ApiError ? err.message : 'Could not switch role.', 'error');
+    } finally {
+      setSwitchingRole(false);
+    }
+  };
   const location = useLocation();
 
   // Real registration form state (Register tab) — mirrors SignupPage's
@@ -419,7 +456,7 @@ export const CastingEcosystem = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl no-scrollbar"
+              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-8 shadow-2xl no-scrollbar"
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -520,7 +557,7 @@ export const CastingEcosystem = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl no-scrollbar"
+              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-8 shadow-2xl no-scrollbar"
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -614,7 +651,7 @@ export const CastingEcosystem = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
                     <input
@@ -634,7 +671,7 @@ export const CastingEcosystem = () => {
                       className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
                     <input
                       type="date"
@@ -713,7 +750,7 @@ export const CastingEcosystem = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl no-scrollbar"
+              className="bg-cinematic-gray border border-white/10 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-8 shadow-2xl no-scrollbar"
             >
               <div className="flex justify-between items-center mb-8 sticky top-0 bg-cinematic-gray py-2 z-10">
                 <div>
@@ -891,26 +928,36 @@ export const CastingEcosystem = () => {
         </div>
 
         <div className="flex flex-col items-center gap-4 w-full">
-          <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
-            <span className={cn("text-xs font-bold uppercase tracking-widest", isRecruiter ? "text-white/40" : "text-gold")}>Artist</span>
-            <button 
-              onClick={() => setIsRecruiter(!isRecruiter)}
-              className="w-10 h-5 bg-white/10 rounded-full relative transition-colors"
-            >
-              <div className={cn(
-                "absolute top-1 w-3 h-3 rounded-full transition-all",
-                isRecruiter ? "right-1 bg-crimson" : "left-1 bg-gold"
-              )} />
-            </button>
-            <span className={cn("text-xs font-bold uppercase tracking-widest", isRecruiter ? "text-crimson" : "text-white/40")}>Recruiter</span>
+          {/* Artist/Business — a real account switch (PATCH /v1/profiles/me/role),
+              styled like the Creator/Business pill toggle on the Profile page
+              instead of the old slider. "Recruiter" is gone — profileType
+              'business'/'industry_professional' is what the backend actually
+              checks, so the label now matches the concept it controls. */}
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+            {([false, true] as const).map((recruiterValue) => (
+              <button
+                key={String(recruiterValue)}
+                onClick={() => handleRoleSwitch(recruiterValue)}
+                disabled={switchingRole}
+                className={cn(
+                  "px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50",
+                  isRecruiter === recruiterValue ? "bg-gold text-black" : "text-white/40 hover:text-white"
+                )}
+              >
+                {recruiterValue ? 'Business' : 'Artist'}
+              </button>
+            ))}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-1 bg-white/5 p-1 rounded-xl border border-white/10 w-full">
             {[
+              // Real, API-backed tabs first — Casting Calls and Hiring Crew
+              // are the only two with live data behind them.
+              { id: 'calls', label: isRecruiter ? 'Manage Calls' : 'Casting Calls', icon: Briefcase },
+              { id: 'crew', label: 'Hiring Crew', icon: Users },
+              { id: 'post-job', label: 'Create Job Post', icon: Plus },
               { id: 'home', label: 'Home', icon: Home },
               { id: 'register', label: 'Register', icon: UserPlus },
               { id: 'profile', label: 'My Profile', icon: User },
-              { id: 'calls', label: isRecruiter ? 'Manage Calls' : 'Casting Calls', icon: Briefcase },
-              { id: 'crew', label: 'Hiring Crew', icon: Users },
               { id: 'matchmaking', label: 'AI Matchmaking', icon: Cpu },
               { id: 'studio', label: 'Audition Studio', icon: Video },
               { id: 'network', label: 'Network', icon: Globe },
@@ -925,10 +972,23 @@ export const CastingEcosystem = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
+                onClick={() => {
+                  if (tab.id === 'post-job') {
+                    if (!user) {
+                      navigate('/signup', { state: { from: location } });
+                      return;
+                    }
+                    if (!isRecruiter) handleRoleSwitch(true, true);
+                    setCrewMode('jobs');
+                    setView('crew');
+                    setShowJobPostModal(true);
+                    return;
+                  }
+                  handleTabClick(tab.id);
+                }}
                 className={cn(
                   "flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                  view === tab.id ? (isRecruiter ? "bg-crimson text-white" : "bg-gold text-black") : "text-white/60 hover:text-white"
+                  view === tab.id ? "bg-gold text-black" : "text-white/60 hover:text-white"
                 )}
               >
                 <tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span>

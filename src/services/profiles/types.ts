@@ -136,6 +136,21 @@ export interface UpdateProfileDetailsInput {
   passportAvailable?: boolean;
 }
 
+// PATCH /v1/profiles/me/role — verified live, works from any starting
+// profileType (tested from 'model'), not just artist/industry_professional.
+// professionId is required when switching to 'artist' if the profile has
+// no existing primary profession.
+export interface SwitchProfileRoleInput {
+  profileType: 'artist' | 'industry_professional';
+  professionId?: number;
+}
+
+export interface SwitchProfileRoleResult {
+  success: boolean;
+  profileType: string;
+  professionId: number | null;
+}
+
 export interface ProfilesService {
   createProfile(input: CreateProfileInput): Promise<MyProfile>;
   getMyProfile(): Promise<MyProfile | null>;
@@ -144,4 +159,5 @@ export interface ProfilesService {
   updateProfile(input: UpdateProfileInput): Promise<MyProfile>;
   updateProfileDetails(input: UpdateProfileDetailsInput): Promise<ProfileDetails>;
   updatePrivacySettings(input: Partial<PrivacySettings>): Promise<PrivacySettings>;
+  switchProfileRole(input: SwitchProfileRoleInput): Promise<SwitchProfileRoleResult>;
 }

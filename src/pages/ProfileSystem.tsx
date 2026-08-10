@@ -93,6 +93,7 @@ import type { Portfolio } from '../services/portfolios';
 import { ApiError } from '../services/httpClient';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 import { HoverGlowPanel } from '../components/ui/hover-effect';
+import { BiharDocumentaryRegistration } from './BiharDocumentaryRegistration';
 
 // Small honest placeholder for header fields this dashboard's mock data
 // invents (platform ID, rating, industry tags, Green ID) but the live
@@ -398,7 +399,10 @@ export const ProfileSystem = ({
     }));
   }, [initialType]);
 
-  const [activeTab, setActiveTab] = useState('wallet');
+  // Profile Details is the first tab with real API data behind it — lands
+  // there instead of the old default (Wallet Overview, which is entirely
+  // scaffolded) so the first thing shown is real.
+  const [activeTab, setActiveTab] = useState('profile-details');
 
   const stats = {
     artist: {
@@ -593,23 +597,26 @@ export const ProfileSystem = ({
             ))}
           </div>
 
-          {/* Dashboard Tabs */}
+          {/* Dashboard Tabs — real API-backed tabs first (Profile Details,
+              My Network, Privacy & Security), then Bihar Untold, then every
+              tab still waiting on a live endpoint. */}
           <div className="flex overflow-x-auto no-scrollbar gap-4 mb-8 border-b border-white/5 pb-4">
             {[
+              { id: 'profile-details', label: 'Profile Details', icon: User },
+              { id: 'network', label: 'My Network', icon: Users },
+              { id: 'privacy', label: 'Privacy & Security', icon: ShieldCheck },
+              { id: 'bihar-untold', label: 'Bihar Untold', icon: Film },
               { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
               { id: 'discovery', label: 'Smart Discovery', icon: Search },
-              { id: 'profile-details', label: 'Profile Details', icon: User },
               { id: 'wallet', label: 'Wallet Overview', icon: Wallet },
               { id: 'finances', label: 'Finances', icon: Wallet },
               { id: 'bookings', label: 'Booking History', icon: Calendar },
-              { id: 'network', label: 'My Network', icon: Users },
               { id: 'counselling', label: 'Counselling', icon: HeartHandshake },
               { id: 'management', label: 'Management', icon: Briefcase },
               { id: 'notifications', label: 'Notifications', icon: MessageSquare },
               { id: 'membership', label: 'Membership', icon: Star },
               { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'services', label: 'Services & Gigs', icon: Briefcase },
-              { id: 'privacy', label: 'Privacy & Security', icon: ShieldCheck },
               ...(profile.type === 'artist' ? [
                 { id: 'portfolio', label: 'Portfolio Manager', icon: User },
                 { id: 'auditions', label: 'Auditions Applied', icon: Mic },
@@ -1024,6 +1031,12 @@ export const ProfileSystem = ({
                     </HoverGlowPanel>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'bihar-untold' && (
+              <motion.div key="bihar-untold" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <BiharDocumentaryRegistration standalone={false} />
               </motion.div>
             )}
 
@@ -1503,91 +1516,53 @@ export const ProfileSystem = ({
                 exit={{ opacity: 0, y: -20 }}
                 className="grid grid-cols-1 lg:grid-cols-3 gap-8"
               >
+                {/* No activity feed, analytics, or achievements API exists yet
+                    — this used to show invented contracts/connections/scores
+                    as if real. Scaffolded like every other no-live-data
+                    section instead. */}
                 <div className="lg:col-span-2 space-y-8">
-                  <div className="glass-panel-orange p-8">
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-bold">Recent Activity</h3>
-                      <button className="text-xs text-gold hover:underline">View All</button>
-                    </div>
-                    <div className="space-y-6">
-                      {[
-                        { title: 'New Contract Signed', desc: 'Feature Film "The Silent Valley"', time: '2h ago', icon: ShieldCheck, color: 'text-emerald-400' },
-                        { title: 'Payment Received', desc: 'Milestone 2 for Ad Campaign', time: '5h ago', icon: Wallet, color: 'text-gold' },
-                        { title: 'New Connection', desc: 'Vikram Singh (Cinematographer)', time: '1d ago', icon: User, color: 'text-blue-400' },
-                      ].map((item, i) => (
+                  <div className="relative glass-panel-orange p-8">
+                    <ComingSoonTag />
+                    <h3 className="text-xl font-bold mb-6">Recent Activity</h3>
+                    <div className="space-y-4">
+                      {[0, 1, 2].map((i) => (
                         <div key={i} className="flex gap-4 items-start">
-                          <div className={cn("mt-1", item.color)}>
-                            <item.icon size={18} />
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm">{item.title}</div>
-                            <div className="text-xs text-white/40">{item.desc}</div>
-                            <div className="text-[10px] text-white/20 mt-1">{item.time}</div>
+                          <ScaffoldRow className="h-8 w-8 rounded-full shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <ScaffoldRow className="h-4 w-2/3" />
+                            <ScaffoldRow className="h-3 w-1/3" />
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="glass-panel-green p-8">
+                  <div className="relative glass-panel-green p-8">
+                    <ComingSoonTag />
                     <h3 className="text-xl font-bold mb-6">Growth Tracking</h3>
-                    <div className="h-48 flex items-end gap-2 px-4">
-                      {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
-                        <div key={i} className="flex-1 bg-white/5 rounded-t-lg relative group">
-                          <motion.div 
-                            initial={{ height: 0 }}
-                            animate={{ height: `${h}%` }}
-                            className={cn(
-                              "absolute bottom-0 left-0 right-0 rounded-t-lg transition-all",
-                              i === 5 ? "bg-gold" : "bg-white/10 group-hover:bg-white/20"
-                            )}
-                          />
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-mono">
-                            {h}%
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between mt-4 px-4 text-[10px] text-white/20 uppercase tracking-widest">
-                      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                    </div>
+                    <ScaffoldRow className="h-48" />
                   </div>
                 </div>
 
                 <div className="space-y-8">
-                  <div className="glass-panel p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
+                  <div className="relative glass-panel p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
+                    <ComingSoonTag />
                     <div className="flex items-center gap-2 mb-4 text-gold">
                       <Zap size={18} />
                       <h3 className="font-bold">Smart AI Tip</h3>
                     </div>
-                    <p className="text-sm text-white/80 leading-relaxed mb-4">
-                      {profile.level === 'fresher' 
-                        ? "Your portfolio views are up 20%. Adding a voice reel could increase your match rate by 35%."
-                        : profile.level === 'intermediate'
-                        ? "Market trends show a high demand for 'Naturalistic' acting in OTT series. Update your tags."
-                        : "Your industry influence score is in the top 1%. Consider mentoring to unlock 'Legend' status."}
-                    </p>
-                    <button className="w-full bg-gold text-black py-2 rounded-lg text-xs font-bold uppercase tracking-widest">
-                      Take Action
-                    </button>
+                    <ScaffoldRow className="h-4 w-full mb-2" />
+                    <ScaffoldRow className="h-4 w-3/4" />
                   </div>
 
-                  <div className="glass-panel p-6">
+                  <div className="relative glass-panel p-6">
+                    <ComingSoonTag />
                     <h3 className="font-bold mb-4 flex items-center gap-2"><Trophy size={16} className="text-gold" /> Achievements</h3>
                     <div className="space-y-4">
-                      {[
-                        { name: 'Fast Learner', progress: 100, icon: Zap },
-                        { name: 'Networker', progress: 65, icon: Globe },
-                        { name: 'Top Earner', progress: 30, icon: Wallet },
-                      ].map((ach) => (
-                        <div key={ach.name}>
-                          <div className="flex justify-between text-[10px] mb-1 uppercase tracking-widest">
-                            <span>{ach.name}</span>
-                            <span>{ach.progress}%</span>
-                          </div>
-                          <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                            <div className="bg-gold h-full" style={{ width: `${ach.progress}%` }} />
-                          </div>
+                      {[0, 1, 2].map((i) => (
+                        <div key={i}>
+                          <ScaffoldRow className="h-3 w-24 mb-2" />
+                          <ScaffoldRow className="h-1 w-full" />
                         </div>
                       ))}
                     </div>

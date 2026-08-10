@@ -150,7 +150,7 @@ const SectionHeading = ({ icon: Icon, title }: { icon: typeof Megaphone; title: 
   </h2>
 );
 
-export const BiharDocumentaryRegistration = () => {
+export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone?: boolean }) => {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const { show } = useToast();
 
@@ -171,7 +171,7 @@ export const BiharDocumentaryRegistration = () => {
   };
 
   return (
-    <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen pb-24">
+    <div className={standalone ? "pt-32 px-6 max-w-4xl mx-auto min-h-screen pb-24" : "max-w-4xl"}>
       <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20 text-xs font-bold uppercase tracking-widest text-gold">
         <CheckCircle2 size={14} /> Registration isn't open yet — preview only, fields are locked
       </div>

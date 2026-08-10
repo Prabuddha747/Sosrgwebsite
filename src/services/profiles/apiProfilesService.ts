@@ -6,6 +6,8 @@ import type {
   ProfileDetails,
   Profession,
   ProfilesService,
+  SwitchProfileRoleInput,
+  SwitchProfileRoleResult,
   UpdateProfileDetailsInput,
   UpdateProfileInput,
 } from './types';
@@ -60,5 +62,9 @@ export const apiProfilesService: ProfilesService = {
   // writes new values; getMyProfile() above is how to read current ones.
   async updatePrivacySettings(input: Partial<PrivacySettings>) {
     return apiFetch<PrivacySettings>('/v1/profiles/me/privacy', { method: 'PATCH', body: input });
+  },
+
+  async switchProfileRole(input: SwitchProfileRoleInput) {
+    return apiFetch<SwitchProfileRoleResult>('/v1/profiles/me/role', { method: 'PATCH', body: input });
   },
 };

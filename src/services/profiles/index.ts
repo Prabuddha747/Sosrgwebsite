@@ -13,6 +13,8 @@ export type {
   ProfileProfession,
   ProfileSkill,
   ProfilesService,
+  SwitchProfileRoleInput,
+  SwitchProfileRoleResult,
   UpdateProfileDetailsInput,
   UpdateProfileInput,
 } from './types';
