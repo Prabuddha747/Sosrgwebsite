@@ -1,9 +1,19 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Constructed lazily, not at module load — the SDK throws immediately if
+// the key is empty, and this module is statically imported into the main
+// bundle (not code-split), so a missing GEMINI_API_KEY was crashing the
+// entire app on boot, not just this one still-unwired AI Suite page.
+let aiClient: GoogleGenAI | null = null;
+const getAi = () => {
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+  }
+  return aiClient;
+};
 
 export const analyzeScript = async (scriptText: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAi().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Analyze the following script and provide a breakdown in JSON format. 
     Include: 
@@ -52,7 +62,7 @@ export const analyzeScript = async (scriptText: string) => {
 };
 
 export const evaluateAudition = async (transcript: string, roleDescription: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAi().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Evaluate this audition performance transcript against the role description.
     Role: ${roleDescription}
@@ -83,7 +93,7 @@ export const evaluateAudition = async (transcript: string, roleDescription: stri
 };
 
 export const generateCastingRoles = async (scriptBreakdown: any) => {
-  const response = await ai.models.generateContent({
+  const response = await getAi().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Based on this script breakdown, generate detailed casting roles.
     Breakdown: ${JSON.stringify(scriptBreakdown)}
@@ -119,7 +129,7 @@ export const generateCastingRoles = async (scriptBreakdown: any) => {
 };
 
 export const predictArtValue = async (artDetails: any) => {
-  const response = await ai.models.generateContent({
+  const response = await getAi().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Predict the market value of this art piece/talent based on current industry trends.
     Details: ${JSON.stringify(artDetails)}
