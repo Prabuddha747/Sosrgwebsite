@@ -93,6 +93,7 @@ import { jobsService } from '../services/jobs';
 import type { JobPost, JobWorkMode, JobCompensationType } from '../services/jobs';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 import { TALENT_CATEGORIES } from '../data/mockData';
+import { PasswordInput } from '../components/common/PasswordInput';
 
 const MIN_PASSWORD_LENGTH = 12;
 
@@ -114,12 +115,11 @@ export const CastingEcosystem = () => {
   // the landing view now instead of the decorative Home tab — arriving at
   // /casting (from the hero CTA, navbar, anywhere) drops straight into
   // real data rather than a preview screen you then have to click through.
-  const [view, setView] = useState<'home' | 'register' | 'profile' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants'>('calls');
+  const [view, setView] = useState<'home' | 'register' | 'profile' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants' | 'post-job' | 'post-casting-call'>('calls');
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [builderMode, setBuilderMode] = useState<'ai' | 'manual'>('ai');
   const [crewMode, setCrewMode] = useState<'jobs' | 'professionals'>('jobs');
-  const [showJobPostModal, setShowJobPostModal] = useState(false);
   const [postingJob, setPostingJob] = useState(false);
   const [jobPostForm, setJobPostForm] = useState({
     title: '',
@@ -136,7 +136,6 @@ export const CastingEcosystem = () => {
     numberOfOpenings: '1',
     applicationDeadline: '',
   });
-  const [showCastingCallModal, setShowCastingCallModal] = useState(false);
   const [postingCastingCall, setPostingCastingCall] = useState(false);
   const [castingCallForm, setCastingCallForm] = useState({
     title: '',
@@ -321,7 +320,6 @@ export const CastingEcosystem = () => {
 
   const handleCreateJobPost = async () => {
     if (!user) {
-      setShowJobPostModal(false);
       navigate('/login', { state: { from: location } });
       return;
     }
@@ -349,16 +347,16 @@ export const CastingEcosystem = () => {
       });
       await jobsService.submitJobPostForReview(created.id);
       show('Role posted and live.', 'success');
-      setShowJobPostModal(false);
       setJobPostForm({
         title: '', industry: '', employmentType: 'full_time', workMode: 'onsite', description: '',
         responsibilities: '', requirements: '', pincode: '', compensationType: 'paid',
         budgetMin: '', budgetMax: '', numberOfOpenings: '1', applicationDeadline: '',
       });
       setJobPostsRefreshKey((k) => k + 1);
+      setCrewMode('jobs');
+      setView('crew');
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        setShowJobPostModal(false);
         show('Your session expired — please sign in again.', 'error');
         navigate('/login', { state: { from: location } });
         return;
@@ -381,7 +379,6 @@ export const CastingEcosystem = () => {
   // real 403 surfaces honestly below rather than trying to pre-validate it.
   const handleCreateCastingCall = async () => {
     if (!user) {
-      setShowCastingCallModal(false);
       navigate('/login', { state: { from: location } });
       return;
     }
@@ -406,15 +403,14 @@ export const CastingEcosystem = () => {
       });
       await castingService.submitCastingCallForReview(created.id);
       show('Casting call posted and live.', 'success');
-      setShowCastingCallModal(false);
       setCastingCallForm({
         title: '', industry: '', engagementType: 'casting', workMode: 'onsite', description: '',
         pincode: '', compensationType: 'paid', budgetMin: '', budgetMax: '', applicationDeadline: '',
       });
       setCastingCallsRefreshKey((k) => k + 1);
+      setView('calls');
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        setShowCastingCallModal(false);
         show('Your session expired — please sign in again.', 'error');
         navigate('/login', { state: { from: location } });
         return;
@@ -612,365 +608,6 @@ export const CastingEcosystem = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Post a Role Modal — POST /v1/job-posts then POST .../submit-review.
-          Requires a Business-type profile server-side (verified live: a
-          casting_director profile gets 403 PROFILE_NOT_ELIGIBLE). */}
-      <AnimatePresence>
-        {showJobPostModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-8 shadow-2xl no-scrollbar"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">Post a Role</h2>
-                  <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible to everyone browsing Find Jobs.</p>
-                </div>
-                <button onClick={() => setShowJobPostModal(false)} className="text-white/40 hover:text-white p-2">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Role Title *</label>
-                    <input
-                      type="text"
-                      value={jobPostForm.title}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, title: e.target.value }))}
-                      placeholder="e.g. Senior Cinematographer"
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
-                    <select
-                      value={jobPostForm.industry}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, industry: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    >
-                      <option value="">Select industry</option>
-                      {TALENT_CATEGORIES.map((cat) => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Employment Type *</label>
-                    <select
-                      value={jobPostForm.employmentType}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, employmentType: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    >
-                      <option value="full_time">Full-time</option>
-                      <option value="part_time">Part-time</option>
-                      <option value="contract">Contract</option>
-                      <option value="freelance">Freelance</option>
-                      <option value="internship">Internship</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
-                    <select
-                      value={jobPostForm.workMode}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, workMode: e.target.value as JobWorkMode }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    >
-                      <option value="onsite">On-site</option>
-                      <option value="hybrid">Hybrid</option>
-                      <option value="remote">Remote</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
-                  <textarea
-                    value={jobPostForm.description}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, description: e.target.value }))}
-                    placeholder="What's this role, and what's the project?"
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Responsibilities</label>
-                    <textarea
-                      value={jobPostForm.responsibilities}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, responsibilities: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Requirements</label>
-                    <textarea
-                      value={jobPostForm.requirements}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, requirements: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
-                    <input
-                      type="text"
-                      value={jobPostForm.pincode}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, pincode: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Openings</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={jobPostForm.numberOfOpenings}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, numberOfOpenings: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
-                    <input
-                      type="date"
-                      value={jobPostForm.applicationDeadline}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
-                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
-                    {(['paid', 'unpaid', 'negotiable'] as JobCompensationType[]).map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setJobPostForm((f) => ({ ...f, compensationType: c }))}
-                        className={cn(
-                          "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
-                          jobPostForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                        )}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                  {jobPostForm.compensationType === 'paid' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="number"
-                        placeholder="Min (₹)"
-                        value={jobPostForm.budgetMin}
-                        onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMin: e.target.value }))}
-                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Max (₹)"
-                        value={jobPostForm.budgetMax}
-                        onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMax: e.target.value }))}
-                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-4 pt-2">
-                  <button onClick={() => setShowJobPostModal(false)} className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateJobPost}
-                    disabled={postingJob}
-                    className="flex-1 py-4 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {postingJob ? 'Posting…' : 'Post Role'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Create Casting Call Modal — POST /v1/casting-calls then submit-review, same pattern as Post a Role. */}
-      <AnimatePresence>
-        {showCastingCallModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-8 shadow-2xl no-scrollbar"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">Create Casting Call</h2>
-                  <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible on Casting Calls.</p>
-                </div>
-                <button onClick={() => setShowCastingCallModal(false)} className="text-white/40 hover:text-white p-2">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Title *</label>
-                    <input
-                      type="text"
-                      value={castingCallForm.title}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, title: e.target.value }))}
-                      placeholder="e.g. Casting for Hindi Feature Film"
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
-                    <select
-                      value={castingCallForm.industry}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, industry: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    >
-                      <option value="">Select industry</option>
-                      {TALENT_CATEGORIES.map((cat) => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Engagement Type *</label>
-                    <select
-                      value={castingCallForm.engagementType}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, engagementType: e.target.value as typeof f.engagementType }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    >
-                      <option value="casting">Casting</option>
-                      <option value="crew_hiring">Crew Hiring</option>
-                      <option value="commission">Commission</option>
-                      <option value="collaboration">Collaboration</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
-                    <select
-                      value={castingCallForm.workMode}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, workMode: e.target.value as CastingWorkMode }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    >
-                      <option value="onsite">On-site</option>
-                      <option value="hybrid">Hybrid</option>
-                      <option value="remote">Remote</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
-                  <textarea
-                    value={castingCallForm.description}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, description: e.target.value }))}
-                    placeholder="What's this project, and who are you casting?"
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
-                    <input
-                      type="text"
-                      value={castingCallForm.pincode}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, pincode: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
-                    <input
-                      type="date"
-                      value={castingCallForm.applicationDeadline}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
-                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
-                    {(['paid', 'unpaid', 'negotiable'] as CastingCompensationType[]).map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setCastingCallForm((f) => ({ ...f, compensationType: c }))}
-                        className={cn(
-                          "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
-                          castingCallForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                        )}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                  {castingCallForm.compensationType === 'paid' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="number"
-                        placeholder="Min (₹)"
-                        value={castingCallForm.budgetMin}
-                        onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMin: e.target.value }))}
-                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Max (₹)"
-                        value={castingCallForm.budgetMax}
-                        onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMax: e.target.value }))}
-                        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-4 pt-2">
-                  <button onClick={() => setShowCastingCallModal(false)} className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateCastingCall}
-                    disabled={postingCastingCall}
-                    className="flex-1 py-4 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {postingCastingCall ? 'Posting…' : 'Create Casting Call'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Advanced Filter Modal */}
       <AnimatePresence>
         {showAdvancedFilter && (
@@ -1214,9 +851,7 @@ export const CastingEcosystem = () => {
                       return;
                     }
                     if (!isRecruiter) handleRoleSwitch(true, true);
-                    setCrewMode('jobs');
-                    setView('crew');
-                    setShowJobPostModal(true);
+                    setView('post-job');
                     return;
                   }
                   if (tab.id === 'post-casting-call') {
@@ -1225,8 +860,7 @@ export const CastingEcosystem = () => {
                       return;
                     }
                     if (!isRecruiter) handleRoleSwitch(true, true);
-                    setView('calls');
-                    setShowCastingCallModal(true);
+                    setView('post-casting-call');
                     return;
                   }
                   handleTabClick(tab.id);
@@ -1368,8 +1002,7 @@ export const CastingEcosystem = () => {
                   </div>
                   <div>
                     <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Password</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       required
                       minLength={MIN_PASSWORD_LENGTH}
                       value={registerPassword}
@@ -1503,7 +1136,7 @@ export const CastingEcosystem = () => {
                   {myPortfolios === null && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                       {[0, 1, 2].map((i) => (
-                        <ScaffoldRow key={i} className="aspect-square" />
+                        <ScaffoldRow key={i} className="aspect-[4/5]" />
                       ))}
                     </div>
                   )}
@@ -1541,6 +1174,158 @@ export const CastingEcosystem = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Create Casting Call — its own tab/section, not folded into Manage
+            Calls, so clicking the tab doesn't silently jump to a different
+            section. POST /v1/casting-calls then submit-review. */}
+        {view === 'post-casting-call' && (
+          <motion.div
+            key="post-casting-call"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-3xl mx-auto"
+          >
+            <div className="glass-panel p-5 sm:p-8 space-y-5 border border-gold/30">
+              <div>
+                <h2 className="text-2xl font-bold mb-1">Create Casting Call</h2>
+                <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible on Casting Calls.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Title *</label>
+                  <input
+                    type="text"
+                    value={castingCallForm.title}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="e.g. Casting for Hindi Feature Film"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
+                  <select
+                    value={castingCallForm.industry}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, industry: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  >
+                    <option value="">Select industry</option>
+                    {TALENT_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Engagement Type *</label>
+                  <select
+                    value={castingCallForm.engagementType}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, engagementType: e.target.value as typeof f.engagementType }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  >
+                    <option value="casting">Casting</option>
+                    <option value="crew_hiring">Crew Hiring</option>
+                    <option value="commission">Commission</option>
+                    <option value="collaboration">Collaboration</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
+                  <select
+                    value={castingCallForm.workMode}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, workMode: e.target.value as CastingWorkMode }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  >
+                    <option value="onsite">On-site</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="remote">Remote</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
+                <textarea
+                  value={castingCallForm.description}
+                  onChange={(e) => setCastingCallForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="What's this project, and who are you casting?"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
+                  <input
+                    type="text"
+                    value={castingCallForm.pincode}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, pincode: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
+                  <input
+                    type="date"
+                    value={castingCallForm.applicationDeadline}
+                    onChange={(e) => setCastingCallForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
+                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
+                  {(['paid', 'unpaid', 'negotiable'] as CastingCompensationType[]).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCastingCallForm((f) => ({ ...f, compensationType: c }))}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
+                        castingCallForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                {castingCallForm.compensationType === 'paid' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      placeholder="Min (₹)"
+                      value={castingCallForm.budgetMin}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMin: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max (₹)"
+                      value={castingCallForm.budgetMax}
+                      onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMax: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 pt-2">
+                <button onClick={() => setView('calls')} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateCastingCall}
+                  disabled={postingCastingCall}
+                  className="flex-1 py-3 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {postingCastingCall ? 'Posting…' : 'Create Casting Call'}
+                </button>
               </div>
             </div>
           </motion.div>
@@ -1650,6 +1435,190 @@ export const CastingEcosystem = () => {
           </motion.div>
         )}
 
+        {/* Post a Role — its own tab/section, not folded into Hiring Crew,
+            so clicking the tab doesn't silently jump to a different section.
+            POST /v1/job-posts then submit-review. Requires a Business-type
+            profile server-side (verified live: a casting_director profile
+            gets 403 PROFILE_NOT_ELIGIBLE). */}
+        {view === 'post-job' && (
+          <motion.div
+            key="post-job"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-3xl mx-auto"
+          >
+            <div className="glass-panel p-5 sm:p-8 space-y-5 border border-gold/30">
+              <div>
+                <h2 className="text-2xl font-bold mb-1">Post a Role</h2>
+                <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible to everyone browsing Find Jobs.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Role Title *</label>
+                  <input
+                    type="text"
+                    value={jobPostForm.title}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="e.g. Senior Cinematographer"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
+                  <select
+                    value={jobPostForm.industry}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, industry: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  >
+                    <option value="">Select industry</option>
+                    {TALENT_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Employment Type *</label>
+                  <select
+                    value={jobPostForm.employmentType}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, employmentType: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  >
+                    <option value="full_time">Full-time</option>
+                    <option value="part_time">Part-time</option>
+                    <option value="contract">Contract</option>
+                    <option value="freelance">Freelance</option>
+                    <option value="internship">Internship</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
+                  <select
+                    value={jobPostForm.workMode}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, workMode: e.target.value as JobWorkMode }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  >
+                    <option value="onsite">On-site</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="remote">Remote</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
+                <textarea
+                  value={jobPostForm.description}
+                  onChange={(e) => setJobPostForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="What's this role, and what's the project?"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Responsibilities</label>
+                  <textarea
+                    value={jobPostForm.responsibilities}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, responsibilities: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Requirements</label>
+                  <textarea
+                    value={jobPostForm.requirements}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, requirements: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
+                  <input
+                    type="text"
+                    value={jobPostForm.pincode}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, pincode: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Openings</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={jobPostForm.numberOfOpenings}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, numberOfOpenings: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
+                  <input
+                    type="date"
+                    value={jobPostForm.applicationDeadline}
+                    onChange={(e) => setJobPostForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
+                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
+                  {(['paid', 'unpaid', 'negotiable'] as JobCompensationType[]).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setJobPostForm((f) => ({ ...f, compensationType: c }))}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
+                        jobPostForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                {jobPostForm.compensationType === 'paid' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      placeholder="Min (₹)"
+                      value={jobPostForm.budgetMin}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMin: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max (₹)"
+                      value={jobPostForm.budgetMax}
+                      onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMax: e.target.value }))}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 pt-2">
+                <button onClick={() => setView('crew')} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateJobPost}
+                  disabled={postingJob}
+                  className="flex-1 py-3 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {postingJob ? 'Posting…' : 'Post Role'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {view === 'crew' && (
           <motion.div
             key="crew"
@@ -1683,7 +1652,7 @@ export const CastingEcosystem = () => {
                 </div>
                 {isRecruiter && (
                   <button
-                    onClick={() => setShowJobPostModal(true)}
+                    onClick={() => setView('post-job')}
                     className="flex items-center gap-2 bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors shrink-0"
                   >
                     <Plus size={14} /> Post a Role

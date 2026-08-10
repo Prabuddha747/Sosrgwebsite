@@ -95,6 +95,7 @@ import type { Portfolio } from '../services/portfolios';
 import { ApiError } from '../services/httpClient';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 import { HoverGlowPanel } from '../components/ui/hover-effect';
+import { PasswordInput } from '../components/common/PasswordInput';
 import { BiharDocumentaryRegistration } from './BiharDocumentaryRegistration';
 
 // Small honest placeholder for header fields this dashboard's mock data
@@ -123,6 +124,62 @@ const ProfileField = ({ label, value, hint }: { label: string; value?: string | 
   <div>
     <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">{label}</div>
     {value ? <div className="font-bold">{value}</div> : <p className="text-xs text-white/30 italic">{hint}</p>}
+  </div>
+);
+
+// Inline-edit counterpart to ProfileField — same micro-label-over-value
+// layout as the read view, so editing a field doesn't switch into a
+// separate "form" look, it just makes the same value box typeable.
+const EditableField = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  maxLength?: number;
+}) => (
+  <div>
+    <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">{label}</div>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 font-bold text-sm text-white outline-none focus:border-gold focus:bg-black/30 transition-colors placeholder:font-normal placeholder:text-white/30"
+    />
+  </div>
+);
+
+const EditableTextarea = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) => (
+  <div>
+    <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">{label}</div>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 leading-relaxed outline-none focus:border-gold focus:bg-black/30 transition-colors placeholder:text-white/30 placeholder:italic resize-none"
+    />
   </div>
 );
 
@@ -1053,51 +1110,37 @@ export const ProfileSystem = ({
                         </>
                       ) : (
                         <div className="space-y-4">
-                          <div>
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Display Name</label>
-                            <input
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <EditableField
+                              label="Display Name"
                               value={basicForm.displayName}
-                              onChange={(e) => setBasicForm((f) => ({ ...f, displayName: e.target.value }))}
-                              className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
+                              onChange={(v) => setBasicForm((f) => ({ ...f, displayName: v }))}
                             />
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Headline</label>
-                            <input
+                            <EditableField
+                              label="Headline"
                               value={basicForm.headline}
-                              onChange={(e) => setBasicForm((f) => ({ ...f, headline: e.target.value }))}
+                              onChange={(v) => setBasicForm((f) => ({ ...f, headline: v }))}
                               placeholder="e.g. Lead Actor & Voice Artist"
-                              className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
                             />
                           </div>
-                          <div>
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Bio</label>
-                            <textarea
-                              value={basicForm.bio}
-                              onChange={(e) => setBasicForm((f) => ({ ...f, bio: e.target.value }))}
-                              rows={4}
-                              className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                            />
-                          </div>
+                          <EditableTextarea
+                            label="Bio"
+                            value={basicForm.bio}
+                            onChange={(v) => setBasicForm((f) => ({ ...f, bio: v }))}
+                          />
                           <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Pincode</label>
-                              <input
-                                value={basicForm.pincode}
-                                onChange={(e) => setBasicForm((f) => ({ ...f, pincode: e.target.value }))}
-                                maxLength={6}
-                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Website</label>
-                              <input
-                                value={basicForm.websiteUrl}
-                                onChange={(e) => setBasicForm((f) => ({ ...f, websiteUrl: e.target.value }))}
-                                placeholder="https://…"
-                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                              />
-                            </div>
+                            <EditableField
+                              label="Pincode"
+                              value={basicForm.pincode}
+                              onChange={(v) => setBasicForm((f) => ({ ...f, pincode: v }))}
+                              maxLength={6}
+                            />
+                            <EditableField
+                              label="Website"
+                              value={basicForm.websiteUrl}
+                              onChange={(v) => setBasicForm((f) => ({ ...f, websiteUrl: v }))}
+                              placeholder="https://…"
+                            />
                           </div>
                           <div className="flex gap-4 pt-2">
                             <button onClick={() => setEditingBasic(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
@@ -1159,50 +1202,35 @@ export const ProfileSystem = ({
                             ) : (
                               <div className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Height (cm)</label>
-                                    <input
-                                      type="number"
-                                      value={detailsForm.heightCm}
-                                      onChange={(e) => setDetailsForm((f) => ({ ...f, heightCm: e.target.value }))}
-                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Weight (kg)</label>
-                                    <input
-                                      type="number"
-                                      value={detailsForm.weightKg}
-                                      onChange={(e) => setDetailsForm((f) => ({ ...f, weightKg: e.target.value }))}
-                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Eye Color</label>
-                                    <input
-                                      value={detailsForm.eyeColor}
-                                      onChange={(e) => setDetailsForm((f) => ({ ...f, eyeColor: e.target.value }))}
-                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Hair Color</label>
-                                    <input
-                                      value={detailsForm.hairColor}
-                                      onChange={(e) => setDetailsForm((f) => ({ ...f, hairColor: e.target.value }))}
-                                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
-                                    />
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Years of Experience</label>
-                                  <input
+                                  <EditableField
+                                    label="Height (cm)"
                                     type="number"
-                                    value={detailsForm.yearsExperience}
-                                    onChange={(e) => setDetailsForm((f) => ({ ...f, yearsExperience: e.target.value }))}
-                                    className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm outline-none focus:border-gold"
+                                    value={detailsForm.heightCm}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, heightCm: v }))}
+                                  />
+                                  <EditableField
+                                    label="Weight (kg)"
+                                    type="number"
+                                    value={detailsForm.weightKg}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, weightKg: v }))}
+                                  />
+                                  <EditableField
+                                    label="Eye Color"
+                                    value={detailsForm.eyeColor}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, eyeColor: v }))}
+                                  />
+                                  <EditableField
+                                    label="Hair Color"
+                                    value={detailsForm.hairColor}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, hairColor: v }))}
                                   />
                                 </div>
+                                <EditableField
+                                  label="Years of Experience"
+                                  type="number"
+                                  value={detailsForm.yearsExperience}
+                                  onChange={(v) => setDetailsForm((f) => ({ ...f, yearsExperience: v }))}
+                                />
                                 <div className="flex gap-3 pt-2">
                                   <button onClick={() => setEditingDetails(false)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-lg font-bold uppercase tracking-widest text-xs transition-colors">
                                     Cancel
@@ -1339,7 +1367,7 @@ export const ProfileSystem = ({
                       {portfoliosLoading && (
                         <div className="grid grid-cols-2 gap-3 mb-4">
                           {[0, 1, 2, 3].map((i) => (
-                            <ScaffoldRow key={i} className="aspect-square" />
+                            <ScaffoldRow key={i} className="aspect-[4/5]" />
                           ))}
                         </div>
                       )}
@@ -1977,15 +2005,13 @@ export const ProfileSystem = ({
                     isOpen={openSection === 'password'}
                     onToggle={() => toggleSection('password')}
                   >
-                    <input
-                      type="password"
+                    <PasswordInput
                       placeholder="Current password"
                       value={passwordForm.current}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, current: e.target.value }))}
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold"
                     />
-                    <input
-                      type="password"
+                    <PasswordInput
                       placeholder="New password (min 12 characters)"
                       value={passwordForm.next}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, next: e.target.value }))}
@@ -2032,12 +2058,12 @@ export const ProfileSystem = ({
                     ) : (
                       <div className="space-y-3 p-4 bg-crimson/5 border border-crimson/20 rounded-xl">
                         <p className="text-xs font-bold text-crimson">Enter your password to confirm — this can't be undone.</p>
-                        <input
-                          type="password"
+                        <PasswordInput
                           placeholder="Password"
                           value={deletePassword}
                           onChange={(e) => setDeletePassword(e.target.value)}
                           className="w-full bg-white/5 border border-crimson/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-crimson"
+                          iconClassName="text-crimson/60 hover:text-crimson"
                         />
                         <div className="flex gap-3">
                           <button

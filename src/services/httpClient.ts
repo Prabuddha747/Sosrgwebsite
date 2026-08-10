@@ -1,6 +1,9 @@
 import { clearTokens, getAccessToken, getDeviceId, getRefreshToken, setAccessToken, setRefreshToken } from './tokenStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Falls back to the production API when VITE_API_BASE_URL isn't set (e.g.
+// a deploy host missing the env var) — this URL isn't a secret, it's
+// already committed in .env.example.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://sosrg-api-292824095440.asia-south1.run.app';
 const APP_VERSION = '1.0.0';
 
 export class ApiError extends Error {

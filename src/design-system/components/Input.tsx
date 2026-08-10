@@ -1,4 +1,5 @@
-import React, { useId } from 'react';
+import React, { useId, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 // Shared field chrome (label, error message, focus ring, 48px min height)
@@ -45,20 +46,36 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, id, ...props }, ref) => {
+  ({ label, error, className, id, type, ...props }, ref) => {
     const generatedId = useId();
     const fieldId = id ?? generatedId;
+    const isPassword = type === 'password';
+    const [visible, setVisible] = useState(false);
     return (
       <FieldWrapper id={fieldId} label={label} error={error}>
         {(describedBy) => (
-          <input
-            ref={ref}
-            id={fieldId}
-            aria-invalid={!!error}
-            aria-describedby={describedBy}
-            className={fieldClasses(!!error, className)}
-            {...props}
-          />
+          <div className="relative">
+            <input
+              ref={ref}
+              id={fieldId}
+              type={isPassword ? (visible ? 'text' : 'password') : type}
+              aria-invalid={!!error}
+              aria-describedby={describedBy}
+              className={fieldClasses(!!error, cn(isPassword && 'pr-11', className))}
+              {...props}
+            />
+            {isPassword && (
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setVisible((v) => !v)}
+                aria-label={visible ? 'Hide password' : 'Show password'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+              >
+                {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            )}
+          </div>
         )}
       </FieldWrapper>
     );
