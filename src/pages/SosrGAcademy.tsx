@@ -99,7 +99,7 @@ export const SosrGAcademy = () => {
           {[
             { id: 'learning-paths', label: 'AI Learning Paths', icon: BookOpen },
             { id: 'scholarships', label: 'SosrG Scholarships', icon: GraduationCap },
-            { id: 'progress', label: 'Progress Tracking', icon: TrendingUp },
+            // { id: 'progress', label: 'Progress Tracking', icon: TrendingUp },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -135,14 +135,14 @@ export const SosrGAcademy = () => {
                 layout, not real course data.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="bg-black/40 rounded-xl overflow-hidden border border-white/10">
-                    <ScaffoldRow className="aspect-video rounded-none border-none" />
-                    <div className="p-4 space-y-2">
+                    {/* <ScaffoldRow className="aspect-video rounded-none border-none" /> */}
+                    {/* <div className="p-4 space-y-2">
                       <ScaffoldRow className="h-4 w-3/4" />
                       <ScaffoldRow className="h-3 w-1/2" />
-                    </div>
+                    </div> */}
                   </div>
                 ))}
               </div>
@@ -171,37 +171,15 @@ export const SosrGAcademy = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-8"
           >
-            <div className="relative glass-panel p-8 text-center overflow-hidden">
-              <ComingSoonTag />
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-gold to-emerald-400" />
-              <GraduationCap size={48} className="mx-auto mb-6 text-emerald-400" />
-              <h2 className="text-3xl font-bold mb-4">SosrG Scholarships</h2>
-              <p className="text-white/60 max-w-2xl mx-auto mb-8">
-                The plan is for an AI model to evaluate your portfolio, engagement, and talent rating to
-                automatically assess scholarship eligibility for premium courses and mentorship programs
-                — no such evaluation exists yet.
-              </p>
-
-              <div className="inline-block bg-white/5 border border-white/10 rounded-2xl p-6 text-left mb-8 w-full max-w-md">
-                <div className="space-y-3">
-                  {['Portfolio Score', 'Platform Engagement', 'Green ID Verification'].map((label) => (
-                    <div key={label} className="flex justify-between items-center text-sm">
-                      <span className="text-white/40">{label}:</span>
-                      <ScaffoldRow className="h-4 w-16" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                {[0, 1].map((i) => (
-                  <div key={i} className="p-6 bg-white/5 border border-white/10 rounded-xl space-y-3">
-                    <ScaffoldRow className="h-5 w-2/3" />
-                    <ScaffoldRow className="h-4 w-full" />
-                  </div>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <GraduationCap size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">SosrG Scholarships — Visit Our App</h2>
             </div>
+            <p className="text-white/60 max-w-3xl mb-6">
+              An AI model evaluating your portfolio, engagement, and talent rating to automatically assess
+              scholarship eligibility for premium courses and mentorship programs — real, merit-based
+              funding instead of a manual application process.
+            </p>
           </motion.div>
         )}
 

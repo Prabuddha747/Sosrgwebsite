@@ -1119,6 +1119,7 @@ export const ProfileSystem = ({
           <div className="flex overflow-x-auto no-scrollbar gap-4 mb-8 border-b border-white/5 pb-4">
             {[
               { id: 'profile-details', label: 'Profile Details', icon: User },
+              { id: 'auditions', label: 'My Applications', icon: Mic },
               { id: 'network', label: 'My Network', icon: Users },
               { id: 'privacy', label: 'Privacy & Security', icon: ShieldCheck },
               // { id: 'bihar-untold', label: 'Bihar Untold', icon: Film },
@@ -1134,7 +1135,6 @@ export const ProfileSystem = ({
               { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'services', label: 'Services & Gigs', icon: Briefcase },
               { id: 'portfolio', label: 'Portfolio', icon: User },
-              { id: 'auditions', label: 'My Applications', icon: Mic },
               ...(profile.type === 'artist' ? [
                 // { id: 'availability', label: 'Availability Calendar', icon: Calendar },
                 // { id: 'ai-insights', label: 'AI Match Suggestions', icon: Zap },
