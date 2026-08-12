@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Flag, GraduationCap, Users, Eye, TrendingUp } from 'lucide-react';
+import manifestoImage from '../../assets/mainfesto.png';
 
 const BELIEFS = [
   { text: 'It needs a place to begin.', icon: Flag },
@@ -13,7 +14,7 @@ export const Manifesto = () => (
   <section className="relative py-16 sm:py-24 px-6 max-w-[1600px] mx-auto overflow-hidden">
     <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none" aria-hidden="true">
       <img
-        src="https://images.unsplash.com/photo-1524634126442-357e0eac3c14?q=80&w=1200&auto=format&fit=crop"
+        src={manifestoImage}
         alt=""
         className="h-full w-full object-cover"
       />

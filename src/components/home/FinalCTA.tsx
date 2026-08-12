@@ -1,11 +1,12 @@
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
+import ctaImage from '../../assets/community/CTA.png';
 
 export const FinalCTA = () => (
   <section className="relative py-16 sm:py-32 px-6 overflow-hidden">
     <div className="absolute inset-0 z-0" aria-hidden="true">
       <img
-        src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2400&auto=format&fit=crop"
+        src={ctaImage}
         alt=""
         className="h-full w-full object-cover"
       />

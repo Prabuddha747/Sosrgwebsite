@@ -203,20 +203,20 @@ export const ArtMartContent = () => {
               <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <Heart size={20} className="text-crimson" />
-                <h2 className="text-2xl font-bold">My Wishlist</h2>
+                <h2 className="text-3xl font-bold">My Wishlist</h2>
               </div>
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 {[0, 1].map((i) => (
                   <ScaffoldRow key={i} className="h-20" />
                 ))}
-              </div>
+              </div> */}
             </div>
 
             <div className="relative lg:col-span-1 glass-panel p-8 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
               <ComingSoonTag />
               <div className="flex items-center gap-2 mb-6">
                 <Share2 size={20} className="text-blue-400" />
-                <h2 className="text-xl font-bold">Refer & Earn</h2>
+                <h2 className="text-2xl font-bold">Refer & Earn</h2>
               </div>
               <p className="text-sm text-white/60 mb-6">Share product links with your network. When someone buys through your link, you both get a discount!</p>
 
@@ -225,7 +225,7 @@ export const ArtMartContent = () => {
                 {['Links Shared', 'Successful Purchases', 'Discounts Earned'].map((label) => (
                   <div key={label} className="flex justify-between items-center text-sm p-2 bg-white/5 rounded">
                     <span className="text-white/60">{label}</span>
-                    <ScaffoldRow className="h-4 w-10" />
+                    {/* <ScaffoldRow className="h-4 w-10" /> */}
                   </div>
                 ))}
               </div>

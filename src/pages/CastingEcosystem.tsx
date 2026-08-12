@@ -17,6 +17,7 @@ import {
   Mic,
   Video,
   Menu,
+  Smartphone,
   X,
   Zap,
   Lock,
@@ -296,6 +297,10 @@ export const CastingEcosystem = () => {
     };
   }, [view, crewMode, jobPostsRefreshKey]);
 
+  // Not currently called — Apply for Role now gates on app install rather
+  // than submitting from web (explicit product decision). Left in place,
+  // real and POST-verified, since re-enabling the web submit path later is
+  // a one-line change (swap the modal body back in) rather than a rebuild.
   const handleSubmitApplication = async () => {
     if (!selectedCall) return;
     setApplying(true);
@@ -392,112 +397,27 @@ export const CastingEcosystem = () => {
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <h3 className="font-bold mb-2 text-sm">Role Details</h3>
-                  <p className="text-xs text-white/60 mb-2">{selectedCall.description}</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
-                    <div className="flex items-center gap-2"><MapPin size={14} className="text-blue-400" /> {selectedCall.location}</div>
-                    <div className="flex items-center gap-2"><Wallet size={14} className="text-emerald-400" /> {selectedCall.payment}</div>
-                  </div>
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10 mb-6">
+                <h3 className="font-bold mb-2 text-sm">Role Details</h3>
+                <p className="text-xs text-white/60 mb-2">{selectedCall.description}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
+                  <div className="flex items-center gap-2"><MapPin size={14} className="text-blue-400" /> {selectedCall.location}</div>
+                  <div className="flex items-center gap-2"><Wallet size={14} className="text-emerald-400" /> {selectedCall.payment}</div>
                 </div>
+              </div>
 
-                {selectedCall.__isLive ? (
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Select Portfolio Items to Include</label>
-                    {applyPortfolioItems === null && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {[0, 1].map((i) => <ScaffoldRow key={i} className="h-14" />)}
-                      </div>
-                    )}
-                    {applyPortfolioItems?.length === 0 && (
-                      <p className="text-xs text-white/40">
-                        No media in your portfolio yet — add photos or reels from Profile → Media Gallery, then they'll show up here.
-                      </p>
-                    )}
-                    {applyPortfolioItems && applyPortfolioItems.length > 0 && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {applyPortfolioItems.map((item) => (
-                          <label
-                            key={item.id}
-                            className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              className="accent-gold"
-                              checked={selectedMediaAssetIds.includes(item.mediaAssetId!)}
-                              onChange={() => toggleMediaAssetSelected(item.mediaAssetId!)}
-                            />
-                            {item.assetType === 'image' && (
-                              <img src={getAssetContentUrl(item.mediaAssetId!)} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
-                            )}
-                            <span className="text-sm font-bold truncate">{item.caption || item.title}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Select Portfolio Items to Include</label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                        <input type="checkbox" className="accent-gold" defaultChecked />
-                        <span className="text-sm font-bold">Main Headshot</span>
-                      </label>
-                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                        <input type="checkbox" className="accent-gold" defaultChecked />
-                        <span className="text-sm font-bold">Full Body Shot</span>
-                      </label>
-                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                        <input type="checkbox" className="accent-gold" defaultChecked />
-                        <span className="text-sm font-bold">Dramatic Monologue Reel</span>
-                      </label>
-                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                        <input type="checkbox" className="accent-gold" />
-                        <span className="text-sm font-bold">Dance Reel</span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Upload Specific Audition Video (Optional)</label>
-                  {selectedCall.__isLive && (
-                    <p className="text-[11px] text-white/40 mb-3">
-                      Coming soon — upload during application isn't wired up here yet. Add a video to your
-                      portfolio from Profile → Media Gallery first, then select it above.
-                    </p>
-                  )}
-                  <div className="border border-dashed border-white/20 rounded-xl p-8 text-center bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                    <Upload size={24} className="mx-auto mb-2 text-white/40" />
-                    <p className="text-sm font-bold mb-1">Click to upload or drag and drop</p>
-                    <p className="text-xs text-white/40">MP4, MOV up to 500MB</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Cover Letter / Note</label>
-                  <textarea
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[100px]"
-                    placeholder="Briefly explain why you are a great fit for this role..."
-                    value={coverNote}
-                    onChange={(e) => setCoverNote(e.target.value)}
-                  ></textarea>
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <button onClick={() => setShowApplicationModal(false)} className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmitApplication}
-                    disabled={applying}
-                    className="flex-1 py-4 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {applying ? 'Submitting…' : 'Submit Application'}
-                  </button>
-                </div>
+              <div className="text-center py-8">
+                <Smartphone size={40} className="mx-auto mb-4 text-gold" />
+                <h3 className="text-xl font-bold mb-2">Apply from the SosrG App</h3>
+                <p className="text-sm text-white/60 max-w-sm mx-auto mb-8">
+                  Submitting an application — with portfolio attachments and audition video uploads — is available in the SosrG mobile app. Please install our app to apply.
+                </p>
+                <button
+                  onClick={() => setShowApplicationModal(false)}
+                  className="bg-gold text-black px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors"
+                >
+                  Got it
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -876,7 +796,7 @@ export const CastingEcosystem = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-base text-white/60 border-t border-white/5 pt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-base text-white/60 border-t border-white/5 pt-4">
                       <span className="flex items-center gap-2">
                         <Clock size={14} /> Apply by {new Date(call.applicationDeadline).toLocaleDateString()}
                       </span>
@@ -889,7 +809,7 @@ export const CastingEcosystem = () => {
                             __isLive: true,
                           })
                         }
-                        className="bg-gold/10 text-gold hover:bg-gold hover:text-black px-4 py-2 rounded-lg font-bold transition-colors"
+                        className="bg-gold/10 text-gold hover:bg-gold hover:text-black px-4 py-2 rounded-lg font-bold transition-colors w-full sm:w-auto shrink-0"
                       >
                         Apply Now
                       </button>
@@ -1017,8 +937,8 @@ export const CastingEcosystem = () => {
                       <div className="bg-crimson px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest">{job.status}</div>
                     </div>
                     <p className="text-base text-white/80 mb-4 line-clamp-2">{job.description}</p>
-                    <div className="flex items-center justify-between text-base text-white/60 border-t border-white/5 pt-4">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-base text-white/60 border-t border-white/5 pt-4">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         {job.pincode && <span className="flex items-center gap-2"><MapPin size={14} className="text-blue-400" /> PIN {job.pincode}</span>}
                         <span className="flex items-center gap-2"><Wallet size={14} className="text-emerald-400" /> {formatCastingBudget(job)}</span>
                         <span className="flex items-center gap-2"><Clock size={14} /> Apply by {new Date(job.applicationDeadline).toLocaleDateString()}</span>
@@ -1033,7 +953,7 @@ export const CastingEcosystem = () => {
                             __type: 'job',
                           })
                         }
-                        className="bg-gold/10 text-gold hover:bg-gold hover:text-black px-4 py-2 rounded-lg font-bold transition-colors"
+                        className="bg-gold/10 text-gold hover:bg-gold hover:text-black px-4 py-2 rounded-lg font-bold transition-colors w-full sm:w-auto shrink-0"
                       >
                         Apply Now
                       </button>

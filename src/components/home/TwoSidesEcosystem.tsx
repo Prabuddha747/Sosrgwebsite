@@ -2,6 +2,8 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import logo from '../../assets/logo.jpg';
+import creatorImage from '../../assets/creator.png';
+import businessImage from '../../assets/business.png';
 
 const SIDES = [
   {
@@ -10,7 +12,7 @@ const SIDES = [
     tagline: 'I want to create, learn, connect and grow.',
     bullets: ['Showcase your talent', 'Find opportunities', 'Connect with people', 'Grow your journey'],
     cta: 'Explore as a Creator',
-    image: 'https://images.unsplash.com/photo-1518834107812-67b0b7c58434?q=80&w=1200&auto=format&fit=crop',
+    image: creatorImage,
   },
   {
     key: 'studio',
@@ -18,7 +20,7 @@ const SIDES = [
     tagline: 'I want to discover talent, build teams and bring creative projects to life.',
     bullets: ['Discover verified talent', 'Post casting calls', 'Manage projects', 'Build your team'],
     cta: 'Explore as a Business ',
-    image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1200&auto=format&fit=crop',
+    image: businessImage,
   },
 ];
 
@@ -43,7 +45,12 @@ export const TwoSidesEcosystem = () => (
           className="relative min-h-120 flex items-end"
         >
           <img src={side.image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 photo-scrim-b" />
+          {/* Stronger, self-contained scrim (not the shared .photo-scrim-b)
+              — these two photos have large bright regions (windows, a light
+              dashboard mockup) sitting right behind the text block, which
+              the standard scrim wasn't dark enough to guarantee contrast
+              against in either theme. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/20" />
           <div className="relative p-8 md:p-10">
             <h3 className="photo-accent text-2xl font-bold mb-3">{side.heading}</h3>
             <p className="photo-text-muted mb-6 max-w-sm">{side.tagline}</p>

@@ -6,12 +6,12 @@ import openMicImage from '../assets/community/open-mic.png';
 import rehearsalImage from '../assets/community/rehearsal.png';
 import auditionImage from '../assets/community/audition.png';
 import workshopImage from '../assets/community/workshop.png';
+import craftImage from '../assets/community/craft.png';
 
 // Real SosrG Studios photos, replacing the old randomly-seeded picsum stock
 // photos. Craft & Traditional Arts was dropped entirely because none of the
 // real photos fit it (see git history) — reinstated for the homepage
-// redesign's "Seven Creative Worlds" section, which needs all seven, with an
-// Unsplash stock photo standing in until a real one exists.
+// redesign's "Seven Creative Worlds" section, which needs all seven.
 export const TALENT_CATEGORIES = [
   { id: 'theatre', name: 'Indian Theatre', desc: 'Connects theatre actors, directors, playwrights, and stage technicians.', icon: Theater, color: 'text-crimson', image: onSetImage },
   { id: 'cinema', name: 'Cinema', desc: 'Film professionals including actors, producers, cinematographers, and editors.', icon: Film, color: 'text-gold', image: backstageImage },
@@ -19,7 +19,7 @@ export const TALENT_CATEGORIES = [
   { id: 'music', name: 'Music', desc: 'Singers, composers, music producers, sound engineers.', icon: Music, color: 'text-purple-400', image: rehearsalImage },
   { id: 'dance', name: 'Dance', desc: 'Dancers, choreographers, background performers, movement directors.', icon: Star, color: 'text-emerald-400', image: auditionImage },
   { id: 'art', name: 'Art & Design', desc: 'Art directors, set designers, graphic artists, concept designers.', icon: Star, color: 'text-orange-400', image: workshopImage },
-  { id: 'craft', name: 'Craft & Traditional Arts', desc: 'Artisans, makers, costume, set, and production crafts.', icon: Hammer, color: 'text-amber-400', image: 'https://images.unsplash.com/photo-1528795259021-d8c86e14354c?q=80&w=1200&auto=format&fit=crop' },
+  { id: 'craft', name: 'Craft & Traditional Arts', desc: 'Artisans, makers, costume, set, and production crafts.', icon: Hammer, color: 'text-amber-400', image: craftImage },
 ];
 
 export const FEATURED_TALENT = [

@@ -62,7 +62,6 @@ import {
   ExternalLink,
   Plus,
   Share2,
-  Filter,
   UserPlus,
   Home,
   UserCheck,
@@ -104,12 +103,12 @@ export const Marketplace = () => {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <button 
+          {/* <button 
             onClick={() => setShowFilterModal(true)}
             className="bg-white/5 border border-white/10 px-6 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"
           >
             <Filter size={16} /> Filters
-          </button>
+          </button> */}
           <button
             onClick={() => showToast('Posting a project? That happens in the SosrG app — download it to get listed.')}
             className="bg-gold text-black px-6 py-2 rounded-xl text-sm font-bold w-full sm:w-auto hover:bg-white transition-colors"
