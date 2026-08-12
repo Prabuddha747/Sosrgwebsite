@@ -85,11 +85,11 @@ export const CommunityHub = () => {
   const [activeTab, setActiveTab] = useState<'directory' | 'sharing' | 'news'>('directory');
 
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-serif italic mb-2">Creative <span className="vibrant-text-3">Community</span></h1>
-          <p className="text-white/50">Connect, share, and stay updated with the 7 Core Creative Sectors.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">Creative <span className="gold-text">Community</span></h1>
+          <p className="text-white/50">Where the 7 Core Creative Sectors connect, share work, and stay in the loop — together.</p>
         </div>
         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
           {[

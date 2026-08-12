@@ -79,7 +79,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const EcosystemHub = () => {
   const [activeView, setActiveView] = useState<'hierarchy' | 'revenue' | 'franchise' | 'monitoring' | 'counselling' | 'grading' | 'event-builder' | 'franchise-structure'>('hierarchy');
@@ -152,11 +151,11 @@ export const EcosystemHub = () => {
   ];
 
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-400 mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-serif italic mb-2">SosrG <span className="vibrant-text-1">Ecosystem</span></h1>
-          <p className="text-white/50">Premium AI-supported multi-level creative infrastructure.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">SosrG <span className="gold-text">Ecosystem</span></h1>
+          <p className="text-white/50">The infrastructure behind SosrG — AI-supported, multi-level, and built to grow with every Connecting Partner in it.</p>
         </div>
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
@@ -165,10 +164,10 @@ export const EcosystemHub = () => {
               { id: 'franchise-structure', label: 'Franchise Structure', icon: Network },
               { id: 'revenue', label: 'Revenue Engine', icon: Wallet },
               { id: 'franchise', label: 'Academy Franchise', icon: Building2 },
-              { id: 'monitoring', label: 'AI Monitoring', icon: BarChart3 },
-              { id: 'counselling', label: 'AI Counselling', icon: GraduationCap },
-              { id: 'grading', label: 'AI Grading', icon: Star },
-              { id: 'event-builder', label: 'AI Event Builder', icon: Calendar },
+              // { id: 'monitoring', label: 'AI Monitoring', icon: BarChart3 },
+              // { id: 'counselling', label: 'AI Counselling', icon: GraduationCap },
+              // { id: 'grading', label: 'AI Grading', icon: Star },
+              // { id: 'event-builder', label: 'AI Event Builder', icon: Calendar },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -196,17 +195,9 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <Network size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Franchise Structure</h2>
+              <h2 className="text-3xl font-bold">Franchise Structure — Visit Our App</h2>
             </div>
-            <p className="text-white/60 max-w-3xl mb-6">A multi-tiered franchise model for regional leaders and Connecting Partners, with performance tracking at every level — not built yet, this is a preview of the layout.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A multi-tiered franchise model for regional leaders and Connecting Partners, with performance tracking at every level.</p>
           </motion.div>
         )}
 
@@ -361,17 +352,9 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <Wallet size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Revenue Engine</h2>
+              <h2 className="text-3xl font-bold">Revenue Engine — Visit Our App</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">Real-time revenue tracking and payout breakdowns across the franchise network — commission splits, regional performance, and settlement status.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
 
@@ -385,17 +368,9 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <Building2 size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Academy Franchise</h2>
+              <h2 className="text-3xl font-bold">Academy Franchise — Visit Our App</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">A franchise pathway for running a local SosrG Academy — training programs, enrollment, and revenue share for franchise partners.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
 
@@ -409,17 +384,9 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <BarChart3 size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">AI Monitoring</h2>
+              <h2 className="text-3xl font-bold">AI Monitoring — Visit Our App</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">Automated monitoring of franchise and platform activity — flags anomalies, tracks regional performance, and surfaces issues before they need manual review.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
 
@@ -433,17 +400,9 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <GraduationCap size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">AI Counselling</h2>
+              <h2 className="text-3xl font-bold">AI Counselling — Visit Our App</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">AI-assisted career guidance for artists and professionals — personalized recommendations based on your actual profile and activity, not a generic script.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
 
@@ -457,17 +416,9 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <Star size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">AI Grading</h2>
+              <h2 className="text-3xl font-bold">AI Grading — Visit Our App</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">An automated skill/experience grading system feeding into account trust levels — assessed from real activity and verified work, not self-declared.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
 
@@ -481,7 +432,7 @@ export const EcosystemHub = () => {
           >
             <div className="glass-panel p-8">
               <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
-                <Calendar className="text-gold" /> AI Event Builder
+                <Calendar className="text-gold" /> AI Event Builder — Visit Our App
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-gold/30 transition-all cursor-pointer group">

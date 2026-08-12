@@ -3,7 +3,9 @@ import type { FormEvent } from 'react';
 import { Link, useLocation, useNavigate, type Location } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ApiError } from '../../services/httpClient';
-import { Button, Card, Input, useToast } from '../../design-system';
+import { Button, Input, useToast } from '../../design-system';
+import { AuthShell } from './AuthShell';
+import backstageImage from '../../assets/community/backstage.png';
 
 export const LoginPage = () => {
   const { login } = useAuth();
@@ -38,38 +40,39 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="sosrg-container pt-36 pb-16 flex justify-center">
-      <Card className="w-full max-w-md">
-        <h1 className="font-display text-sosrg-2xl text-text-primary mb-6">Log in</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
-            label="Email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Input
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={error}
-          />
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Logging in…' : 'Log in'}
-          </Button>
-        </form>
-        <p className="mt-6 text-sosrg-sm text-text-muted">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-gold-500 sosrg-focus-ring">
-            Sign up
-          </Link>
-        </p>
-      </Card>
-    </div>
+    <AuthShell image={backstageImage} caption="Good to see you again." imageSide="left">
+      <h1 className="font-auth-display text-sosrg-3xl text-text-primary mb-2">Log in</h1>
+      <div className="w-12 h-1 bg-gold-500 rounded-full mb-8" />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <Input
+          label="Email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="text-sosrg-lg"
+        />
+        <Input
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={error}
+          className="text-sosrg-lg"
+        />
+        <Button type="submit" disabled={submitting} className="text-sosrg-lg mt-1">
+          {submitting ? 'Logging in…' : 'Log in'}
+        </Button>
+      </form>
+      <p className="mt-8 text-sosrg-base text-text-muted">
+        Don't have an account?{' '}
+        <Link to="/signup" className="text-gold-500 sosrg-focus-ring">
+          Sign up
+        </Link>
+      </p>
+    </AuthShell>
   );
 };

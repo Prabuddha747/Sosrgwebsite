@@ -98,11 +98,11 @@ export const TalentAuction = () => {
   const filteredAuctions = selectedSector === 'All Sectors' ? AUCTIONS : AUCTIONS.filter(a => a.sector === selectedSector);
 
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-serif italic mb-2">Talent <span className="vibrant-text-3">Auction</span></h1>
-          <p className="text-white/50 mb-2">Bid on top talent across the 7 Core Creative Sectors.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">Talent <span className="gold-text">Auction</span></h1>
+          <p className="text-white/50 mb-2">Bid on top talent across all 7 Core Creative Sectors — and win the right people for your project.</p>
           <p className="text-white/40 text-sm max-w-2xl">
             Real-time bidding on talent and creative rights, with live auction state, verified wallets,
             and binding contracts on close — what you see below is a preview of the layout, not a live
@@ -241,42 +241,12 @@ export const TalentAuction = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="max-w-2xl mx-auto glass-panel-purple p-8"
           >
-            <h2 className="text-2xl font-bold mb-6">Create New Auction</h2>
-            <form className="space-y-6">
-              <div>
-                <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Creative Sector</label>
-                <select className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold">
-                  {SECTORS.filter(s => s !== 'All Sectors').map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Auction Title</label>
-                <input type="text" placeholder="e.g., Lead Role in Indie Feature" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold" />
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Minimum Bid (₹)</label>
-                  <input type="number" placeholder="50000" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold" />
-                </div>
-                <div>
-                  <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Buy-Now Price (₹)</label>
-                  <input type="number" placeholder="150000" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Duration</label>
-                <select className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold">
-                  <option>24 Hours</option>
-                  <option>3 Days</option>
-                  <option>7 Days</option>
-                </select>
-              </div>
-              <button type="button" className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-white transition-colors">
-                Launch Auction
-              </button>
-            </form>
+            <div className="flex items-center gap-2 mb-2">
+              <Plus size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Create Auction — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">List talent, rights, or creative assets for competitive bidding, with reserve pricing, buy-now offers, and AI-suggested valuations pulled from real market data.</p>
           </motion.div>
         )}
 
@@ -286,30 +256,12 @@ export const TalentAuction = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {['Total Auction Revenue', 'Active Auctions', 'Average Bid Increase'].map((label) => (
-                <div key={label} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">{label}</div>
-                  <ScaffoldRow className="h-9 w-24 mb-2" />
-                </div>
-              ))}
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Analytics — Visit Our App</h2>
             </div>
-
-            <div className="relative glass-panel-orange p-8">
-              <ComingSoonTag />
-              <div className="flex items-center gap-2 mb-6">
-                <Trophy size={20} className="text-gold" />
-                <h3 className="text-xl font-bold">Weekly Leaderboard</h3>
-              </div>
-              <div className="space-y-4">
-                {[0, 1, 2].map((i) => (
-                  <ScaffoldRow key={i} className="h-16" />
-                ))}
-              </div>
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Real-time revenue, active auction counts, and bid velocity — plus a live weekly leaderboard ranking top sellers and buyers by actual closed deals.</p>
           </motion.div>
         )}
 
@@ -319,45 +271,12 @@ export const TalentAuction = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
           >
-            {/* Digital Contracts */}
-            <div className="relative glass-panel-blue p-8">
-              <ComingSoonTag />
-              <div className="flex items-center gap-2 mb-6">
-                <FileText size={20} className="text-blue-400" />
-                <h3 className="text-xl font-bold">Digital Contracts</h3>
-              </div>
-              <p className="text-sm text-white/60 mb-6">Auto-generated agreements for won auctions.</p>
-              <div className="space-y-4">
-                {[0, 1].map((i) => (
-                  <ScaffoldRow key={i} className="h-16" />
-                ))}
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Contracts & Calendar — Visit Our App</h2>
             </div>
-
-            {/* Calendar & Reviews */}
-            <div className="space-y-8">
-              <div className="relative glass-panel-green p-8">
-                <ComingSoonTag />
-                <div className="flex items-center gap-2 mb-6">
-                  <Calendar size={20} className="text-gold" />
-                  <h3 className="text-xl font-bold">Calendar Integration</h3>
-                </div>
-                <p className="text-sm text-white/60 mb-4">Bookings from won auctions are automatically added to your schedule.</p>
-                <ScaffoldRow className="h-16" />
-              </div>
-
-              <div className="relative glass-panel p-8">
-                <ComingSoonTag />
-                <div className="flex items-center gap-2 mb-6">
-                  <Star size={20} className="text-gold" />
-                  <h3 className="text-xl font-bold">Ratings & Reviews</h3>
-                </div>
-                <p className="text-sm text-white/60 mb-4">Mutual ratings impact future auction visibility and trust scores.</p>
-                <ScaffoldRow className="h-16" />
-              </div>
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Auto-generated agreements the moment an auction closes, synced straight to your production calendar, with mutual ratings that carry real weight on future auction visibility.</p>
           </motion.div>
         )}
         {activeTab === 'upcoming' && (
@@ -366,11 +285,12 @@ export const TalentAuction = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="glass-panel p-12 text-center"
           >
-            <Clock size={48} className="mx-auto mb-6 text-white/20" />
-            <h2 className="text-2xl font-bold mb-2">Upcoming Auctions</h2>
-            <p className="text-white/40">New talent and creative assets are being verified. Stay tuned.</p>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Upcoming Auctions — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A real pipeline of verified upcoming auctions — talent, scripts, scores, and rights — so you can plan bids before they go live, not just watch a countdown.</p>
           </motion.div>
         )}
 
@@ -380,36 +300,12 @@ export const TalentAuction = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
-            <div className="relative lg:col-span-1 glass-panel p-8">
-              <ComingSoonTag />
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 bg-gold/20 rounded-2xl flex items-center justify-center">
-                  <Wallet className="text-gold" size={32} />
-                </div>
-                <div>
-                  <ScaffoldRow className="h-7 w-24 mb-2" />
-                  <p className="text-xs text-white/40">Available Balance</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <button disabled className="w-full bg-white/10 border border-white/10 text-white/50 py-4 rounded-xl font-bold text-sm cursor-not-allowed">Add Funds</button>
-                <button disabled className="w-full bg-white/5 border border-white/10 text-white/30 py-4 rounded-xl font-bold text-sm cursor-not-allowed">Withdraw</button>
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">My Wallet — Visit Our App</h2>
             </div>
-            <div className="relative lg:col-span-2 glass-panel p-8">
-              <ComingSoonTag />
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Trophy size={20} className="text-gold" /> Rewards & Gamification</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {['SosrG Coins', 'Weekly Leaderboard'].map((label) => (
-                  <div key={label} className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                    <ScaffoldRow className="h-8 w-16 mb-2" />
-                    <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A verified wallet for bidding, buy-now purchases, and payouts — plus SosrG Coins and leaderboard rewards tied to real auction activity, not a demo balance.</p>
           </motion.div>
         )}
       </AnimatePresence>

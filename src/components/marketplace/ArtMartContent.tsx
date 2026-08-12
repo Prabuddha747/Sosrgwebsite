@@ -7,7 +7,6 @@ import {
   Music,
   User,
   Search,
-  Cpu,
   ShieldCheck,
   FileText,
   LayoutDashboard,
@@ -17,12 +16,10 @@ import {
   Mic,
   Video,
   Menu,
-  X,
   Zap,
   Lock,
   Globe,
   Award,
-  TrendingUp,
   Briefcase,
   Gavel,
   ShoppingBag,
@@ -39,7 +36,6 @@ import {
   FileCheck,
   History,
   CheckCircle,
-  CheckCircle2,
   AlertCircle,
   Users,
   Calendar,
@@ -84,13 +80,6 @@ import { ScaffoldRow, ComingSoonTag } from '../ScaffoldUI';
 export const ArtMartContent = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'sell' | 'custom-orders' | 'wishlist'>('browse');
   const [category, setCategory] = useState('All Items');
-  const [showAIPricing, setShowAIPricing] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3000);
-  };
 
   const CATEGORIES = ['All Items', 'Cinema', 'Theatre', 'Literature', 'Music', 'Dance', 'Art & Design', 'Crafts'];
 
@@ -162,6 +151,7 @@ export const ArtMartContent = () => {
               </div>
             </div>
             <div className="lg:col-span-3">
+              <h2 className="text-2xl font-bold mb-6">Browse — Visit Our App</h2>
               {/* No live Art Mart listings API yet (doc/API_REQUIREMENTS.md)
                   — cards are shimmer placeholders rather than the invented
                   product catalogue this page used to show as if it were real. */}
@@ -182,112 +172,22 @@ export const ArtMartContent = () => {
         )}
 
         {activeTab === 'sell' && (
-          <motion.div
-            key="sell"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="max-w-3xl mx-auto glass-panel-blue p-8"
-          >
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold">List Product or Artwork</h2>
-              <button 
-                onClick={() => setShowAIPricing(!showAIPricing)}
-                className="flex items-center gap-2 bg-blue-500/10 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-500/20 transition-colors"
-              >
-                <Cpu size={14} /> AI Pricing Suggestion
-              </button>
+          <motion.div key="sell" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Plus size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">List Product or Artwork — Visit Our App</h2>
             </div>
-
-            <AnimatePresence>
-              {showAIPricing && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-8 overflow-hidden"
-                >
-                  <div className="relative p-6 bg-blue-500/5 border border-blue-500/20 rounded-xl">
-                    <ComingSoonTag />
-                    <h4 className="font-bold text-blue-400 mb-2 flex items-center gap-2"><TrendingUp size={16} /> AI Market Analysis</h4>
-                    <p className="text-xs text-white/60 mb-4">Based on current market demand and recent sales in your selected category.</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      {['Suggested Price', 'Demand Level', 'Est. Time to Sell'].map((label) => (
-                        <div key={label} className="bg-black/30 p-4 rounded-lg text-center">
-                          <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">{label}</div>
-                          <ScaffoldRow className="h-6 w-16 mx-auto" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Product Type</label>
-                  <select className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold">
-                    {CATEGORIES.filter(c => c !== 'All Items').map(cat => (
-                      <option key={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Product Name</label>
-                  <input type="text" placeholder="e.g., Abstract Oil Painting" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Description</label>
-                <textarea placeholder="Describe your item..." className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm h-32 resize-none focus:outline-none focus:border-gold" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Price (₹)</label>
-                  <input type="number" placeholder="45000" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold" />
-                </div>
-                <div>
-                  <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Upload Images/Files</label>
-                  <div className="w-full bg-black/30 border border-white/10 border-dashed rounded-xl p-3 text-sm text-center text-white/40 cursor-pointer hover:bg-white/5 transition-colors">
-                    Click to upload
-                  </div>
-                </div>
-              </div>
-              <button 
-                type="button" 
-                onClick={() => showToast('Product listed successfully!')}
-                className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-white transition-colors"
-              >
-                List Product
-              </button>
-            </form>
+            <p className="text-white/60 max-w-3xl mb-6">List a product or artwork for sale, with AI pricing suggestions based on real market demand and recent sales in your category.</p>
           </motion.div>
         )}
 
         {activeTab === 'custom-orders' && (
-          <motion.div
-            key="custom-orders"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
-          >
-            <div className="relative glass-panel p-8">
-              <ComingSoonTag />
-              <div className="flex items-center gap-2 mb-6">
-                <Briefcase size={20} className="text-gold" />
-                <h2 className="text-2xl font-bold">Custom Orders & Commissions</h2>
-              </div>
-              <p className="text-sm text-white/60 mb-8">Manage your custom artwork commissions. Secure payments with 30% advance and milestone-based releases.</p>
-
-              <div className="space-y-4">
-                {[0, 1].map((i) => (
-                  <ScaffoldRow key={i} className="h-32" />
-                ))}
-              </div>
+          <motion.div key="custom-orders" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Briefcase size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Custom Orders & Commissions — Visit Our App</h2>
             </div>
+            <p className="text-white/60 max-w-3xl mb-6">Manage your custom artwork commissions, with secure payments — 30% advance and milestone-based releases.</p>
           </motion.div>
         )}
 
@@ -334,20 +234,6 @@ export const ArtMartContent = () => {
         )}
       </AnimatePresence>
 
-      {/* Toast Notification */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 right-8 bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 font-bold"
-          >
-            <CheckCircle2 size={20} />
-            {toastMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

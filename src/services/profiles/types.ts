@@ -110,13 +110,20 @@ export interface CreateProfileInput {
   yearsExperience?: number;
 }
 
+// UpdateProfileDto — dateOfBirth/genderIdentity/profileImageAssetId/
+// introVideoAssetId are real fields on the live DTO that weren't wired here
+// yet (verified against /openapi.json this session).
 export interface UpdateProfileInput {
   displayName?: string;
   headline?: string | null;
   bio?: string | null;
+  dateOfBirth?: string | null;
+  genderIdentity?: string | null;
   pincode?: string | null;
   yearsExperience?: number | null;
   websiteUrl?: string | null;
+  introVideoAssetId?: string;
+  profileImageAssetId?: string;
   isDiscoverable?: boolean;
 }
 

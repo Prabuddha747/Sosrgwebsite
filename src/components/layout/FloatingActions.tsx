@@ -13,11 +13,9 @@ import {
   LayoutDashboard,
   Star,
   ChevronRight,
-  Play,
   Mic,
   Video,
   Menu,
-  X,
   Zap,
   Lock,
   Globe,
@@ -66,7 +64,6 @@ import {
   UserPlus,
   Home,
   UserCheck,
-  MessageCircle,
   HeartHandshake,
   Newspaper,
   MoreHorizontal,
@@ -82,7 +79,6 @@ import { cn } from '../../lib/utils';
 
 export const FloatingActions = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -122,52 +118,6 @@ export const FloatingActions = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="relative">
-        <AnimatePresence>
-          {isChatOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.9 }}
-              className="absolute bottom-16 right-0 w-80 bg-cinematic-black border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            >
-              <div className="p-4 bg-gradient-to-r from-gold/20 to-transparent border-b border-white/10 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <h3 className="font-bold text-gold">SosrG Assistant</h3>
-                </div>
-                <button onClick={() => setIsChatOpen(false)} className="text-white/60 hover:text-white">
-                  <X size={16} />
-                </button>
-              </div>
-              <div className="p-4 h-64 overflow-y-auto flex flex-col gap-3 text-sm custom-scrollbar">
-                <div className="bg-white/5 border border-white/10 p-3 rounded-xl rounded-tl-none self-start max-w-[85%] text-white/80 leading-relaxed">
-                  Hello! Welcome to SosrG. How can I assist you today? Whether you're looking for talent, casting, or marketplace items, I'm here to help.
-                </div>
-              </div>
-              <div className="p-3 border-t border-white/10 flex gap-2 bg-black/20">
-                <input 
-                  type="text" 
-                  placeholder="Type your message..." 
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold/50 transition-colors"
-                />
-                <button className="p-2 bg-gold text-black rounded-lg hover:bg-white transition-colors flex items-center justify-center">
-                  <Play size={16} className="ml-1" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <button 
-          onClick={() => setIsChatOpen(!isChatOpen)}
-          className="p-4 bg-gold text-black rounded-full hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_30px_rgba(255,255,255,0.6)] flex items-center justify-center"
-          title="Help & Support"
-        >
-          {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
-        </button>
-      </div>
     </div>
   );
 };

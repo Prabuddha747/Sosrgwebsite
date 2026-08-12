@@ -8,6 +8,7 @@ import type {
   JobPostFilters,
   JobPostListResult,
   JobsService,
+  MyJobApplication,
 } from './types';
 
 export const apiJobsService: JobsService = {
@@ -45,5 +46,16 @@ export const apiJobsService: JobsService = {
       `/v1/job-posts/${encodeURIComponent(jobPostId)}/submit-review`,
       { method: 'POST', idempotencyKey: crypto.randomUUID() },
     );
+  },
+
+  async listMyJobApplications() {
+    return apiFetch<MyJobApplication[]>('/v1/job-applications/me');
+  },
+
+  async withdrawJobApplication(applicationId: string) {
+    await apiFetch<void>(`/v1/job-applications/${encodeURIComponent(applicationId)}/withdraw`, {
+      method: 'POST',
+      idempotencyKey: crypto.randomUUID(),
+    });
   },
 };

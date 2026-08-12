@@ -61,6 +61,13 @@ One block per gap below, in the same shape as the OpenAPI spec you already publi
     "openQuestion": "Standard account-security/compliance surface — scope independently of everything else in this doc."
   },
   {
+    "gap": "Change `username` after profile creation (§2.4g)",
+    "requests": [
+      { "method": "PATCH", "path": "/v1/profiles/me/username", "input": { "username": "string" }, "output": { "username": "string", "changedAt": "string (ISO 8601)" } }
+    ],
+    "openQuestion": "Uniqueness check + likely a rate limit (once every N days) since username is also the public-profile URL slug (`GET /v1/profiles/{username}`) — old links would 404 after a change unless old usernames redirect or stay reserved."
+  },
+  {
     "gap": "Notifications (§3 — DB schema already exists)",
     "requests": [
       { "method": "GET", "path": "/v1/notifications", "input": { "query": { "cursor": "string | null", "limit": "number" } }, "output": { "items": "Notification[]", "unreadCount": "number", "nextCursor": "string | null" } },
@@ -178,6 +185,12 @@ Both the main profile page (Booking History) and the Casting/Hiring page's "My P
 - **Input** (`POST /v1/profiles/me/experience`): `{title: string, roleOrCredit: string, projectType: string, year: number, description?: string}`.
 - **Output**: the created record plus an ID, e.g. `{id: string, title, roleOrCredit, projectType, year, description, createdAt}`; `GET /v1/profiles/me/experience` (or nested on the profile response as `experience: [...]`, matching how `skills`/`languages` are already nested) for reading it back.
 - This is genuinely new — no `experience`/`credit`/`work_history`-named table found in the migrations this session, same category as §3's other schema-first gaps.
+
+### 2.4g No endpoint to change `username` after profile creation
+
+`username` is only ever set once, at profile creation (`POST /v1/profiles` — required alongside `profileType`/`displayName`, per §1). `UpdateProfileInput`/`PATCH /v1/profiles/me` has no `username` field, and no other endpoint in the published spec touches it either. The frontend's Edit Profile form (My Profile page) has no username field as a result — a user who picks a username at signup is stuck with it permanently, with no self-service or support-driven way to change it that the frontend can call.
+
+**Suggested shape:** `PATCH /v1/profiles/me/username` — `{username: string}` → `{username: string, changedAt: string}`. Since `username` doubles as the public-profile URL slug (`GET /v1/profiles/{username}`), this needs a uniqueness check (same as signup) and probably a cooldown (e.g. once every 30 days) to stop churn; worth deciding whether an old username 404s immediately after a change or stays reserved/redirects for a grace period, since existing shared profile links would otherwise break silently.
 
 ### 2.5 `ApplyCastingCallDto.mediaAssetIds` — real, but not yet wired frontend-side
 

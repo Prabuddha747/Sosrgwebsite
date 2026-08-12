@@ -1,5 +1,5 @@
 export const Sosrg7EPage = () => (
-  <div className="pt-32 pb-32 px-6 max-w-[1600px] mx-auto min-h-screen space-y-24">
+  <div className="pt-32 pb-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen space-y-24">
     {/* Education */}
     <div>
       <h1 className="text-5xl font-serif italic mb-12"><span className="gold-text">Education</span> (Learning)</h1>

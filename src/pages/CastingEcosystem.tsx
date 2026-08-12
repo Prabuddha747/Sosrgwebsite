@@ -6,7 +6,6 @@ import {
   Theater,
   PenTool,
   Music,
-  User,
   Search,
   Cpu,
   ShieldCheck,
@@ -38,7 +37,6 @@ import {
   ArrowDownRight,
   Scale,
   FileCheck,
-  History,
   CheckCircle,
   CheckCircle2,
   AlertCircle,
@@ -57,7 +55,6 @@ import {
   BookOpen,
   Store,
   Network,
-  Image,
   Instagram,
   Youtube,
   ExternalLink,
@@ -82,24 +79,19 @@ import {
 import { cn } from '../lib/utils';
 import type { Section } from '../types';
 import { castingService } from '../services/casting';
-import type { CastingCall, CastingWorkMode, CastingCompensationType } from '../services/casting';
+import type { CastingCall, CastingCallApplicationSummary, CastingApplicationSettableStatus } from '../services/casting';
 import { ApiError } from '../services/httpClient';
 import { useToast } from '../design-system';
 import { useAuth } from '../contexts/AuthContext';
-import { profilesService } from '../services/profiles';
 import { portfoliosService } from '../services/portfolios';
-import type { Portfolio } from '../services/portfolios';
+import type { PortfolioItemDetail } from '../services/portfolios';
+import { getAssetContentUrl } from '../services/media';
 import { jobsService } from '../services/jobs';
-import type { JobPost, JobWorkMode, JobCompensationType } from '../services/jobs';
+import type { JobPost } from '../services/jobs';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
-import { TALENT_CATEGORIES } from '../data/mockData';
-import { PasswordInput } from '../components/common/PasswordInput';
 
-const MIN_PASSWORD_LENGTH = 12;
-
-// Real budget/status fields don't exist on the old CASTING_CALLS mock shape
-// below — this formats the live API's minor-unit budget range into display
-// text, used for both casting calls and job posts (same budget field shape).
+// Formats the live API's minor-unit budget range into display text, used
+// for both casting calls and job posts (same budget field shape).
 function formatCastingBudget(call: { compensationType: string; budgetMinMinor: number | null; budgetMaxMinor: number | null; currency: string }): string {
   if (call.compensationType === 'unpaid') return 'Unpaid';
   if (call.budgetMinMinor == null || call.budgetMaxMinor == null) {
@@ -115,40 +107,10 @@ export const CastingEcosystem = () => {
   // the landing view now instead of the decorative Home tab — arriving at
   // /casting (from the hero CTA, navbar, anywhere) drops straight into
   // real data rather than a preview screen you then have to click through.
-  const [view, setView] = useState<'home' | 'register' | 'profile' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants' | 'post-job' | 'post-casting-call'>('calls');
-  const [isRecruiter, setIsRecruiter] = useState(false);
+  const [view, setView] = useState<'home' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants' | 'post-job' | 'post-casting-call'>('calls');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [builderMode, setBuilderMode] = useState<'ai' | 'manual'>('ai');
   const [crewMode, setCrewMode] = useState<'jobs' | 'professionals'>('jobs');
-  const [postingJob, setPostingJob] = useState(false);
-  const [jobPostForm, setJobPostForm] = useState({
-    title: '',
-    industry: '',
-    employmentType: 'full_time',
-    workMode: 'onsite' as JobWorkMode,
-    description: '',
-    responsibilities: '',
-    requirements: '',
-    pincode: '',
-    compensationType: 'paid' as JobCompensationType,
-    budgetMin: '',
-    budgetMax: '',
-    numberOfOpenings: '1',
-    applicationDeadline: '',
-  });
-  const [postingCastingCall, setPostingCastingCall] = useState(false);
-  const [castingCallForm, setCastingCallForm] = useState({
-    title: '',
-    industry: '',
-    engagementType: 'casting' as 'casting' | 'crew_hiring' | 'commission' | 'collaboration',
-    workMode: 'onsite' as CastingWorkMode,
-    description: '',
-    pincode: '',
-    compensationType: 'paid' as CastingCompensationType,
-    budgetMin: '',
-    budgetMax: '',
-    applicationDeadline: '',
-  });
   const [forumMode, setForumMode] = useState<'messages' | 'community'>('community');
   const [crewSector, setCrewSector] = useState('All Sectors');
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -156,89 +118,60 @@ export const CastingEcosystem = () => {
   const [coverNote, setCoverNote] = useState('');
   const [applying, setApplying] = useState(false);
   const { show } = useToast();
-  const { user, profile: authProfile, register, refreshProfile } = useAuth();
-  const navigate = useNavigate();
-  const [switchingRole, setSwitchingRole] = useState(false);
+  const { user, profile: authProfile } = useAuth();
+  // Real account setting (profileType), read-only here — creating jobs/
+  // casting calls and switching to a Business profile both moved to the
+  // admin panel, so this page no longer offers a way to change it, only to
+  // reflect it (e.g. "Manage Calls" vs "Casting Calls", AI Smart Match vs
+  // Talent Search copy).
+  const BUSINESS_LIKE_TYPES = ['business', 'casting_director', 'industry_professional', 'arts_organisation'];
+  const isRecruiter = !!authProfile && BUSINESS_LIKE_TYPES.includes(authProfile.profileType);
 
-  // Artist/Business is a real account setting, not just a local view
-  // toggle — PATCH /v1/profiles/me/role actually switches the profile
-  // (verified live, works from any starting profileType). Logged-out
-  // visitors just get the local UI toggle since there's no profile to
-  // switch yet.
-  const handleRoleSwitch = async (nextIsRecruiter: boolean, silent = false) => {
-    if (nextIsRecruiter === isRecruiter) return;
-    setIsRecruiter(nextIsRecruiter);
-    if (!user || !authProfile) return;
-    setSwitchingRole(true);
-    try {
-      await profilesService.switchProfileRole({
-        profileType: nextIsRecruiter ? 'industry_professional' : 'artist',
-        professionId: authProfile.professions?.[0]?.id,
-      });
-      await refreshProfile();
-      // The Create Job Post tab switches to Business as a side effect of
-      // getting you to the form — no popup there, same as Bihar Untold's
-      // tab click just opening its section without an announcement. The
-      // explicit Artist/Business toggle still confirms the switch.
-      if (!silent) {
-        show(nextIsRecruiter ? 'Switched to Business — you can now post jobs and casting calls.' : 'Switched to Artist.', 'success');
-      }
-    } catch (err) {
-      setIsRecruiter(!nextIsRecruiter);
-      show(err instanceof ApiError ? err.message : 'Could not switch role.', 'error');
-    } finally {
-      setSwitchingRole(false);
-    }
-  };
-  const location = useLocation();
-
-  // Real registration form state (Register tab) — mirrors SignupPage's
-  // logic exactly rather than the old local-only fake form.
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [registerError, setRegisterError] = useState<string>();
-  const [registering, setRegistering] = useState(false);
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (registerPassword.length < MIN_PASSWORD_LENGTH) {
-      setRegisterError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-      return;
-    }
-    setRegisterError(undefined);
-    setRegistering(true);
-    try {
-      await register(registerEmail, registerPassword);
-      navigate('/profile/setup');
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
-      setRegisterError(message);
-      show(message, 'error');
-    } finally {
-      setRegistering(false);
-    }
-  };
-
-  // My Profile tab — real portfolio read (same live API as ProfileSystem's
-  // Media Gallery); upload isn't built yet so stays a toast, same as there.
-  const [myPortfolios, setMyPortfolios] = useState<Portfolio[] | null>(null);
+  // Apply modal — real portfolio items to attach (mediaAssetIds), replacing
+  // the old hardcoded "Main Headshot"/"Full Body Shot" checkboxes that
+  // weren't backed by any real selection. Fetched fresh each time the modal
+  // opens rather than reusing `myPortfolios` above, since that one's scoped
+  // to the separate "My Profile" tab and may never have loaded.
+  const [applyPortfolioItems, setApplyPortfolioItems] = useState<PortfolioItemDetail[] | null>(null);
+  const [selectedMediaAssetIds, setSelectedMediaAssetIds] = useState<string[]>([]);
   useEffect(() => {
-    if (view !== 'profile' || !user) return;
+    if (!showApplicationModal || !user) return;
     let cancelled = false;
-    portfoliosService.listMyPortfolios().then((items) => {
-      if (!cancelled) setMyPortfolios(items);
-    }).catch(() => {
-      if (!cancelled) setMyPortfolios([]);
-    });
+    setApplyPortfolioItems(null);
+    setSelectedMediaAssetIds([]);
+    portfoliosService
+      .listMyPortfolios()
+      .then((list) => {
+        const primaryId = list[0]?.id;
+        if (!primaryId) return { items: [] } as { items: PortfolioItemDetail[] };
+        return portfoliosService.getPortfolioById(primaryId);
+      })
+      .then((detail) => {
+        if (cancelled) return;
+        const mediaItems = detail.items.filter((item) => item.mediaAssetId);
+        setApplyPortfolioItems(mediaItems);
+        setSelectedMediaAssetIds(mediaItems.map((item) => item.mediaAssetId!));
+      })
+      .catch(() => {
+        if (!cancelled) setApplyPortfolioItems([]);
+      });
     return () => {
       cancelled = true;
     };
-  }, [view, user]);
+  }, [showApplicationModal, user]);
 
-  // Everything except Home, Register, and the live Casting Calls listing
-  // requires an account — send a logged-out visitor to create a profile
-  // instead of switching to a tab that's meaningless without one.
-  const PUBLIC_TABS = new Set(['home', 'register', 'calls']);
+  const toggleMediaAssetSelected = (assetId: string) => {
+    setSelectedMediaAssetIds((prev) =>
+      prev.includes(assetId) ? prev.filter((id) => id !== assetId) : [...prev, assetId],
+    );
+  };
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Everything except Home and the live Casting Calls listing requires an
+  // account — send a logged-out visitor to create a profile instead of
+  // switching to a tab that's meaningless without one.
+  const PUBLIC_TABS = new Set(['home', 'calls']);
   const handleTabClick = (tabId: string) => {
     if (!PUBLIC_TABS.has(tabId) && !user) {
       navigate('/signup', { state: { from: location } });
@@ -260,9 +193,9 @@ export const CastingEcosystem = () => {
     setShowApplicationModal(true);
   };
 
-  // Live casting calls — the "Casting Calls" tab below is the only part of
-  // this page wired to the real API; every other tab still uses the fake
-  // CASTING_CALLS array further down (Home preview, AI Matchmaking).
+  // Live casting calls — "Casting Calls" and "Hiring Crew" are the only two
+  // tabs on this page wired to a real, live API; every other tab is an
+  // honest "Visit Our App" placeholder.
   const [liveCalls, setLiveCalls] = useState<CastingCall[]>([]);
   const [liveLoading, setLiveLoading] = useState(true);
   const [liveError, setLiveError] = useState<string | null>(null);
@@ -287,6 +220,51 @@ export const CastingEcosystem = () => {
       cancelled = true;
     };
   }, [castingCallsRefreshKey]);
+
+  // Applicants tab (recruiter-side review) — GET /v1/casting-calls/{id}/applications
+  // is scoped per casting call, so this reuses liveCalls (already fetched
+  // above) filtered to ones this profile created, rather than a dedicated
+  // "my calls" endpoint (none exists — see doc/API_ENDPOINT_MAP.md).
+  const myCastingCalls = liveCalls.filter((c) => c.createdBy === authProfile?.id);
+  const [reviewingCallId, setReviewingCallId] = useState<string | null>(null);
+  const [callApplications, setCallApplications] = useState<CastingCallApplicationSummary[] | null>(null);
+  const [callApplicationsLoading, setCallApplicationsLoading] = useState(false);
+  const [callApplicationsError, setCallApplicationsError] = useState<string | null>(null);
+  const [updatingApplicationId, setUpdatingApplicationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!reviewingCallId) return;
+    let cancelled = false;
+    setCallApplicationsLoading(true);
+    setCallApplicationsError(null);
+    castingService
+      .listApplicationsForCall(reviewingCallId)
+      .then((items) => {
+        if (!cancelled) setCallApplications(items);
+      })
+      .catch((err) => {
+        if (!cancelled) setCallApplicationsError(err instanceof ApiError ? err.message : 'Could not load applications.');
+      })
+      .finally(() => {
+        if (!cancelled) setCallApplicationsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reviewingCallId]);
+
+  const handleUpdateApplicationStatus = async (applicationId: string, status: CastingApplicationSettableStatus) => {
+    setUpdatingApplicationId(applicationId);
+    try {
+      await castingService.updateApplicationStatus(applicationId, status);
+      setCallApplications((prev) => prev?.map((a) => (a.id === applicationId ? { ...a, status } : a)) ?? prev);
+      show(`Marked as ${status}.`, 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not update application status.', 'error');
+    } finally {
+      setUpdatingApplicationId(null);
+    }
+  };
 
   // Live job posts — Hiring Crew tab's "Find Jobs" mode. Same real API as
   // Casting Calls (GET/POST /v1/job-posts), just a different resource.
@@ -318,132 +296,20 @@ export const CastingEcosystem = () => {
     };
   }, [view, crewMode, jobPostsRefreshKey]);
 
-  const handleCreateJobPost = async () => {
-    if (!user) {
-      navigate('/login', { state: { from: location } });
-      return;
-    }
-    const f = jobPostForm;
-    if (!f.title || !f.industry || !f.description || !f.applicationDeadline) {
-      show('Title, industry, description, and application deadline are required.', 'error');
-      return;
-    }
-    setPostingJob(true);
-    try {
-      const created = await jobsService.createJobPost({
-        title: f.title,
-        industry: f.industry,
-        employmentType: f.employmentType,
-        workMode: f.workMode,
-        description: f.description,
-        applicationDeadline: new Date(f.applicationDeadline).toISOString(),
-        responsibilities: f.responsibilities || undefined,
-        requirements: f.requirements || undefined,
-        pincode: f.pincode || undefined,
-        compensationType: f.compensationType,
-        budgetMinMinor: f.budgetMin ? Math.round(Number(f.budgetMin) * 100) : undefined,
-        budgetMaxMinor: f.budgetMax ? Math.round(Number(f.budgetMax) * 100) : undefined,
-        numberOfOpenings: f.numberOfOpenings ? Number(f.numberOfOpenings) : undefined,
-      });
-      await jobsService.submitJobPostForReview(created.id);
-      show('Role posted and live.', 'success');
-      setJobPostForm({
-        title: '', industry: '', employmentType: 'full_time', workMode: 'onsite', description: '',
-        responsibilities: '', requirements: '', pincode: '', compensationType: 'paid',
-        budgetMin: '', budgetMax: '', numberOfOpenings: '1', applicationDeadline: '',
-      });
-      setJobPostsRefreshKey((k) => k + 1);
-      setCrewMode('jobs');
-      setView('crew');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        show('Your session expired — please sign in again.', 'error');
-        navigate('/login', { state: { from: location } });
-        return;
-      }
-      if (err instanceof ApiError && err.code === 'PROFILE_NOT_ELIGIBLE') {
-        show('Your account type can\'t post jobs — this requires a Business profile.', 'error');
-        return;
-      }
-      show(err instanceof ApiError ? err.message : 'Could not post the role.', 'error');
-    } finally {
-      setPostingJob(false);
-    }
-  };
-
-  // Eligibility differs from job posts (curl-verified this session):
-  // business/casting_director/arts_organisation succeed here,
-  // industry_professional does not — even though industry_professional IS
-  // eligible for job posts. The Business toggle switches to
-  // industry_professional, so it alone doesn't guarantee this succeeds; the
-  // real 403 surfaces honestly below rather than trying to pre-validate it.
-  const handleCreateCastingCall = async () => {
-    if (!user) {
-      navigate('/login', { state: { from: location } });
-      return;
-    }
-    const f = castingCallForm;
-    if (!f.title || !f.industry || !f.description || !f.applicationDeadline) {
-      show('Title, industry, description, and application deadline are required.', 'error');
-      return;
-    }
-    setPostingCastingCall(true);
-    try {
-      const created = await castingService.createCastingCall({
-        title: f.title,
-        industry: f.industry,
-        engagementType: f.engagementType,
-        workMode: f.workMode,
-        description: f.description,
-        compensationType: f.compensationType,
-        applicationDeadline: new Date(f.applicationDeadline).toISOString(),
-        pincode: f.pincode || undefined,
-        budgetMinMinor: f.budgetMin ? Math.round(Number(f.budgetMin) * 100) : undefined,
-        budgetMaxMinor: f.budgetMax ? Math.round(Number(f.budgetMax) * 100) : undefined,
-      });
-      await castingService.submitCastingCallForReview(created.id);
-      show('Casting call posted and live.', 'success');
-      setCastingCallForm({
-        title: '', industry: '', engagementType: 'casting', workMode: 'onsite', description: '',
-        pincode: '', compensationType: 'paid', budgetMin: '', budgetMax: '', applicationDeadline: '',
-      });
-      setCastingCallsRefreshKey((k) => k + 1);
-      setView('calls');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        show('Your session expired — please sign in again.', 'error');
-        navigate('/login', { state: { from: location } });
-        return;
-      }
-      if (err instanceof ApiError && err.code === 'PROFILE_NOT_ELIGIBLE') {
-        show('Your account type can\'t post casting calls — this needs a Business, Casting Director, or Arts Organisation profile.', 'error');
-        return;
-      }
-      show(err instanceof ApiError ? err.message : 'Could not post the casting call.', 'error');
-    } finally {
-      setPostingCastingCall(false);
-    }
-  };
-
   const handleSubmitApplication = async () => {
     if (!selectedCall) return;
-    if (!selectedCall.__isLive) {
-      // Old decorative flow, unchanged — Matchmaking's "Apply Now" reuses
-      // this same modal against fake data with no live endpoint behind it.
-      alert('Application submitted successfully!');
-      setShowApplicationModal(false);
-      return;
-    }
     setApplying(true);
     try {
+      const mediaAssetIds = selectedMediaAssetIds.length > 0 ? selectedMediaAssetIds : undefined;
       if (selectedCall.__type === 'job') {
-        await jobsService.applyToJobPost(selectedCall.id, { coverNote: coverNote || undefined });
+        await jobsService.applyToJobPost(selectedCall.id, { coverNote: coverNote || undefined, mediaAssetIds });
       } else {
-        await castingService.applyToCastingCall(selectedCall.id, { coverNote: coverNote || undefined });
+        await castingService.applyToCastingCall(selectedCall.id, { coverNote: coverNote || undefined, mediaAssetIds });
       }
       show('Application submitted.', 'success');
       setShowApplicationModal(false);
       setCoverNote('');
+      setSelectedMediaAssetIds([]);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setShowApplicationModal(false);
@@ -499,17 +365,8 @@ export const CastingEcosystem = () => {
     }
   };
 
-  const CASTING_CALLS = [
-    { id: 1, title: 'Epic Period Drama', house: 'Dharma Productions', roles: 5, type: 'Cinema', status: 'Active', image: 'https://picsum.photos/seed/bollywood-set/800/400', fitScore: 94, budgetMatch: 'High', description: 'Looking for lead and supporting actors for a big-budget historical epic set in the 18th century.', requirements: ['Fluent in Hindi and Urdu', 'Horse riding skills preferred', 'Age 25-40'], location: 'Mumbai & Rajasthan', payment: '₹50,000 - ₹2,00,000 per day', auditionDetails: 'In-person auditions starting next week. Please submit a 2-minute dramatic monologue.' },
-    { id: 2, title: 'Broadway Style Musical', house: 'National Theatre', roles: 12, type: 'Theatre', status: 'Urgent', image: 'https://picsum.photos/seed/theatre-stage/800/400', fitScore: 88, budgetMatch: 'Medium', description: 'Casting singers and dancers for a modern adaptation of a classic musical.', requirements: ['Strong vocal range (Tenor/Soprano)', 'Trained in Jazz or Contemporary dance'], location: 'New Delhi', payment: '₹1,00,000 for the entire run', auditionDetails: 'Video submissions required for the first round. Include one song and one dance routine.' },
-    { id: 3, title: 'Classical Dance Documentary', house: 'National Film Board', roles: 2, type: 'Dance', status: 'Active', image: 'https://picsum.photos/seed/odissi-dance/800/400', fitScore: 75, budgetMatch: 'Low', description: 'Seeking trained Odissi dancers for a documentary exploring the roots of Indian classical dance.', requirements: ['Minimum 5 years of formal training in Odissi', 'Expressive face and strong rhythm'], location: 'Bhubaneswar', payment: '₹20,000 per day', auditionDetails: 'Submit a 5-minute performance video showcasing different mudras and expressions.' },
-    { id: 4, title: 'Audiobook Narration', house: 'Penguin Audio', roles: 1, type: 'Literature', status: 'Active', image: 'https://picsum.photos/seed/audiobook/800/400', fitScore: 91, budgetMatch: 'High', description: 'Looking for a voice actor to narrate a bestselling fantasy novel.', requirements: ['Clear diction and ability to do multiple character voices', 'Home studio setup preferred'], location: 'Remote', payment: '₹5,000 per finished hour', auditionDetails: 'Submit a 3-minute voice reel demonstrating different character voices.' },
-    { id: 5, title: 'Lead Vocalist for Indie Band', house: 'SoundWave Records', roles: 1, type: 'Music', status: 'Urgent', image: 'https://picsum.photos/seed/indie-band/800/400', fitScore: 85, budgetMatch: 'Medium', description: 'An established indie rock band is looking for a new lead vocalist to join them for an upcoming tour and album recording.', requirements: ['Strong stage presence', 'Ability to write lyrics is a plus', 'Age 20-35'], location: 'Bengaluru', payment: 'Profit sharing + Tour allowance', auditionDetails: 'Live auditions at SoundWave Studios this weekend. Prepare two original songs.' },
-    { id: 6, title: 'Handloom Fashion Show Models', house: 'Crafts Council', roles: 10, type: 'Crafts', status: 'Active', image: 'https://picsum.photos/seed/handloom/800/400', fitScore: 78, budgetMatch: 'Low', description: 'Casting models for a fashion show highlighting traditional Indian handloom textiles and artisanal crafts.', requirements: ['Height: 5\'8" and above (Female), 6\'0" and above (Male)', 'Comfortable walking in traditional attire'], location: 'Hyderabad', payment: '₹15,000 per show', auditionDetails: 'Walk-in auditions on Friday. Please bring your portfolio.' },
-  ];
-
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       {/* Application Modal */}
       <AnimatePresence>
         {showApplicationModal && selectedCall && (
@@ -545,35 +402,73 @@ export const CastingEcosystem = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Select Portfolio Items to Include</label>
-                  {selectedCall.__isLive && (
-                    <p className="text-[11px] text-white/40 mb-3">
-                      Coming soon — the Media/Portfolios API is live, but attaching portfolio items to an application isn't wired up here yet. Your cover note below is still submitted for real.
-                    </p>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                      <input type="checkbox" className="accent-gold" defaultChecked />
-                      <span className="text-sm font-bold">Main Headshot</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                      <input type="checkbox" className="accent-gold" defaultChecked />
-                      <span className="text-sm font-bold">Full Body Shot</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                      <input type="checkbox" className="accent-gold" defaultChecked />
-                      <span className="text-sm font-bold">Dramatic Monologue Reel</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                      <input type="checkbox" className="accent-gold" />
-                      <span className="text-sm font-bold">Dance Reel</span>
-                    </label>
+                {selectedCall.__isLive ? (
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Select Portfolio Items to Include</label>
+                    {applyPortfolioItems === null && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {[0, 1].map((i) => <ScaffoldRow key={i} className="h-14" />)}
+                      </div>
+                    )}
+                    {applyPortfolioItems?.length === 0 && (
+                      <p className="text-xs text-white/40">
+                        No media in your portfolio yet — add photos or reels from Profile → Media Gallery, then they'll show up here.
+                      </p>
+                    )}
+                    {applyPortfolioItems && applyPortfolioItems.length > 0 && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {applyPortfolioItems.map((item) => (
+                          <label
+                            key={item.id}
+                            className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              className="accent-gold"
+                              checked={selectedMediaAssetIds.includes(item.mediaAssetId!)}
+                              onChange={() => toggleMediaAssetSelected(item.mediaAssetId!)}
+                            />
+                            {item.assetType === 'image' && (
+                              <img src={getAssetContentUrl(item.mediaAssetId!)} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
+                            )}
+                            <span className="text-sm font-bold truncate">{item.caption || item.title}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Select Portfolio Items to Include</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                        <input type="checkbox" className="accent-gold" defaultChecked />
+                        <span className="text-sm font-bold">Main Headshot</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                        <input type="checkbox" className="accent-gold" defaultChecked />
+                        <span className="text-sm font-bold">Full Body Shot</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                        <input type="checkbox" className="accent-gold" defaultChecked />
+                        <span className="text-sm font-bold">Dramatic Monologue Reel</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                        <input type="checkbox" className="accent-gold" />
+                        <span className="text-sm font-bold">Dance Reel</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Upload Specific Audition Video (Optional)</label>
+                  {selectedCall.__isLive && (
+                    <p className="text-[11px] text-white/40 mb-3">
+                      Coming soon — upload during application isn't wired up here yet. Add a video to your
+                      portfolio from Profile → Media Gallery first, then select it above.
+                    </p>
+                  )}
                   <div className="border border-dashed border-white/20 rounded-xl p-8 text-center bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
                     <Upload size={24} className="mx-auto mb-2 text-white/40" />
                     <p className="text-sm font-bold mb-1">Click to upload or drag and drop</p>
@@ -781,44 +676,37 @@ export const CastingEcosystem = () => {
             real connection to casting and just confused what this page was
             for. This explains the page and is upfront about which tabs
             below are real vs. still being built. */}
-        <div className="max-w-3xl">
-          <h1 className="text-4xl md:text-5xl font-serif italic mb-4">Casting <span className="vibrant-text-2">& Hiring</span></h1>
-          <p className="text-white/70 mb-2">
-            Open casting calls, applying to them, and building the profile casting directors see —
-            plus, eventually, crew hiring, audition tools, and industry networking, all in one hub.
+        <div className="max-w-4xl">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Casting <span className="gold-text">& Hiring</span></h1>
+          <p className="text-white/70 text-lg mb-3">
+            Real casting calls, real applications, and a profile built to get you seen by the people
+            doing the hiring — with crew hiring, audition tools, and industry networking on the way.
           </p>
-          <p className="text-white/40 text-sm">
-            Casting Calls is real and pulls live listings. Most of the other tabs below (Hiring Crew,
-            AI Matchmaking, Audition Studio, Network, Forum, Workshops, and more) are still under
-            development — look around and see what's coming.
+          <p className="text-white/50 text-base">
+            Casting Calls is live now, pulling real listings you can apply to today. Hiring Crew, AI
+            Matchmaking, Audition Studio, Network, Forum, Workshops, and more are still being built —
+            take a look at what's coming.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mt-6">
-            <button onClick={() => setView('register')} className="bg-gold text-black px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors">Join as Talent</button>
+            <button
+              onClick={() => navigate(user ? '/profile' : '/signup', user ? undefined : { state: { from: location } })}
+              className="bg-gold text-black px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors"
+            >
+              {user ? 'Go to My Profile' : 'Join as Talent'}
+            </button>
             <button onClick={() => setView('calls')} className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Browse Casting Calls</button>
           </div>
+          {!user && (
+            <p className="text-white/40 text-sm mt-4">
+              Already have an account?{' '}
+              <button onClick={() => navigate('/login', { state: { from: location } })} className="text-gold hover:underline font-bold">
+                Log in
+              </button>
+            </p>
+          )}
         </div>
 
-        <div className="flex flex-col items-center gap-4 w-full">
-          {/* Artist/Business — a real account switch (PATCH /v1/profiles/me/role),
-              styled like the Creator/Business pill toggle on the Profile page
-              instead of the old slider. "Recruiter" is gone — profileType
-              'business'/'industry_professional' is what the backend actually
-              checks, so the label now matches the concept it controls. */}
-          <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-            {([false, true] as const).map((recruiterValue) => (
-              <button
-                key={String(recruiterValue)}
-                onClick={() => handleRoleSwitch(recruiterValue)}
-                disabled={switchingRole}
-                className={cn(
-                  "px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50",
-                  isRecruiter === recruiterValue ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                )}
-              >
-                {recruiterValue ? 'Business' : 'Artist'}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-col items-start gap-4 w-full">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-1 bg-white/5 p-1 rounded-xl border border-white/10 w-full">
             {[
               // Real, API-backed tabs first — Casting Calls and Hiring Crew
@@ -827,39 +715,27 @@ export const CastingEcosystem = () => {
               { id: 'crew', label: 'Hiring Crew', icon: Users },
               { id: 'post-job', label: 'Create Job Post', icon: Plus },
               { id: 'post-casting-call', label: 'Create Casting Call', icon: Plus },
-              { id: 'home', label: 'Home', icon: Home },
-              { id: 'register', label: 'Register', icon: UserPlus },
-              { id: 'profile', label: 'My Profile', icon: User },
-              { id: 'matchmaking', label: 'AI Matchmaking', icon: Cpu },
-              { id: 'studio', label: 'Audition Studio', icon: Video },
+              // { id: 'home', label: 'Home', icon: Home },
+              // { id: 'matchmaking', label: 'AI Matchmaking', icon: Cpu },
+              // { id: 'studio', label: 'Audition Studio', icon: Video },
               { id: 'network', label: 'Network', icon: Globe },
               { id: 'forum', label: 'Forum', icon: MessageCircle },
-              { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+              // { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'workshops', label: 'Workshops', icon: BookOpen },
               { id: 'mentorship', label: 'Mentorship', icon: GraduationCap },
-              { id: 'events', label: 'Events', icon: Calendar },
-              { id: 'volunteer', label: 'Volunteer', icon: HeartHandshake },
-              { id: 'grants', label: 'Grants', icon: Award },
-              ...(isRecruiter ? [{ id: 'builder', label: 'AI Builder', icon: Zap }, { id: 'applications', label: 'Applications', icon: UserPlus }] : []),
+              // { id: 'events', label: 'Events', icon: Calendar },
+              // { id: 'volunteer', label: 'Volunteer', icon: HeartHandshake },
+              // { id: 'grants', label: 'Grants', icon: Award },
+              // ...(isRecruiter ? [{ id: 'builder', label: 'AI Builder', icon: Zap }, { id: 'applications', label: 'Applications', icon: UserPlus }] : []),
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
                   if (tab.id === 'post-job') {
-                    if (!user) {
-                      navigate('/signup', { state: { from: location } });
-                      return;
-                    }
-                    if (!isRecruiter) handleRoleSwitch(true, true);
                     setView('post-job');
                     return;
                   }
                   if (tab.id === 'post-casting-call') {
-                    if (!user) {
-                      navigate('/signup', { state: { from: location } });
-                      return;
-                    }
-                    if (!isRecruiter) handleRoleSwitch(true, true);
                     setView('post-casting-call');
                     return;
                   }
@@ -909,272 +785,27 @@ export const CastingEcosystem = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-16"
           >
-            {/* Trending & Featured — CASTING_CALLS/FEATURED_TALENT below are
-                decorative mock arrays with no live "trending"/"featured"
-                API; the real live listing is the Casting Calls tab. */}
+            {/* Trending & Featured — no live "trending"/"featured" API;
+                the real live listing is the Casting Calls tab. */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div>
                 <div className="flex justify-between items-end mb-8">
-                  <h2 className="text-3xl font-bold flex items-center gap-3"><TrendingUp className="text-crimson" /> Trending Calls</h2>
+                  <h2 className="text-3xl font-bold flex items-center gap-3"><TrendingUp className="text-crimson" /> Trending Calls — Visit Our App</h2>
                   <button onClick={() => setView('calls')} className="text-gold text-sm font-bold uppercase tracking-widest hover:text-white transition-colors">View All</button>
-                </div>
-                <div className="space-y-4">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="relative glass-panel p-4">
-                      <ComingSoonTag />
-                      <ScaffoldRow className="h-20" />
-                    </div>
-                  ))}
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-end mb-8">
-                  <h2 className="text-3xl font-bold flex items-center gap-3"><Star className="text-gold" /> Featured Talent</h2>
+                  <h2 className="text-3xl font-bold flex items-center gap-3"><Star className="text-gold" /> Featured Talent — Visit Our App</h2>
                   <button onClick={() => navigate('/talent')} className="text-gold text-sm font-bold uppercase tracking-widest hover:text-white transition-colors">View Directory</button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="relative glass-panel p-4">
-                      <ComingSoonTag />
-                      <ScaffoldRow className="w-16 h-16 rounded-full mx-auto mb-3" />
-                      <ScaffoldRow className="h-4" />
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
 
             {/* News & Events */}
             <div>
-              <h2 className="text-3xl font-bold mb-8 flex items-center gap-3"><Calendar className="text-blue-400" /> Industry Events & News</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="relative glass-panel p-4">
-                    <ComingSoonTag />
-                    <ScaffoldRow className="h-40 mb-4" />
-                    <ScaffoldRow className="h-4" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {view === 'register' && (
-          <motion.div
-            key="register"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="max-w-md mx-auto"
-          >
-            {user ? (
-              <div className="glass-panel-blue p-8 md:p-12 text-center">
-                <ShieldCheck className="mx-auto mb-4 text-gold" size={32} />
-                <h2 className="text-2xl font-bold mb-2">You're already registered</h2>
-                <p className="text-white/60 text-sm mb-6">Head to My Profile to see and edit your details.</p>
-                <button
-                  onClick={() => setView('profile')}
-                  className="bg-gold text-black px-6 py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors"
-                >
-                  Go to My Profile
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleRegister} className="glass-panel-blue p-8 md:p-12">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold mb-4">Join the Ecosystem</h2>
-                  <p className="text-white/60">Create your account, then set up the profile casting directors and crew see.</p>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold"
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Password</label>
-                    <PasswordInput
-                      required
-                      minLength={MIN_PASSWORD_LENGTH}
-                      value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold"
-                      placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
-                    />
-                  </div>
-
-                  {registerError && <p className="text-crimson text-sm">{registerError}</p>}
-
-                  <button
-                    type="submit"
-                    disabled={registering}
-                    className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-yellow-500 transition-colors mt-8 disabled:opacity-50"
-                  >
-                    {registering ? 'Creating account…' : 'Create Account'}
-                  </button>
-
-                  <p className="text-center text-xs text-white/40 mt-4">
-                    Already have an account?{' '}
-                    <button type="button" onClick={() => navigate('/login', { state: { from: location } })} className="text-gold hover:underline">
-                      Log in
-                    </button>
-                    . By registering, you agree to our Terms of Service and Privacy Policy.
-                  </p>
-                </div>
-              </form>
-            )}
-          </motion.div>
-        )}
-
-        {view === 'profile' && (
-          <motion.div
-            key="profile"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
-          >
-            {/* Same real profile data as My Profile → Profile Details /
-                Actor-Model on the main profile page (useAuth's profile) —
-                not a second, separately-maintained fake profile. */}
-            <div className="glass-panel-pink p-8 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-gold/20 to-crimson/20"></div>
-              <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-end mt-12">
-                <div className="relative">
-                  <div className="w-32 h-32 rounded-full border-4 border-black bg-white/10 flex items-center justify-center text-3xl font-bold text-white/40">
-                    {authProfile?.displayName?.charAt(0)?.toUpperCase() ?? '?'}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-3xl font-bold mb-1">{authProfile?.displayName ?? 'Your name'}</h2>
-                      <p className="text-gold font-bold uppercase tracking-widest text-sm mb-2">
-                        {authProfile?.professions?.[0]?.name ?? authProfile?.profileType ?? 'Profession not set'}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-white/60">
-                        <span className="flex items-center gap-1">
-                          <MapPin size={14} />
-                          {[authProfile?.district, authProfile?.state].filter(Boolean).join(', ') || 'Location not set'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <button onClick={() => navigate('/profile')} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-bold transition-colors">Edit Profile</button>
-                      <button onClick={() => show('Sharing a public portfolio link is coming soon.', 'info')} className="bg-white/5 border border-white/10 text-white/40 px-4 py-2 rounded-lg text-sm font-bold cursor-not-allowed">Share Portfolio</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="space-y-8">
-                <div className="relative glass-panel p-6">
-                  <button onClick={() => navigate('/profile')} className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest text-gold hover:underline">Edit</button>
-                  <h3 className="font-bold mb-4 flex items-center gap-2"><User size={18} className="text-gold" /> About Me</h3>
-                  {authProfile?.bio ? (
-                    <p className="text-sm text-white/60 leading-relaxed">{authProfile.bio}</p>
-                  ) : (
-                    <p className="text-sm text-white/30 italic">No bio yet — add one from Edit Profile.</p>
-                  )}
-                </div>
-
-                <div className="relative glass-panel p-6">
-                  <button onClick={() => navigate('/profile')} className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest text-gold hover:underline">Edit</button>
-                  <h3 className="font-bold mb-4 flex items-center gap-2"><Briefcase size={18} className="text-blue-400" /> Skills & Attributes</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Languages</h4>
-                      {authProfile?.languages?.length ? (
-                        <div className="flex flex-wrap gap-2">
-                          {authProfile.languages.map(lang => (
-                            <span key={lang.code} className="bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">{lang.name}</span>
-                          ))}
-                        </div>
-                      ) : <p className="text-xs text-white/30 italic">None added yet.</p>}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Skills</h4>
-                      {authProfile?.skills?.length ? (
-                        <div className="flex flex-wrap gap-2">
-                          {authProfile.skills.map(skill => (
-                            <span key={skill.id} className="bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">{skill.name}</span>
-                          ))}
-                        </div>
-                      ) : <p className="text-xs text-white/30 italic">None added yet.</p>}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Physical Attributes</h4>
-                      <ul className="text-sm text-white/60 space-y-1">
-                        <li>Height: {authProfile?.details?.heightCm ? `${authProfile.details.heightCm} cm` : 'xx'}</li>
-                        <li>Weight: {authProfile?.details?.weightKg ? `${authProfile.details.weightKg} kg` : 'xx'}</li>
-                        <li>Eye Color: {authProfile?.details?.eyeColor ?? 'xx'}</li>
-                        <li>Hair: {authProfile?.details?.hairColor ?? 'xx'}</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-2 space-y-8">
-                {/* Media Gallery — real, live portfolios API (same one My
-                    Profile → Profile Details uses); upload isn't built yet,
-                    so that stays a toast rather than a fake success state. */}
-                <div className="relative glass-panel p-6">
-                  <span className="absolute top-4 right-4 text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
-                  <h3 className="font-bold mb-4 flex items-center gap-2"><Image size={18} className="text-emerald-400" /> Media Gallery</h3>
-                  {myPortfolios === null && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                      {[0, 1, 2].map((i) => (
-                        <ScaffoldRow key={i} className="aspect-[4/5]" />
-                      ))}
-                    </div>
-                  )}
-                  {myPortfolios?.length === 0 && (
-                    <p className="text-sm text-white/30 italic mb-4">No portfolio yet — this is where your photos, reels, and showreels will show up.</p>
-                  )}
-                  {myPortfolios && myPortfolios.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {myPortfolios.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-                          <span className="text-sm font-medium">{p.title}</span>
-                          <span className="text-[9px] uppercase tracking-widest text-white/40">{p.visibility}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => show("Uploading media here is coming soon — this can't be edited yet.", 'info')}
-                    className="w-full border border-dashed border-white/20 flex items-center justify-center gap-2 text-white/40 hover:text-white hover:border-white/40 transition-colors rounded-xl h-16 text-xs font-bold"
-                  >
-                    <Upload size={16} /> Upload your media
-                  </button>
-                </div>
-
-                <div className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <h3 className="font-bold mb-2 flex items-center gap-2"><History size={18} className="text-purple-400" /> Experience & Projects</h3>
-                  <p className="text-xs text-white/60 mb-6">
-                    A real, structured work history — past roles, projects, and years — pulled from your
-                    actual bookings instead of typed in freehand.
-                  </p>
-                  <div className="space-y-4">
-                    {[0, 1, 2].map((i) => (
-                      <ScaffoldRow key={i} className="h-16" />
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <h2 className="text-3xl font-bold mb-8 flex items-center gap-3"><Calendar className="text-blue-400" /> Industry Events & News — Visit Our App</h2>
             </div>
           </motion.div>
         )}
@@ -1183,151 +814,12 @@ export const CastingEcosystem = () => {
             Calls, so clicking the tab doesn't silently jump to a different
             section. POST /v1/casting-calls then submit-review. */}
         {view === 'post-casting-call' && (
-          <motion.div
-            key="post-casting-call"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="max-w-3xl mx-auto"
-          >
-            <div className="glass-panel p-5 sm:p-8 space-y-5 border border-gold/30">
-              <div>
-                <h2 className="text-2xl font-bold mb-1">Create Casting Call</h2>
-                <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible on Casting Calls.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Title *</label>
-                  <input
-                    type="text"
-                    value={castingCallForm.title}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, title: e.target.value }))}
-                    placeholder="e.g. Casting for Hindi Feature Film"
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
-                  <select
-                    value={castingCallForm.industry}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, industry: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  >
-                    <option value="">Select industry</option>
-                    {TALENT_CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Engagement Type *</label>
-                  <select
-                    value={castingCallForm.engagementType}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, engagementType: e.target.value as typeof f.engagementType }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  >
-                    <option value="casting">Casting</option>
-                    <option value="crew_hiring">Crew Hiring</option>
-                    <option value="commission">Commission</option>
-                    <option value="collaboration">Collaboration</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
-                  <select
-                    value={castingCallForm.workMode}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, workMode: e.target.value as CastingWorkMode }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  >
-                    <option value="onsite">On-site</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="remote">Remote</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
-                <textarea
-                  value={castingCallForm.description}
-                  onChange={(e) => setCastingCallForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="What's this project, and who are you casting?"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
-                  <input
-                    type="text"
-                    value={castingCallForm.pincode}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, pincode: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
-                  <input
-                    type="date"
-                    value={castingCallForm.applicationDeadline}
-                    onChange={(e) => setCastingCallForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
-                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
-                  {(['paid', 'unpaid', 'negotiable'] as CastingCompensationType[]).map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setCastingCallForm((f) => ({ ...f, compensationType: c }))}
-                      className={cn(
-                        "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
-                        castingCallForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                      )}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                {castingCallForm.compensationType === 'paid' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="number"
-                      placeholder="Min (₹)"
-                      value={castingCallForm.budgetMin}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMin: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max (₹)"
-                      value={castingCallForm.budgetMax}
-                      onChange={(e) => setCastingCallForm((f) => ({ ...f, budgetMax: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-4 pt-2">
-                <button onClick={() => setView('calls')} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateCastingCall}
-                  disabled={postingCastingCall}
-                  className="flex-1 py-3 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {postingCastingCall ? 'Posting…' : 'Create Casting Call'}
-                </button>
-              </div>
+          <motion.div key="post-casting-call" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Plus size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Create Casting Call — Visit Our App</h2>
             </div>
+            <p className="text-white/60 max-w-3xl mb-6">Posting a new casting call directly from this page, going live immediately on Casting Calls.</p>
           </motion.div>
         )}
 
@@ -1369,22 +861,22 @@ export const CastingEcosystem = () => {
                       <div>
                         <span className="text-gold text-[10px] uppercase tracking-widest font-bold mb-1 block">{call.industry}</span>
                         <h3 className="text-2xl font-bold">{call.title}</h3>
-                        <p className="text-white/40 text-sm capitalize">{call.workMode} · {call.engagementType}</p>
+                        <p className="text-white/50 text-base capitalize">{call.workMode} · {call.engagementType}</p>
                       </div>
                       <div className="text-right">
                         <div className="bg-crimson px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest">{call.status}</div>
                       </div>
                     </div>
 
-                    <div className="mb-4 text-sm text-white/80">
+                    <div className="mb-4 text-base text-white/80">
                       <p className="mb-2">{call.description}</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
+                      <div className="grid grid-cols-2 gap-2 text-base text-white/60">
                         <div className="flex items-center gap-2"><MapPin size={14} className="text-blue-400" /> PIN {call.pincode}</div>
                         <div className="flex items-center gap-2"><Wallet size={14} className="text-emerald-400" /> {formatCastingBudget(call)}</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-white/60 border-t border-white/5 pt-4">
+                    <div className="flex items-center justify-between text-base text-white/60 border-t border-white/5 pt-4">
                       <span className="flex items-center gap-2">
                         <Clock size={14} /> Apply by {new Date(call.applicationDeadline).toLocaleDateString()}
                       </span>
@@ -1413,7 +905,7 @@ export const CastingEcosystem = () => {
                   {isRecruiter ? <Search size={18} className="text-crimson" /> : <Zap size={18} className="text-gold" />}
                   {isRecruiter ? 'Talent Search' : 'AI Smart Match'}
                 </h3>
-                <p className="text-sm text-white/40 mb-6">
+                <p className="text-base text-white/50 mb-6">
                   {isRecruiter
                     ? 'Search and filter the talent directory by sector, skill, and availability.'
                     : 'Roles matched to your actual profile and skills, ranked by fit.'}
@@ -1422,7 +914,7 @@ export const CastingEcosystem = () => {
                   {isRecruiter ? 'Advanced Talent Filter' : 'View AI Recommendations'}
                 </button>
               </div>
-              <div className="relative glass-panel p-6">
+              {/* <div className="relative glass-panel p-6">
                 <ComingSoonTag />
                 <h3 className="font-bold mb-6 flex items-center gap-2"><Award size={18} className="text-crimson" /> {isRecruiter ? 'Top Applicants' : 'Premium Casting'}</h3>
                 <div className="space-y-3">
@@ -1430,7 +922,7 @@ export const CastingEcosystem = () => {
                     <ScaffoldRow key={i} className="h-12" />
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         )}
@@ -1441,181 +933,12 @@ export const CastingEcosystem = () => {
             profile server-side (verified live: a casting_director profile
             gets 403 PROFILE_NOT_ELIGIBLE). */}
         {view === 'post-job' && (
-          <motion.div
-            key="post-job"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="max-w-3xl mx-auto"
-          >
-            <div className="glass-panel p-5 sm:p-8 space-y-5 border border-gold/30">
-              <div>
-                <h2 className="text-2xl font-bold mb-1">Post a Role</h2>
-                <p className="text-white/60 text-sm">Goes live immediately after posting — real listing, visible to everyone browsing Find Jobs.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Role Title *</label>
-                  <input
-                    type="text"
-                    value={jobPostForm.title}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, title: e.target.value }))}
-                    placeholder="e.g. Senior Cinematographer"
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Industry *</label>
-                  <select
-                    value={jobPostForm.industry}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, industry: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  >
-                    <option value="">Select industry</option>
-                    {TALENT_CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Employment Type *</label>
-                  <select
-                    value={jobPostForm.employmentType}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, employmentType: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  >
-                    <option value="full_time">Full-time</option>
-                    <option value="part_time">Part-time</option>
-                    <option value="contract">Contract</option>
-                    <option value="freelance">Freelance</option>
-                    <option value="internship">Internship</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Work Mode *</label>
-                  <select
-                    value={jobPostForm.workMode}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, workMode: e.target.value as JobWorkMode }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  >
-                    <option value="onsite">On-site</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="remote">Remote</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Description *</label>
-                <textarea
-                  value={jobPostForm.description}
-                  onChange={(e) => setJobPostForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="What's this role, and what's the project?"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[80px]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Responsibilities</label>
-                  <textarea
-                    value={jobPostForm.responsibilities}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, responsibilities: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Requirements</label>
-                  <textarea
-                    value={jobPostForm.requirements}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, requirements: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-gold min-h-[70px]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">PIN Code</label>
-                  <input
-                    type="text"
-                    value={jobPostForm.pincode}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, pincode: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Openings</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={jobPostForm.numberOfOpenings}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, numberOfOpenings: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Application Deadline *</label>
-                  <input
-                    type="date"
-                    value={jobPostForm.applicationDeadline}
-                    onChange={(e) => setJobPostForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-white/60 block mb-2">Compensation</label>
-                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit mb-3">
-                  {(['paid', 'unpaid', 'negotiable'] as JobCompensationType[]).map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setJobPostForm((f) => ({ ...f, compensationType: c }))}
-                      className={cn(
-                        "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all capitalize",
-                        jobPostForm.compensationType === c ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                      )}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                {jobPostForm.compensationType === 'paid' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="number"
-                      placeholder="Min (₹)"
-                      value={jobPostForm.budgetMin}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMin: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max (₹)"
-                      value={jobPostForm.budgetMax}
-                      onChange={(e) => setJobPostForm((f) => ({ ...f, budgetMax: e.target.value }))}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-4 pt-2">
-                <button onClick={() => setView('crew')} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateJobPost}
-                  disabled={postingJob}
-                  className="flex-1 py-3 bg-gold text-black hover:bg-yellow-500 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {postingJob ? 'Posting…' : 'Post Role'}
-                </button>
-              </div>
+          <motion.div key="post-job" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Plus size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Post a Role — Visit Our App</h2>
             </div>
+            <p className="text-white/60 max-w-3xl mb-6">Posting a new job role directly from this page, going live immediately for everyone browsing Find Jobs.</p>
           </motion.div>
         )}
 
@@ -1689,12 +1012,12 @@ export const CastingEcosystem = () => {
                       <div>
                         <span className="text-gold text-[10px] uppercase tracking-widest font-bold mb-1 block">{job.industry} · {job.employmentType.replace('_', ' ')}</span>
                         <h3 className="text-xl font-bold">{job.title}</h3>
-                        <p className="text-white/40 text-sm capitalize">{job.workMode} · {job.numberOfOpenings} opening{job.numberOfOpenings === 1 ? '' : 's'}</p>
+                        <p className="text-white/50 text-base capitalize">{job.workMode} · {job.numberOfOpenings} opening{job.numberOfOpenings === 1 ? '' : 's'}</p>
                       </div>
                       <div className="bg-crimson px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest">{job.status}</div>
                     </div>
-                    <p className="text-sm text-white/80 mb-4 line-clamp-2">{job.description}</p>
-                    <div className="flex items-center justify-between text-xs text-white/60 border-t border-white/5 pt-4">
+                    <p className="text-base text-white/80 mb-4 line-clamp-2">{job.description}</p>
+                    <div className="flex items-center justify-between text-base text-white/60 border-t border-white/5 pt-4">
                       <div className="flex items-center gap-4">
                         {job.pincode && <span className="flex items-center gap-2"><MapPin size={14} className="text-blue-400" /> PIN {job.pincode}</span>}
                         <span className="flex items-center gap-2"><Wallet size={14} className="text-emerald-400" /> {formatCastingBudget(job)}</span>
@@ -1732,48 +1055,22 @@ export const CastingEcosystem = () => {
         )}
 
         {view === 'network' && (
-          <motion.div
-            key="network"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Globe className="text-gold" size={20} /> Network</h2>
-              <p className="text-white/60 text-sm max-w-2xl">A directory to connect directly with other casting-industry professionals — casting directors, crew, and fellow talent — beyond the general Community page.</p>
+          <motion.div key="network" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Globe size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Network — Visit Our App</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A directory to connect directly with other casting-industry professionals — casting directors, crew, and fellow talent — beyond the general Community page.</p>
           </motion.div>
         )}
 
         {view === 'forum' && (
-          <motion.div
-            key="forum"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><MessageCircle className="text-gold" size={20} /> Forum</h2>
-              <p className="text-white/60 text-sm max-w-2xl">Sector-specific discussion boards and direct messaging for casting and industry topics, separate from the general Community page.</p>
+          <motion.div key="forum" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <MessageCircle size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Forum — Visit Our App</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Sector-specific discussion boards and direct messaging for casting and industry topics, separate from the general Community page.</p>
           </motion.div>
         )}
 
@@ -1786,16 +1083,8 @@ export const CastingEcosystem = () => {
             className="space-y-6"
           >
             <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Cpu className="text-gold" size={20} /> AI Matchmaking</h2>
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Cpu className="text-gold" size={20} /> AI Matchmaking — Visit Our App</h2>
               <p className="text-white/60 text-sm max-w-2xl">Automatic matching between your profile and open roles, ranked by fit, so relevant casting calls surface without manual searching.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
             </div>
           </motion.div>
         )}
@@ -1809,16 +1098,8 @@ export const CastingEcosystem = () => {
             className="space-y-6"
           >
             <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Video className="text-gold" size={20} /> Audition Studio</h2>
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Video className="text-gold" size={20} /> Audition Studio — Visit Our App</h2>
               <p className="text-white/60 text-sm max-w-2xl">Record and submit self-tape auditions directly on the platform, with take management, so casting directors can review submissions in one place.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
             </div>
           </motion.div>
         )}
@@ -1831,64 +1112,140 @@ export const CastingEcosystem = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><UserPlus className="text-gold" size={20} /> Applicants</h2>
-              <p className="text-white/60 text-sm max-w-2xl">A dashboard to review, shortlist, and manage everyone who applied to your posted casting calls.</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                  <UserPlus className="text-gold" size={20} /> Applicants
+                  <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
+                </h2>
+                <p className="text-white/60 text-sm max-w-2xl">Review, shortlist, and manage everyone who applied to your posted casting calls.</p>
+              </div>
+              {reviewingCallId && (
+                <button
+                  onClick={() => { setReviewingCallId(null); setCallApplications(null); }}
+                  className="text-xs font-bold uppercase tracking-widest text-white/50 hover:text-white flex items-center gap-1"
+                >
+                  <ChevronRight size={14} className="rotate-180" /> Back to my calls
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
+
+            {!reviewingCallId && (
+              liveLoading ? (
+                <div className="space-y-4">{[0, 1, 2].map((i) => <ScaffoldRow key={i} className="h-20" />)}</div>
+              ) : myCastingCalls.length === 0 ? (
+                <p className="text-sm text-white/30 italic">
+                  You haven't posted a casting call yet — post one from "Manage Calls" to start reviewing applicants.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {myCastingCalls.map((call) => (
+                    <button
+                      key={call.id}
+                      onClick={() => setReviewingCallId(call.id)}
+                      className="w-full flex items-center justify-between gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:border-gold/40 transition-colors text-left"
+                    >
+                      <div>
+                        <div className="font-bold">{call.title}</div>
+                        <div className="text-xs text-white/40">{call.industry} · {call.status}</div>
+                      </div>
+                      <ChevronRight size={18} className="text-white/30 shrink-0" />
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )
+            )}
+
+            {reviewingCallId && (
+              <>
+                {callApplicationsLoading && (
+                  <div className="space-y-4">{[0, 1, 2].map((i) => <ScaffoldRow key={i} className="h-24" />)}</div>
+                )}
+                {!callApplicationsLoading && callApplicationsError && (
+                  <div className="flex items-center gap-2 text-xs text-white/40 bg-white/5 border border-white/10 rounded-xl p-3">
+                    <AlertCircle size={14} className="text-white/30 shrink-0" /> {callApplicationsError}
+                  </div>
+                )}
+                {!callApplicationsLoading && !callApplicationsError && (callApplications?.length ?? 0) === 0 && (
+                  <p className="text-sm text-white/30 italic">No applications yet for this casting call.</p>
+                )}
+                {!callApplicationsLoading && (callApplications?.length ?? 0) > 0 && (
+                  <div className="space-y-3">
+                    {callApplications!.map((app) => {
+                      const isTerminal = app.status === 'selected' || app.status === 'rejected';
+                      return (
+                        <div key={app.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div>
+                              <div className="font-bold">{app.applicant?.displayName ?? 'Applicant'}</div>
+                              {app.applicant?.headline && <div className="text-xs text-white/40">{app.applicant.headline}</div>}
+                              <div className="text-xs text-white/30 flex items-center gap-1.5 mt-1">
+                                <Clock size={12} /> Applied {new Date(app.appliedAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <span className={cn(
+                              'text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shrink-0',
+                              app.status === 'selected' ? 'bg-emerald-500/15 text-emerald-400'
+                              : app.status === 'shortlisted' ? 'bg-gold/15 text-gold'
+                              : app.status === 'rejected' ? 'bg-red-500/15 text-red-400'
+                              : 'bg-blue-500/15 text-blue-400',
+                            )}>
+                              {app.status.replace('_', ' ')}
+                            </span>
+                          </div>
+                          {app.coverNote && <p className="text-sm text-white/60 mb-3">{app.coverNote}</p>}
+                          {!isTerminal && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleUpdateApplicationStatus(app.id, 'shortlisted')}
+                                disabled={updatingApplicationId === app.id}
+                                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest bg-gold/10 text-gold px-3 py-2 rounded-lg hover:bg-gold/20 transition-colors disabled:opacity-50"
+                              >
+                                <Star size={12} /> Shortlist
+                              </button>
+                              <button
+                                onClick={() => handleUpdateApplicationStatus(app.id, 'selected')}
+                                disabled={updatingApplicationId === app.id}
+                                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 px-3 py-2 rounded-lg hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                              >
+                                <CheckCircle2 size={12} /> Select
+                              </button>
+                              <button
+                                onClick={() => handleUpdateApplicationStatus(app.id, 'rejected')}
+                                disabled={updatingApplicationId === app.id}
+                                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest bg-white/5 text-white/50 px-3 py-2 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-50"
+                              >
+                                <X size={12} /> Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </motion.div>
         )}
 
         {view === 'workshops' && (
-          <motion.div
-            key="workshops"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><BookOpen className="text-gold" size={20} /> Workshops</h2>
-              <p className="text-white/60 text-sm max-w-2xl">Skill-building workshops and masterclasses run by industry professionals, with registration and scheduling.</p>
+          <motion.div key="workshops" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Workshops — Visit Our App</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Skill-building workshops and masterclasses run by industry professionals, with registration and scheduling.</p>
           </motion.div>
         )}
 
         {view === 'mentorship' && (
-          <motion.div
-            key="mentorship"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><GraduationCap className="text-gold" size={20} /> Mentorship</h2>
-              <p className="text-white/60 text-sm max-w-2xl">Structured mentorship pairing with experienced industry professionals for career guidance.</p>
+          <motion.div key="mentorship" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <GraduationCap size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Mentorship — Visit Our App</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Structured mentorship pairing with experienced industry professionals for career guidance.</p>
           </motion.div>
         )}
 
@@ -1901,16 +1258,8 @@ export const CastingEcosystem = () => {
             className="space-y-6"
           >
             <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Calendar className="text-gold" size={20} /> Events</h2>
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Calendar className="text-gold" size={20} /> Events — Visit Our App</h2>
               <p className="text-white/60 text-sm max-w-2xl">Industry events, festivals, and networking meetups relevant to casting and hiring, with RSVP and calendar sync.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
             </div>
           </motion.div>
         )}
@@ -1924,16 +1273,8 @@ export const CastingEcosystem = () => {
             className="space-y-6"
           >
             <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><HeartHandshake className="text-gold" size={20} /> Volunteer</h2>
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><HeartHandshake className="text-gold" size={20} /> Volunteer — Visit Our App</h2>
               <p className="text-white/60 text-sm max-w-2xl">Volunteer opportunities on productions and community projects, for people building experience or credits.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
             </div>
           </motion.div>
         )}
@@ -1970,16 +1311,8 @@ export const CastingEcosystem = () => {
             className="space-y-6"
           >
             <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><LayoutDashboard className="text-gold" size={20} /> Dashboard</h2>
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><LayoutDashboard className="text-gold" size={20} /> Dashboard — Visit Our App</h2>
               <p className="text-white/60 text-sm max-w-2xl">An overview of your posted casting calls, applicants, and hiring activity in one place.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-32" />
-                </div>
-              ))}
             </div>
           </motion.div>
         )}

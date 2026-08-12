@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Film,
@@ -92,6 +93,13 @@ import { HighlightItem } from '../ui/highlight';
 export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, language, setLanguage }: { activeSection: Section, setActiveSection: (s: Section) => void, theme: 'dark' | 'light', setTheme: (t: 'dark' | 'light') => void, language: string, setLanguage: (l: string) => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  // Transparent-over-photo only makes sense on the homepage, where a
+  // full-bleed dark hero sits directly under the fixed nav at scrollY 0.
+  // Every other route (Bihar, Casting, Community, etc.) has plain page
+  // background up top instead, so light nav-transparent text there was
+  // unreadable — force solid everywhere else.
+  const hasFullBleedHero = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -180,7 +188,9 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 sm:px-6 py-3 sm:py-4",
-      isScrolled || isMenuOpen ? "bg-cinematic-black/95 backdrop-blur-xl border-b border-white/10" : "bg-transparent"
+      isScrolled || isMenuOpen || !hasFullBleedHero
+        ? "nav-solid bg-cinematic-black border-b border-white/15 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+        : "bg-transparent nav-transparent"
     )}>
       <div className="max-w-[1600px] mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer z-50" onClick={() => { setActiveSection('home'); setIsMenuOpen(false); }}>
@@ -223,6 +233,16 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               ))}
             </MotionNavigationMenuList>
           </MotionNavigationMenu>
+
+          <button
+            onClick={() => setActiveSection('bihar-documentary')}
+            className={cn(
+              "text-sm font-medium tracking-widest uppercase transition-colors hover:text-gold flex items-center gap-1",
+              activeSection === 'bihar-documentary' ? "text-gold" : "text-white/60"
+            )}
+          >
+            <Film size={14} className="mb-[2px]" /> BHub
+          </button>
 
           <button
             onClick={() => setActiveSection('profile')}
@@ -309,7 +329,22 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
                   </div>
                 </div>
               ))}
-              
+
+              <div className="mb-2">
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={() => { setActiveSection('bihar-documentary'); setIsMenuOpen(false); }}
+                    className={cn(
+                      "text-left text-base font-medium py-2 px-3 rounded-lg flex items-center gap-3 transition-colors",
+                      activeSection === 'bihar-documentary' ? "text-gold bg-white/5" : "text-white/70 hover:bg-white/5"
+                    )}
+                  >
+                    <Film size={18} className={activeSection === 'bihar-documentary' ? "text-gold" : "text-white/40"} />
+                    BHub
+                  </button>
+                </div>
+              </div>
+
               <div className="mb-2">
                 <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 px-2">{t.profile}</div>
                 <div className="flex flex-col gap-1">

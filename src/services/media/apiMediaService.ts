@@ -1,5 +1,16 @@
-import { apiFetch, apiUploadBinary } from '../httpClient';
-import type { MediaAssetStatus, MediaAssetType, MediaService, ReservedUpload, ReserveUploadInput } from './types';
+import { API_BASE_URL, apiFetch, apiUploadBinary } from '../httpClient';
+import type { MediaAsset, MediaAssetStatus, MediaAssetType, MediaService, ReservedUpload, ReserveUploadInput } from './types';
+
+// GET /v1/media/assets/{id}/content — curl-verified live this session: for
+// a `visibility: "public"` asset it serves the raw file (video/mp4 etc.)
+// with a 200 and no Authorization header required, so it drops straight
+// into a plain <video>/<img> src. Private assets would 401 here — this
+// helper doesn't handle that case, since nothing in the app surfaces
+// private media yet.
+export function getAssetContentUrl(assetId: string): string {
+  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
+  return new URL(`v1/media/assets/${encodeURIComponent(assetId)}/content`, base).toString();
+}
 
 export const apiMediaService: MediaService = {
   async reserveUpload(input: ReserveUploadInput) {
@@ -16,6 +27,14 @@ export const apiMediaService: MediaService = {
 
   async getAssetStatus(assetId: string) {
     return apiFetch<MediaAssetStatus>(`/v1/media/assets/${encodeURIComponent(assetId)}/status`);
+  },
+
+  async getAsset(assetId: string) {
+    return apiFetch<MediaAsset>(`/v1/media/assets/${encodeURIComponent(assetId)}`);
+  },
+
+  async deleteAsset(assetId: string) {
+    await apiFetch<void>(`/v1/media/assets/${encodeURIComponent(assetId)}`, { method: 'DELETE' });
   },
 
   async uploadFile(file: File, purpose: string, assetType: MediaAssetType = 'image') {

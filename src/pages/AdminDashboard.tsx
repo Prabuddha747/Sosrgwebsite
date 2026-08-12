@@ -96,7 +96,7 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
           <h2 className="text-3xl font-bold flex items-center gap-3">

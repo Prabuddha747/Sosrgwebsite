@@ -131,10 +131,10 @@ export const AISuite = () => {
 
   return (
     <section className="py-24 px-6 bg-cinematic-gray/50">
-      <div className="max-w-[1600px] mx-auto">
+      <div className="w-full max-w-[1600px] mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif italic mb-4">AI <span className="vibrant-text-2">Modules</span></h2>
-          <p className="text-white/50 max-w-2xl mx-auto">Demonstrating the intelligent backbone of the platform to build trust in automation and fairness.</p>
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">AI <span className="gold-text">Modules</span></h2>
+          <p className="text-white/50 max-w-2xl mx-auto">The intelligent backbone behind the platform — built to be trustworthy, transparent, and fair by default.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">

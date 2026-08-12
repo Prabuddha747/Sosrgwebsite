@@ -8,7 +8,12 @@ export const ScaffoldRow = ({ className }: { className?: string }) => (
   <div
     aria-hidden="true"
     className={cn(
-      'relative overflow-hidden rounded-xl bg-white/5 border border-white/5',
+      // `scaffold-row` is a dedicated hook for index.css's .light-mode
+      // override — the generic `.light-mode .bg-white\/5` rule (3% dark
+      // tint) is too faint to read as a shimmer against a near-white card,
+      // but bumping that generic rule's contrast would affect every other
+      // bg-white/5 usage site-wide, not just this one.
+      'scaffold-row relative overflow-hidden rounded-xl bg-white/5 border border-white/5',
       'before:absolute before:inset-0 before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]',
       'before:bg-[length:200%_100%] motion-safe:before:animate-[sosrg-shine_1.6s_ease-in-out_infinite]',
       className,

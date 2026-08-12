@@ -60,6 +60,13 @@
   --font-display: "Fraunces", ui-serif, serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 
+  /* Auth/onboarding heading serif — deliberately separate from
+     --font-display, not a sitewide swap. Fraunces + its opsz "settle"
+     animation stays everywhere else (redesign.md §5); Lora is scoped to
+     Signup/Login/ProfileSetupPage only, where a warmer editorial serif
+     reads more like a considered choice than a generic template font. */
+  --font-auth-display: "Lora", ui-serif, serif;
+
   /* Fluid type scale, namespaced under "sosrg" so it never overrides
      Tailwind's default text-xs..text-4xl scale that old pages still use. */
   --text-sosrg-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
@@ -96,6 +103,39 @@
   100% { background-position: -50% 0; }
 }
 
+/* Dark-mode counterpart. tokens.css above was authored cream-only
+   ("superseding the v2 navy dark theme" — see file header), so v3 pages
+   (Auth, ProfileSetupPage, Bihar) rendered near-invisible dark-on-dark
+   text whenever the site was switched to dark mode (body without
+   .light-mode — see App.tsx). Same tokens, re-picked for a dark surface
+   and re-contrast-checked against it rather than against cream-100. Gold
+   fills (gold-500/300) already read fine on dark and are left alone;
+   gold-700 existed specifically as a *darkened* gold for text-on-cream
+   contrast, so it needs the opposite treatment here. */
+body:not(.light-mode) {
+  --color-cream-50: #211B15;
+  --color-cream-100: #15110D;
+  --color-cream-200: #2E271F;
+  --color-gold-700: #E8C878;
+  --color-text-primary: #F5EDE2;
+  --color-text-muted: #B4A48F;
+  --color-danger: #E5566C;
+  --color-success: #4FAE78;
+  --color-tier-yellow: #D9A83E;
+  --color-tier-blue: #6C9BFA;
+
+  /* shadow-elevation's "light" half was still the cream-mode highlight
+     (near-white at 90% opacity) — meant to read as a soft embossed edge
+     next to a cream card, it instead rendered as a bright glow/halo around
+     every SelectTile on a near-black surface. Re-picked as a dim warm
+     highlight, same recipe as .glass-panel's dark-theme box-shadow in
+     index.css, instead of stark white. */
+  --sosrg-shadow-dark: rgba(0, 0, 0, 0.6);
+  --sosrg-shadow-light: rgba(198, 149, 46, 0.12);
+  --sosrg-shadow-inset-dark: rgba(0, 0, 0, 0.5);
+  --sosrg-shadow-inset-light: rgba(198, 149, 46, 0.08);
+}
+
 /* Focus-visible ring — redesign.md §2/§9: always an explicit 2px solid
    ring with 2px offset, independent of any neumorphic shadow. v2 used
    gold-300 (a light highlight) because it needed to stand out on dark navy;
@@ -113,6 +153,18 @@
   max-width: 1440px;
   margin-inline: auto;
   padding-inline: clamp(1rem, 4vw, 3rem);
+}
+
+/* Grain texture for cream/gold surfaces (Card, and anything else opting in)
+   — same fractalNoise recipe as .glass-panel's dark-theme counterpart in
+   index.css, tuned lighter (multiply, lower opacity) since it sits on a
+   near-white surface instead of a near-black one. A background-image layer,
+   not a ::before, so it paints behind content automatically. */
+.sosrg-texture {
+  background-color: var(--color-cream-50);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  background-blend-mode: multiply;
+  background-repeat: repeat;
 }
 
 /* Fraunces variable-axis "settle" — redesign.md §3/§5: the platform's one

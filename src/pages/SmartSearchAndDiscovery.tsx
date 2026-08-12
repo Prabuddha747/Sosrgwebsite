@@ -115,11 +115,11 @@ export const SmartSearchAndDiscovery = () => {
   );
 
   return (
-    <div className="pt-32 pb-32 px-6 max-w-[1600px] mx-auto min-h-screen">
+    <div className="pt-32 pb-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
         <div>
-          <h1 className="text-5xl font-serif italic mb-4">Talent <span className="vibrant-text-1">Directory</span></h1>
-          <p className="text-white/60">Discover, hire, and collaborate with top professionals across the 7 Core Creative Sectors.</p>
+          <h1 className="text-5xl font-extrabold tracking-tight mb-4">Talent <span className="gold-text">Directory</span></h1>
+          <p className="text-white/60">Find the right person for the job — top professionals across all 7 Core Creative Sectors, ready to discover, hire, and collaborate with.</p>
         </div>
         <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={20} />

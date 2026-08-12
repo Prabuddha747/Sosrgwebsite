@@ -32,7 +32,7 @@ Base URL: `https://sosrg-api-292824095440.asia-south1.run.app`
 | `GET /v1/profiles/me` | `profilesService.getMyProfile()` | Global — loaded on session bootstrap and after every profile edit (`AuthContext`), consumed across Navbar / Profile / Casting | Wired |
 | `GET /v1/professions` | `profilesService.getProfessions()` | Profile Setup — profession picker | Wired |
 | `GET /v1/profiles/{username}` | `profilesService.getPublicProfile()` | Public Profile page (`/@username`) | Wired |
-| `PATCH /v1/profiles/me` | `profilesService.updateProfile()` | Profile → Basic Information (inline edit) · Privacy & Security → Discoverability toggle | Wired |
+| `PATCH /v1/profiles/me` | `profilesService.updateProfile()` | Profile → Basic Information (inline edit, incl. date of birth, gender) · Profile header avatar upload (`profileImageAssetId`) · Privacy & Security → Discoverability toggle | Wired |
 | `PATCH /v1/profiles/me/details` | `profilesService.updateProfileDetails()` | Profile → Actor/Model Advanced Module (inline edit) | Wired |
 | `PATCH /v1/profiles/me/privacy` | `profilesService.updatePrivacySettings()` | Profile → Privacy & Security → Contact Visibility, Portfolio Visibility | Wired |
 | `PATCH /v1/profiles/me/role` | `profilesService.switchProfileRole()` | Casting Calls page — Artist / Business pill toggle, and silently before opening "Create Job Post" / "Create Casting Call" | Wired |
@@ -81,6 +81,16 @@ Base URL: `https://sosrg-api-292824095440.asia-south1.run.app`
 | `GET /v1/portfolios` | `portfoliosService.listMyPortfolios()` | Casting Calls page — used to check for an existing portfolio | Wired |
 | `POST /v1/portfolios` | `portfoliosService.createPortfolio()` | Profile → Media Gallery — auto-created on first "Upload New" if none exists | Wired |
 | `POST /v1/portfolios/{id}/items` | `portfoliosService.addPortfolioItem()` | Profile → Media Gallery — "Upload New" | Wired |
+| `GET /v1/portfolios/{id}` | `portfoliosService.getPortfolioById()` | Profile → Media Gallery / Portfolio Manager — fetches the primary portfolio's real items (mediaAssetId/assetType) so photos/videos actually render, not just the portfolio title. Also used by the Casting apply modal to list real items to attach | Wired |
+| `PATCH /v1/portfolios/{id}` | `portfoliosService.updatePortfolio()` | — | Implemented, not called from any screen yet |
+| `DELETE /v1/portfolios/{id}` | `portfoliosService.deletePortfolio()` | — | Implemented, not called from any screen yet |
+| `POST /v1/portfolios/{id}/set-primary` | `portfoliosService.setPrimaryPortfolio()` | — | Implemented, not called — the app only ever uses the first (already-primary) portfolio |
+| `PATCH /v1/portfolios/{id}/items/{itemId}` | `portfoliosService.updatePortfolioItem()` | — | Implemented, not called from any screen yet |
+| `DELETE /v1/portfolios/{id}/items/{itemId}` | `portfoliosService.removePortfolioItem()` | Profile → Portfolio Manager — remove-item (×) button on each media card | Wired |
+| `PUT /v1/portfolios/{id}/items/order` | — | — | Not implemented — no reordering UI exists |
+| `POST /v1/portfolios/{id}/share-links` | `portfoliosService.createShareLink()` | Profile → Portfolio Manager — "Share Portfolio" button, copies the resulting URL to the clipboard | Wired |
+| `DELETE /v1/portfolios/{id}/share-links/{id}` | `portfoliosService.revokeShareLink()` | — | Implemented, not called from any screen yet (no "manage my share links" UI exists) |
+| `GET /v1/shared/portfolios/{shareToken}` | `portfoliosService.getSharedPortfolio()` | `/shared/portfolio/:token` — public viewer page reached via a Portfolio Manager share link, no auth required | Wired |
 
 ---
 
@@ -91,6 +101,12 @@ Base URL: `https://sosrg-api-292824095440.asia-south1.run.app`
 | `POST /v1/media/uploads` | `mediaService.reserveUpload()` | Profile → Media Gallery ("Upload New") and → Privacy & Security → Verification (KYC), via `mediaService.uploadFile()` | Wired |
 | `PUT /v1/media/uploads/{sessionId}/content` | `mediaService.uploadContent()` | Same as above, via `mediaService.uploadFile()` | Wired |
 | `GET /v1/media/assets/{id}/status` | `mediaService.getAssetStatus()` | Same as above, via `mediaService.uploadFile()` (polls until `ready`) | Wired |
+| `GET /v1/media/assets/{id}/content` | `getAssetContentUrl()` (URL builder, not a fetch call) | Profile → Media Gallery / Portfolio Manager, Casting apply modal, `/shared/portfolio/:token` — used directly as `<video>`/`<img>` `src`; curl-verified live to serve the raw file with no auth required for `visibility: "public"` assets | Wired |
+| `GET /v1/media/assets/{id}` | `mediaService.getAsset()` | — | Implemented, not called from any screen yet |
+| `DELETE /v1/media/assets/{id}` | `mediaService.deleteAsset()` | — | Implemented, not called from any screen yet |
+| `GET /v1/media/profile-image` | — | — | Not implemented |
+| `POST /v1/media/assets/{id}/download` | — | — | Not implemented — curl-verified this session to just return the same `/content` URL with an expiry, so `getAssetContentUrl()` already covers the same need for public assets |
+| `GET /v1/media/assets/{id}/content` | `getAssetContentUrl()` (URL builder, not a fetch call) | Profile → Media Gallery — used directly as `<video>`/`<img>` `src`; curl-verified live to serve the raw file with no auth required for `visibility: "public"` assets | Wired |
 
 ---
 

@@ -1,10 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Inter:wght@400;500;600;700;800;900&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
 @import "tailwindcss";
 @import "./design-system/tokens.css";
 
 @theme {
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  /* Site-wide default is Inter — clean, geometric, and already the
+     highest-readability choice loaded for the v3 design system, so the
+     legacy dark-theme pages (this token) and the v3 pages now share one
+     typeface instead of two ("Outfit" read as the mismatched "old" font
+     once v3 pages sat next to it). font-serif (Cormorant Garamond) stays
+     defined for the few places that still deliberately want it, but no
+     homepage section should reach for font-serif italic anymore. */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
@@ -59,11 +66,28 @@
 .glass-panel-purple,
 .glass-panel-green,
 .glass-panel-orange {
-  @apply bg-cinematic-gray border border-white/5 rounded-2xl transition-shadow duration-500;
+  @apply bg-cinematic-gray border border-white/10 rounded-2xl transition-shadow duration-500;
+  /* Grain texture — a background-image layer (not a ::before) so it paints
+     behind every child automatically, no stacking/pointer-events to manage.
+     Same fractalNoise recipe as .texture-grain below; kept inline here since
+     this rule is a Tailwind @apply block, not a plain selector. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+  background-repeat: repeat;
 }
 
 .glass-panel {
   box-shadow: 8px 8px 20px rgba(8, 5, 2, 0.6), -6px -6px 16px rgba(198, 149, 46, 0.14);
+}
+
+/* Navbar's "solid" (scrolled/menu-open) state — opaque instead of the old
+   /95 translucency, plus the same grain so it doesn't read as a flat
+   overlay bar. Fainter than .glass-panel since it's a thin strip glanced
+   past, not a surface read closely. */
+.nav-solid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+  background-repeat: repeat;
 }
 
 .gold-text {
@@ -112,6 +136,66 @@
 
 .gold-glow {
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Split-layout wizard image side (Profile Setup, Bihar Untold, AuthShell)
+   — the inner edge dissolves toward the content column instead of a hard
+   cut, but that split only exists in the two-column desktop layout (image
+   is md:w-1/2). Below md the image goes full-width with no column beside
+   it, so the mask must NOT apply there — a plain inline style can't be
+   made responsive, hence real media-gated classes here instead. Matches
+   Tailwind's own default md breakpoint (768px), not this project's custom
+   laptop:769px, since the split layout itself is built on md:. */
+.split-image-mask-right,
+.split-image-mask-left {
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+@media (min-width: 768px) {
+  /* "to right" starts its 0% stop at the LEFT edge — which is the edge
+     touching the center/content column when the image sits on the right.
+     That's the edge that must dissolve; the OUTER page edge (100%, at the
+     far right) should stay fully opaque. Previous version had these two
+     swapped, so it hard-cut right at the center and faded toward the
+     outer edge instead — backwards from what's actually visible. */
+  .split-image-mask-right {
+    mask-image: linear-gradient(to right, transparent 0%, black 60%, black 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 60%, black 100%);
+  }
+  .split-image-mask-left {
+    mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+  }
+}
+.split-image-overlay-right {
+  background: linear-gradient(to right, rgba(20, 15, 10, 0.85) 0%, rgba(20, 15, 10, 0.4) 30%, transparent 60%);
+}
+.split-image-overlay-left {
+  background: linear-gradient(to left, rgba(20, 15, 10, 0.85) 0%, rgba(20, 15, 10, 0.4) 30%, transparent 60%);
+}
+
+/* Homepage redesign (reference boards): full-bleed photography (Artist
+   Journey cards, Two Sides split, Final CTA, Seven Worlds selector) keeps
+   the same dark vignette in both themes — unlike page chrome, these photos
+   never turn cream in light mode. Deliberately NOT built from
+   --color-cinematic-black (which .light-mode below redefines) — these
+   values are fixed on purpose. Text sitting directly on that vignette uses
+   .photo-text/-muted/-accent instead of text-white/gold so it doesn't
+   invert to dark-on-dark under .light-mode either. */
+.photo-scrim-b {
+  background: linear-gradient(to top, rgba(20, 15, 10, 0.92), rgba(20, 15, 10, 0.15) 60%, transparent);
+}
+.photo-scrim-t {
+  background: linear-gradient(to bottom, rgba(20, 15, 10, 0.8), rgba(20, 15, 10, 0.3) 55%, transparent);
+}
+.photo-text {
+  color: #f7f3e8;
+}
+.photo-text-muted {
+  color: rgba(247, 243, 232, 0.75);
+}
+.photo-accent {
+  color: #d4bb6e;
 }
 
 /* Used across ~20 horizontal/vertical scroll strips site-wide (pill filters,
@@ -219,6 +303,19 @@
 .light-mode .text-white\/80 { color: rgba(28, 23, 18, 0.9) !important; }
 .light-mode .text-white\/90 { color: rgba(28, 23, 18, 0.95) !important; }
 
+/* The remap above is unconditional — right for the navbar's solid/scrolled
+   state (a cream bar in light mode, so text needs to go dark), wrong for
+   its transparent resting state (still sitting on the dark hero photo even
+   in light mode, so the remap was turning nav text dark-on-dark and making
+   it unreadable). .nav-transparent only gets applied in that resting state,
+   and this restores the original light, theme-invariant color there —
+   3-class selector so it outranks the 2-class rules above regardless of
+   source order. */
+.light-mode .nav-transparent .text-white { color: #F7F3E8 !important; }
+.light-mode .nav-transparent .text-white\/40 { color: rgba(247, 243, 232, 0.6) !important; }
+.light-mode .nav-transparent .text-white\/60 { color: rgba(247, 243, 232, 0.75) !important; }
+.light-mode .nav-transparent .text-white\/80 { color: rgba(247, 243, 232, 0.9) !important; }
+
 /* Standard Tailwind palette colors (emerald-400, blue-400, etc.) are used
    directly as accent text throughout the old pages — unlike gold/crimson
    (custom --color-* tokens already redefined for light mode above), these
@@ -254,4 +351,11 @@
 .light-mode .hover\:bg-white\/20:hover { background-color: rgba(28, 23, 18, 0.15) !important; }
 .light-mode .hover\:border-white:hover { border-color: #1C1712 !important; }
 .light-mode .hover\:border-white\/30:hover { border-color: rgba(28, 23, 18, 0.3) !important; }
+
+/* ScaffoldRow shimmer (src/components/ScaffoldUI.tsx) needs more contrast
+   than the generic .bg-white\/5 rule above gives it (3% dark tint reads as
+   invisible against a near-white card) — a dedicated hook rather than
+   raising that generic rule's opacity for every other bg-white/5 usage. */
+.light-mode .scaffold-row { background-color: rgba(28, 23, 18, 0.08) !important; }
+.light-mode .scaffold-row::before { background-image: linear-gradient(90deg, transparent, rgba(28, 23, 18, 0.15), transparent) !important; }
 

@@ -48,10 +48,27 @@ export interface ApplyJobPostInput {
   mediaAssetIds?: string[];
 }
 
+// UpdateJobApplicationStatusDto's enum, verified against the live spec.
+// "submitted" isn't in that DTO (it's not a reviewer-settable value) but is
+// the real initial status — curl-verified live on GET /v1/job-applications/me.
+export type JobApplicationStatus = 'submitted' | 'viewed' | 'shortlisted' | 'rejected' | 'selected';
+
 export interface JobApplication {
   id: string;
   jobPostId: string;
   status: string;
+}
+
+// GET /v1/job-applications/me list item — curl-verified live this session:
+// {"id","jobPostId","jobTitle":"Senior Cinematographer (DoP) - OTT Web
+// Series","workMode":"hybrid","status":"submitted","appliedAt":"2026-08-08T..."}.
+export interface MyJobApplication {
+  id: string;
+  jobPostId: string;
+  jobTitle: string;
+  workMode: JobWorkMode;
+  status: JobApplicationStatus | string;
+  appliedAt: string;
 }
 
 // CreateJobPostDto's required fields (verified against the live OpenAPI
@@ -93,4 +110,6 @@ export interface JobsService {
   createJobPost(input: CreateJobPostInput): Promise<CreatedJobPost>;
   /** Moves a draft job post to review — verified live: transitions straight to "active", no separate approval step observed. */
   submitJobPostForReview(jobPostId: string): Promise<{ success: boolean; status: string }>;
+  listMyJobApplications(): Promise<MyJobApplication[]>;
+  withdrawJobApplication(applicationId: string): Promise<void>;
 }

@@ -1,7 +1,12 @@
 export type {
   ApplyCastingCallInput,
+  Audition,
+  AuditionType,
   CastingApplication,
+  CastingApplicationSettableStatus,
+  CastingApplicationStatus,
   CastingCall,
+  CastingCallApplicationSummary,
   CastingCallFilters,
   CastingCallListResult,
   CastingCompensationType,
@@ -9,5 +14,9 @@ export type {
   CastingWorkMode,
   CreateCastingCallInput,
   CreatedCastingCall,
+  MyCastingApplication,
+  RequestAuditionInput,
+  SubmitSelfTapeInput,
+  UpdateCastingCallInput,
 } from './types';
 export { apiCastingService as castingService } from './apiCastingService';

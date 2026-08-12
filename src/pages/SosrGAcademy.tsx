@@ -85,11 +85,11 @@ export const SosrGAcademy = () => {
   const [activeTab, setActiveTab] = useState<'learning-paths' | 'scholarships' | 'progress'>('learning-paths');
 
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-serif italic mb-2">SosrG <span className="vibrant-text-4">Academy</span></h1>
-          <p className="text-white/50 mb-2">AI-driven learning paths, scholarships, and progress tracking for the 7 Core Creative Sectors.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">SosrG <span className="gold-text">Academy</span></h1>
+          <p className="text-white/50 mb-2">Learn what actually moves your career forward — AI-driven paths, scholarships, and progress tracking across all 7 Core Creative Sectors.</p>
           <p className="text-white/40 text-sm max-w-2xl">
             Real courses, AI-evaluated scholarship eligibility, and milestone tracking tied to your
             actual activity — what you see below is a preview of the layout, not live courses yet.

@@ -83,11 +83,11 @@ import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const EventManagement = () => {
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-serif italic mb-2">Event <span className="vibrant-text-2">Calendar</span></h1>
-          <p className="text-white/50">Book workshops, festivals, and performances across India.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">Event <span className="gold-text">Calendar</span></h1>
+          <p className="text-white/50">Workshops, festivals, and live performances across India — find what's next and be there for it.</p>
         </div>
         <button disabled className="bg-white/10 border border-white/10 text-white/50 px-8 py-3 rounded-xl font-bold uppercase tracking-widest cursor-not-allowed w-full md:w-auto">
           Host an Event — Coming Soon

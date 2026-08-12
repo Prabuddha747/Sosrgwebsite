@@ -40,7 +40,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled}
       className={cn(
         'sosrg-focus-ring inline-flex items-center justify-center gap-2',
-        'min-h-12 min-w-12 px-6 rounded-xl',
+        'min-h-12 min-w-12 px-[1.5em] rounded-xl',
         'font-body text-sosrg-base transition-shadow duration-200',
         'disabled:shadow-none disabled:opacity-45 disabled:cursor-not-allowed',
         variantClasses[variant],

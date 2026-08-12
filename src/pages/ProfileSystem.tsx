@@ -20,14 +20,11 @@ import {
   Zap,
   Lock,
   Globe,
-  Award,
-  TrendingUp,
   Briefcase,
   Gavel,
   ShoppingBag,
   Wallet,
   MessageSquare,
-  Trophy,
   Clock,
   Check,
   Upload,
@@ -50,7 +47,6 @@ import {
   Heart,
   Handshake,
   Calculator,
-  Ticket,
   Palette,
   BookOpen,
   Store,
@@ -87,11 +83,15 @@ import { profilesService } from '../services/profiles';
 import type { ContactVisibility, PortfolioVisibility, BlockedProfile, MutedProfile, KycDocument, KycDocumentType } from '../services/profiles';
 import { authService } from '../services/auth';
 import type { AuthSession } from '../services/auth';
-import { mediaService } from '../services/media';
+import { mediaService, getAssetContentUrl } from '../services/media';
 import { messagingService } from '../services/messaging';
 import type { Conversation, Message } from '../services/messaging';
 import { portfoliosService } from '../services/portfolios';
-import type { Portfolio } from '../services/portfolios';
+import type { Portfolio, PortfolioDetail } from '../services/portfolios';
+import { castingService } from '../services/casting';
+import type { Audition, AuditionType, MyCastingApplication } from '../services/casting';
+import { jobsService } from '../services/jobs';
+import type { MyJobApplication } from '../services/jobs';
 import { ApiError } from '../services/httpClient';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 import { HoverGlowPanel } from '../components/ui/hover-effect';
@@ -466,7 +466,7 @@ export const ProfileSystem = ({
   // still show an under-development toast — those need the Media API
   // wired in, a bigger piece of work than a field edit.
   const [editingBasic, setEditingBasic] = useState(false);
-  const [basicForm, setBasicForm] = useState({ displayName: '', headline: '', bio: '', pincode: '', websiteUrl: '' });
+  const [basicForm, setBasicForm] = useState({ displayName: '', headline: '', bio: '', pincode: '', websiteUrl: '', dateOfBirth: '', genderIdentity: '' });
   const [savingBasic, setSavingBasic] = useState(false);
 
   const openBasicEdit = () => {
@@ -477,6 +477,8 @@ export const ProfileSystem = ({
       bio: authProfile.bio ?? '',
       pincode: authProfile.pincode ?? '',
       websiteUrl: authProfile.websiteUrl ?? '',
+      dateOfBirth: authProfile.dateOfBirth ? authProfile.dateOfBirth.slice(0, 10) : '',
+      genderIdentity: authProfile.genderIdentity ?? '',
     });
     setEditingBasic(true);
   };
@@ -490,6 +492,8 @@ export const ProfileSystem = ({
         bio: basicForm.bio || null,
         pincode: basicForm.pincode || null,
         websiteUrl: basicForm.websiteUrl || null,
+        dateOfBirth: basicForm.dateOfBirth || null,
+        genderIdentity: basicForm.genderIdentity || null,
       });
       await refreshProfile();
       show('Profile updated.', 'success');
@@ -501,18 +505,72 @@ export const ProfileSystem = ({
     }
   };
 
+  // Switch Profile Role — PATCH /v1/profiles/me/role, real and live (see
+  // SwitchProfileRoleInput in services/profiles/types.ts). Only accepts
+  // 'artist' or 'industry_professional' as the target, but works from any
+  // starting type. Surfaced so an account mistyped as a business-like role
+  // (Industry Professional, Casting Director, etc.) can move to the artist
+  // dashboard without needing a new signup.
+  const [switchingRole, setSwitchingRole] = useState(false);
+
+  const handleSwitchToArtist = async () => {
+    setSwitchingRole(true);
+    try {
+      await profilesService.switchProfileRole({ profileType: 'artist' });
+      await refreshProfile();
+      show('Switched to Artist profile.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not switch profile type.', 'error');
+    } finally {
+      setSwitchingRole(false);
+    }
+  };
+
+  // Avatar photo — profileImageAssetId is a real UpdateProfileDto field
+  // that had no upload UI anywhere; reuses the same reserve-upload/PATCH
+  // pattern as the KYC document uploader above.
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (file: File) => {
+    setUploadingAvatar(true);
+    try {
+      const uploaded = await mediaService.uploadFile(file, 'profile_photo', 'image');
+      await profilesService.updateProfile({ profileImageAssetId: uploaded.assetId });
+      await refreshProfile();
+      show('Profile photo updated.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not upload photo.', 'error');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const [editingDetails, setEditingDetails] = useState(false);
-  const [detailsForm, setDetailsForm] = useState({ heightCm: '', weightKg: '', eyeColor: '', hairColor: '', yearsExperience: '' });
+  const [detailsForm, setDetailsForm] = useState({
+    heightCm: '', weightKg: '', eyeColor: '', hairColor: '', yearsExperience: '',
+    chestCm: '', waistCm: '', hipsCm: '', shoeSize: '', skinTone: '',
+    playingAgeMin: '', playingAgeMax: '', travelReady: false, passportAvailable: false,
+  });
   const [savingDetails, setSavingDetails] = useState(false);
 
   const openDetailsEdit = () => {
     if (!authProfile) return;
+    const d = authProfile.details;
     setDetailsForm({
-      heightCm: authProfile.details.heightCm != null ? String(authProfile.details.heightCm) : '',
-      weightKg: authProfile.details.weightKg != null ? String(authProfile.details.weightKg) : '',
-      eyeColor: authProfile.details.eyeColor ?? '',
-      hairColor: authProfile.details.hairColor ?? '',
+      heightCm: d.heightCm != null ? String(d.heightCm) : '',
+      weightKg: d.weightKg != null ? String(d.weightKg) : '',
+      eyeColor: d.eyeColor ?? '',
+      hairColor: d.hairColor ?? '',
       yearsExperience: authProfile.yearsExperience != null ? String(authProfile.yearsExperience) : '',
+      chestCm: d.chestCm != null ? String(d.chestCm) : '',
+      waistCm: d.waistCm != null ? String(d.waistCm) : '',
+      hipsCm: d.hipsCm != null ? String(d.hipsCm) : '',
+      shoeSize: d.shoeSize ?? '',
+      skinTone: d.skinTone ?? '',
+      playingAgeMin: d.playingAgeMin != null ? String(d.playingAgeMin) : '',
+      playingAgeMax: d.playingAgeMax != null ? String(d.playingAgeMax) : '',
+      travelReady: d.travelReady ?? false,
+      passportAvailable: d.passportAvailable ?? false,
     });
     setEditingDetails(true);
   };
@@ -525,6 +583,15 @@ export const ProfileSystem = ({
         weightKg: detailsForm.weightKg ? Number(detailsForm.weightKg) : undefined,
         eyeColor: detailsForm.eyeColor || undefined,
         hairColor: detailsForm.hairColor || undefined,
+        chestCm: detailsForm.chestCm ? Number(detailsForm.chestCm) : undefined,
+        waistCm: detailsForm.waistCm ? Number(detailsForm.waistCm) : undefined,
+        hipsCm: detailsForm.hipsCm ? Number(detailsForm.hipsCm) : undefined,
+        shoeSize: detailsForm.shoeSize || undefined,
+        skinTone: detailsForm.skinTone || undefined,
+        playingAgeMin: detailsForm.playingAgeMin ? Number(detailsForm.playingAgeMin) : undefined,
+        playingAgeMax: detailsForm.playingAgeMax ? Number(detailsForm.playingAgeMax) : undefined,
+        travelReady: detailsForm.travelReady,
+        passportAvailable: detailsForm.passportAvailable,
       });
       if (detailsForm.yearsExperience) {
         await profilesService.updateProfile({ yearsExperience: Number(detailsForm.yearsExperience) });
@@ -631,6 +698,69 @@ export const ProfileSystem = ({
     };
   }, [portfoliosRefreshKey]);
 
+  // GET /v1/portfolios/{id} — curl-verified live this session — is the only
+  // endpoint that returns each item's mediaAssetId/assetType, so the actual
+  // photo/video can be rendered (not just the portfolio's title, which is
+  // all listMyPortfolios gives). Fetched separately once the primary
+  // portfolio's id is known.
+  const [portfolioDetail, setPortfolioDetail] = useState<PortfolioDetail | null>(null);
+  const [portfolioDetailLoading, setPortfolioDetailLoading] = useState(false);
+  const primaryPortfolioId = portfolios?.[0]?.id;
+
+  useEffect(() => {
+    if (!primaryPortfolioId) {
+      setPortfolioDetail(null);
+      return;
+    }
+    let cancelled = false;
+    setPortfolioDetailLoading(true);
+    portfoliosService
+      .getPortfolioById(primaryPortfolioId)
+      .then((result) => {
+        if (!cancelled) setPortfolioDetail(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPortfolioDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPortfolioDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [primaryPortfolioId, portfoliosRefreshKey]);
+
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const handleDeleteMediaItem = async (itemId: string) => {
+    if (!primaryPortfolioId) return;
+    setDeletingItemId(itemId);
+    try {
+      await portfoliosService.removePortfolioItem(primaryPortfolioId, itemId);
+      show('Removed.', 'success');
+      setPortfoliosRefreshKey((k) => k + 1);
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not remove item.', 'error');
+    } finally {
+      setDeletingItemId(null);
+    }
+  };
+
+  const [sharingPortfolio, setSharingPortfolio] = useState(false);
+  const handleSharePortfolio = async () => {
+    if (!primaryPortfolioId) return;
+    setSharingPortfolio(true);
+    try {
+      const link = await portfoliosService.createShareLink(primaryPortfolioId);
+      const url = `${window.location.origin}/shared/portfolio/${link.shareToken}`;
+      await navigator.clipboard.writeText(url);
+      show('Share link copied to clipboard.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not create a share link.', 'error');
+    } finally {
+      setSharingPortfolio(false);
+    }
+  };
+
   const handleUploadMedia = async (file: File) => {
     setMediaUploading(true);
     try {
@@ -706,33 +836,117 @@ export const ProfileSystem = ({
   // scaffolded) so the first thing shown is real.
   const [activeTab, setActiveTab] = useState('profile-details');
 
-  const stats = {
-    artist: {
-      fresher: { projects: 4, rating: 4.2, views: '1.2k', earnings: '₹15k' },
-      intermediate: { projects: 12, rating: 4.8, views: '15k', earnings: '₹2.4L' },
-      expert: { projects: 45, rating: 5.0, views: '250k', earnings: '₹18L' },
-    },
-    buyer: {
-      fresher: { projects: 2, rating: 4.0, views: '500', earnings: '₹50k Spent' },
-      intermediate: { projects: 10, rating: 4.5, views: '5k', earnings: '₹5L Spent' },
-      expert: { projects: 30, rating: 4.9, views: '50k', earnings: '₹20L Spent' },
-    },
-    business: {
-      fresher: { clients: 2, team: 3, revenue: '₹5L', rating: 4.0 },
-      intermediate: { clients: 15, team: 12, revenue: '₹45L', rating: 4.6 },
-      expert: { clients: 80, team: 50, revenue: '₹3.2Cr', rating: 4.9 },
-    },
-    casting_director: {
-      fresher: { projects: 3, rating: 4.1, views: '2k', earnings: '10 Talents Cast' },
-      intermediate: { projects: 15, rating: 4.7, views: '20k', earnings: '150 Talents Cast' },
-      expert: { projects: 60, rating: 4.9, views: '500k', earnings: '1000+ Talents Cast' },
+  // My Applications — combines GET /v1/job-applications/me (curl-verified
+  // live) and GET /v1/casting-applications/me (implemented per the
+  // published DTO, but 500s server-side on this account — see
+  // MyCastingApplication's doc comment). Fetched lazily on first visiting
+  // the tab, tracked separately so a casting-side failure doesn't blank out
+  // job applications that did load.
+  type UnifiedApplication = { id: string; kind: 'casting' | 'job'; title: string; status: string; appliedAt: string };
+  const [jobApplications, setJobApplications] = useState<MyJobApplication[] | null>(null);
+  const [jobApplicationsError, setJobApplicationsError] = useState<string | null>(null);
+  const [castingApplications, setCastingApplications] = useState<MyCastingApplication[] | null>(null);
+  const [castingApplicationsError, setCastingApplicationsError] = useState<string | null>(null);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [applicationsLoaded, setApplicationsLoaded] = useState(false);
+  const [applicationFilter, setApplicationFilter] = useState<'all' | 'active' | 'shortlisted' | 'selected' | 'rejected' | 'withdrawn'>('all');
+  const [withdrawingAppId, setWithdrawingAppId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'auditions' || applicationsLoaded) return;
+    setApplicationsLoading(true);
+    setApplicationsLoaded(true);
+    Promise.allSettled([jobsService.listMyJobApplications(), castingService.listMyCastingApplications()]).then(
+      ([jobResult, castingResult]) => {
+        if (jobResult.status === 'fulfilled') setJobApplications(jobResult.value);
+        else setJobApplicationsError(jobResult.reason instanceof ApiError ? jobResult.reason.message : 'Could not load job applications.');
+
+        if (castingResult.status === 'fulfilled') setCastingApplications(castingResult.value);
+        else setCastingApplicationsError(castingResult.reason instanceof ApiError ? castingResult.reason.message : 'Could not load casting applications.');
+
+        setApplicationsLoading(false);
+      },
+    );
+  }, [activeTab, applicationsLoaded]);
+
+  const unifiedApplications: UnifiedApplication[] = [
+    ...(jobApplications ?? []).map((a): UnifiedApplication => ({ id: a.id, kind: 'job', title: a.jobTitle, status: a.status, appliedAt: a.appliedAt })),
+    ...(castingApplications ?? []).map((a): UnifiedApplication => ({ id: a.id, kind: 'casting', title: a.castingCallTitle ?? 'Casting Call', status: a.status, appliedAt: a.appliedAt })),
+  ].sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
+
+  const isTerminalOrPending = (status: string) =>
+    ['submitted', 'viewed', 'audition_requested'].includes(status) ? 'active' : status.includes('withdraw') ? 'withdrawn' : status;
+
+  const filteredApplications = unifiedApplications.filter((a) => applicationFilter === 'all' || isTerminalOrPending(a.status) === applicationFilter);
+
+  const handleWithdrawApplication = async (app: UnifiedApplication) => {
+    setWithdrawingAppId(app.id);
+    try {
+      if (app.kind === 'job') {
+        await jobsService.withdrawJobApplication(app.id);
+        setJobApplications((prev) => prev?.map((a) => (a.id === app.id ? { ...a, status: 'withdrawn' } : a)) ?? prev);
+      } else {
+        await castingService.withdrawCastingApplication(app.id);
+        setCastingApplications((prev) => prev?.map((a) => (a.id === app.id ? { ...a, status: 'withdrawn' } : a)) ?? prev);
+      }
+      show('Application withdrawn.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not withdraw application.', 'error');
+    } finally {
+      setWithdrawingAppId(null);
     }
   };
 
-  const currentStats = stats[profile.type][profile.level] || stats.artist.intermediate;
+  // Request Audition + Submit Self-Tape — casting-applications only (jobs
+  // have no audition concept in this API). There's no GET /v1/auditions
+  // endpoint (confirmed absent from the live spec), so the audition
+  // returned by requestAudition is only known for the rest of this session
+  // — leaving and coming back before submitting a self-tape means starting
+  // the request over, a real limitation until the backend adds a way to
+  // read auditions back.
+  const [auditionFormAppId, setAuditionFormAppId] = useState<string | null>(null);
+  const [auditionType, setAuditionType] = useState<AuditionType>('self_tape');
+  const [auditionInstructions, setAuditionInstructions] = useState('');
+  const [requestingAuditionAppId, setRequestingAuditionAppId] = useState<string | null>(null);
+  const [applicationAuditions, setApplicationAuditions] = useState<Record<string, Audition>>({});
+  const [submittingSelfTapeAppId, setSubmittingSelfTapeAppId] = useState<string | null>(null);
+
+  const handleRequestAudition = async (applicationId: string) => {
+    setRequestingAuditionAppId(applicationId);
+    try {
+      const audition = await castingService.requestAudition(applicationId, {
+        auditionType,
+        instructions: auditionInstructions || undefined,
+      });
+      setApplicationAuditions((prev) => ({ ...prev, [applicationId]: audition }));
+      setCastingApplications((prev) => prev?.map((a) => (a.id === applicationId ? { ...a, status: 'audition_requested' } : a)) ?? prev);
+      setAuditionFormAppId(null);
+      setAuditionInstructions('');
+      show('Audition requested.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not request an audition.', 'error');
+    } finally {
+      setRequestingAuditionAppId(null);
+    }
+  };
+
+  const handleSubmitSelfTape = async (applicationId: string, file: File) => {
+    const audition = applicationAuditions[applicationId];
+    if (!audition) return;
+    setSubmittingSelfTapeAppId(applicationId);
+    try {
+      const uploaded = await mediaService.uploadFile(file, 'audition_self_tape', 'video');
+      await castingService.submitSelfTape(audition.id, { submissionAssetId: uploaded.assetId });
+      show('Self-tape submitted.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not submit self-tape.', 'error');
+    } finally {
+      setSubmittingSelfTapeAppId(null);
+    }
+  };
 
   return (
-    <div className="pt-32 px-6 max-w-[1600px] mx-auto min-h-screen pb-24">
+    <div className="pt-32 px-6 w-full max-w-400 mx-auto min-h-screen pb-24">
       {isSettingUp ? (
         <ProfileSetupFlow onComplete={(data) => {
           setProfile({
@@ -755,11 +969,14 @@ export const ProfileSystem = ({
             <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
               <div className="relative">
                 <div className="w-24 h-24 rounded-2xl border-2 border-gold p-1 overflow-hidden">
-                  <img 
-                    src={profile.type === 'artist' ? "https://picsum.photos/seed/creator/200/200" : "https://picsum.photos/seed/business/200/200"} 
-                    className="w-full h-full object-cover rounded-xl" 
-                    alt="Profile" 
-                    referrerPolicy="no-referrer" 
+                  <img
+                    src={
+                      authProfile?.profileImagePath
+                        ?? (profile.type === 'artist' ? "https://picsum.photos/seed/creator/200/200" : "https://picsum.photos/seed/business/200/200")
+                    }
+                    className="w-full h-full object-cover rounded-xl"
+                    alt="Profile"
+                    referrerPolicy="no-referrer"
                   />
                 </div>
                 <div className={cn(
@@ -768,6 +985,20 @@ export const ProfileSystem = ({
                 )}>
                   {profile.level}
                 </div>
+                {authProfile && (
+                  <label className={cn(
+                    "absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gold text-black flex items-center justify-center cursor-pointer shadow-lg hover:bg-gold/80 transition-colors",
+                    uploadingAvatar && "opacity-50 pointer-events-none"
+                  )}>
+                    <Upload size={12} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarUpload(f); e.target.value = ''; }}
+                    />
+                  </label>
+                )}
               </div>
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
@@ -815,7 +1046,7 @@ export const ProfileSystem = ({
                     // Ratings & Reviews has no live API yet (see that tab) —
                     // this is the same gap, not a field the user forgot to fill in.
                     <span className="bg-gold/10 border border-gold/20 px-2 py-1 rounded text-[10px] text-gold font-bold flex items-center gap-1">
-                      <Star size={10} className="fill-gold" /> Rating — Coming soon
+                      <Star size={10} className="fill-gold" /> Rating — Visit Our App
                     </span>
                   ) : (
                     <span className="bg-gold/10 border border-gold/20 px-2 py-1 rounded text-[10px] text-gold font-bold flex items-center gap-1">
@@ -852,20 +1083,16 @@ export const ProfileSystem = ({
               >
                 <Settings size={14} /> Edit Profile
               </button>
-              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                {(['artist', 'business'] as ProfileType[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setProfile({ ...profile, type: t })}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
-                      profile.type === t ? "bg-gold text-black" : "text-white/40 hover:text-white"
-                    )}
-                  >
-                    {t === 'artist' ? 'Creator' : 'Business'}
-                  </button>
-                ))}
-              </div>
+              {realProfile && authProfile && authProfile.profileType !== 'artist' && authProfile.profileType !== 'model' && (
+                <button
+                  onClick={handleSwitchToArtist}
+                  disabled={switchingRole}
+                  title="This account is currently typed as a business-like role — switch it to Artist to get the artist dashboard."
+                  className="flex items-center justify-center gap-2 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <User size={14} /> {switchingRole ? 'Switching…' : 'Switch to Artist Profile'}
+                </button>
+              )}
               {/*
                 The old Fresher/Intermediate/Expert switcher used to live
                 here, letting a user set their own experience-tier — removed
@@ -886,19 +1113,6 @@ export const ProfileSystem = ({
             </div>
           </div>
 
-          {/* Stats Grid — labels are real category names, values are still
-              mock (no stats/analytics API exists), so only the number
-              scaffolds, not the label. */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-            {Object.keys(currentStats).map((key) => (
-              <div key={key} className="relative glass-panel p-6 text-center group hover:border-gold/30 transition-all">
-                <ComingSoonTag />
-                <ScaffoldRow className="h-8 w-16 mx-auto mb-2" />
-                <div className="text-[10px] uppercase tracking-widest text-white/40 group-hover:text-white/60 transition-colors">{key}</div>
-              </div>
-            ))}
-          </div>
-
           {/* Dashboard Tabs — real API-backed tabs first (Profile Details,
               My Network, Privacy & Security), then Bihar Untold, then every
               tab still waiting on a live endpoint. */}
@@ -907,9 +1121,9 @@ export const ProfileSystem = ({
               { id: 'profile-details', label: 'Profile Details', icon: User },
               { id: 'network', label: 'My Network', icon: Users },
               { id: 'privacy', label: 'Privacy & Security', icon: ShieldCheck },
-              { id: 'bihar-untold', label: 'Bihar Untold', icon: Film },
-              { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
-              { id: 'discovery', label: 'Smart Discovery', icon: Search },
+              // { id: 'bihar-untold', label: 'Bihar Untold', icon: Film },
+              // { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+              // { id: 'discovery', label: 'Smart Discovery', icon: Search },
               { id: 'wallet', label: 'Wallet Overview', icon: Wallet },
               { id: 'finances', label: 'Finances', icon: Wallet },
               { id: 'bookings', label: 'Booking History', icon: Calendar },
@@ -919,16 +1133,16 @@ export const ProfileSystem = ({
               { id: 'membership', label: 'Membership', icon: Star },
               { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'services', label: 'Services & Gigs', icon: Briefcase },
+              { id: 'portfolio', label: 'Portfolio', icon: User },
+              { id: 'auditions', label: 'My Applications', icon: Mic },
               ...(profile.type === 'artist' ? [
-                { id: 'portfolio', label: 'Portfolio Manager', icon: User },
-                { id: 'auditions', label: 'Auditions Applied', icon: Mic },
-                { id: 'availability', label: 'Availability Calendar', icon: Calendar },
-                { id: 'ai-insights', label: 'AI Match Suggestions', icon: Zap },
+                // { id: 'availability', label: 'Availability Calendar', icon: Calendar },
+                // { id: 'ai-insights', label: 'AI Match Suggestions', icon: Zap },
               ] : [
                 { id: 'projects', label: 'Post New Project', icon: Briefcase },
                 { id: 'casting', label: 'Casting Panel', icon: Users },
                 { id: 'budget', label: 'Budget Manager', icon: Calculator },
-                { id: 'workflow', label: 'Workflow Tracker', icon: Settings },
+                // { id: 'workflow', label: 'Workflow Tracker', icon: Settings },
               ]),
               { id: 'legal', label: 'Contracts Vault', icon: ShieldCheck },
             ].map((tab) => (
@@ -948,89 +1162,12 @@ export const ProfileSystem = ({
           {/* Tab Content */}
           <AnimatePresence mode="wait">
             {activeTab === 'discovery' && (
-              <motion.div
-                key="discovery"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
-                {/* Search & Filters */}
-                <div className="glass-panel p-6">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-                      <input 
-                        type="text" 
-                        placeholder="Search by skill, name, or keywords..." 
-                        className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-gold/50 transition-colors"
-                      />
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0">
-                      <select className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold/50">
-                        <option>All Skills</option>
-                        <option>Acting</option>
-                        <option>Direction</option>
-                        <option>Cinematography</option>
-                      </select>
-                      <select className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold/50">
-                        <option>Any Rating</option>
-                        <option>4.5 & Above</option>
-                        <option>4.0 & Above</option>
-                      </select>
-                      <select className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold/50">
-                        <option>Any Location</option>
-                        <option>Mumbai</option>
-                        <option>Delhi</option>
-                        <option>Remote</option>
-                      </select>
-                      <button className="flex items-center gap-2 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm whitespace-nowrap hover:bg-white/5 transition-colors">
-                        <ShieldCheck size={16} className="text-emerald-400" /> Verified Only
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Brief box — this whole tab has no live search/discovery API
-                    behind it yet, so it's honestly described up front rather
-                    than presented as working search results. */}
-                <div className="glass-panel p-6 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
-                  <h3 className="font-bold mb-2 flex items-center gap-2"><Search size={16} className="text-blue-400" /> About Smart Discovery</h3>
-                  <p className="text-sm text-white/60 leading-relaxed">
-                    Smart Discovery is meant to surface trending talent and personalized casting/collaboration
-                    suggestions based on your profile and activity. There's no discovery/search or
-                    recommendations API live yet, so the filters above are real controls with nothing behind
-                    them, and the sections below are shown as loading placeholders rather than fabricated
-                    results.
-                  </p>
-                </div>
-
-                {/* Trending Section */}
-                <div>
-                  <div className="flex items-center gap-2 mb-6">
-                    <TrendingUp className="text-gold" size={24} />
-                    <h2 className="text-2xl font-bold">Trending Now</h2>
-                    <span className="bg-gold text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded ml-2">Coming Soon</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[0, 1, 2, 3].map((i) => (
-                      <ScaffoldRow key={i} className="h-56" />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Personalised Suggestions */}
-                <div className="glass-panel p-8 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Zap className="text-blue-400" size={24} />
-                    <h2 className="text-2xl font-bold">Suggested For You</h2>
-                    <span className="bg-gold text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded ml-2">Coming Soon</span>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ScaffoldRow className="h-40" />
-                    <ScaffoldRow className="h-40" />
-                  </div>
-                </div>
+              <motion.div key="discovery" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Search size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Smart Discovery — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Smart Discovery is meant to surface trending talent and personalized casting/collaboration suggestions based on your profile and activity, with real search and filters instead of a static demo.</p>
               </motion.div>
             )}
 
@@ -1062,6 +1199,7 @@ export const ProfileSystem = ({
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <ProfileField label="Full Name" value={authProfile?.displayName ?? profile.name} hint="Your public display name." />
                             <ProfileField label="Gender" value={authProfile?.genderIdentity} hint="Not set — your self-described gender identity." />
+                            <ProfileField label="Date of Birth" value={authProfile?.dateOfBirth?.slice(0, 10)} hint="Not set — helps match you to age-appropriate roles." />
                             <ProfileField
                               label="Profession"
                               value={authProfile?.professions?.[0]?.name}
@@ -1142,6 +1280,20 @@ export const ProfileSystem = ({
                               placeholder="https://…"
                             />
                           </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <EditableField
+                              label="Date of Birth"
+                              type="date"
+                              value={basicForm.dateOfBirth}
+                              onChange={(v) => setBasicForm((f) => ({ ...f, dateOfBirth: v }))}
+                            />
+                            <EditableField
+                              label="Gender"
+                              value={basicForm.genderIdentity}
+                              onChange={(v) => setBasicForm((f) => ({ ...f, genderIdentity: v }))}
+                              placeholder="e.g. Female, Male, Non-binary"
+                            />
+                          </div>
                           <div className="flex gap-4 pt-2">
                             <button onClick={() => setEditingBasic(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold uppercase tracking-widest text-sm transition-colors">
                               Cancel
@@ -1198,6 +1350,42 @@ export const ProfileSystem = ({
                                   <span className="text-white/40 text-sm">Experience</span>
                                   <span className="font-bold text-sm">{authProfile?.yearsExperience != null ? `${authProfile.yearsExperience} yrs` : 'xx'}</span>
                                 </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Chest</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.chestCm != null ? `${authProfile.details.chestCm} cm` : 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Waist</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.waistCm != null ? `${authProfile.details.waistCm} cm` : 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Hips</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.hipsCm != null ? `${authProfile.details.hipsCm} cm` : 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Shoe Size</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.shoeSize ?? 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Skin Tone</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.skinTone ?? 'xx'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Playing Age Range</span>
+                                  <span className="font-bold text-sm">
+                                    {authProfile?.details.playingAgeMin != null && authProfile?.details.playingAgeMax != null
+                                      ? `${authProfile.details.playingAgeMin}–${authProfile.details.playingAgeMax}`
+                                      : 'xx'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Travel Ready</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.travelReady ? 'Yes' : 'No'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40 text-sm">Passport Available</span>
+                                  <span className="font-bold text-sm">{authProfile?.details.passportAvailable ? 'Yes' : 'No'}</span>
+                                </div>
                               </div>
                             ) : (
                               <div className="space-y-3">
@@ -1224,6 +1412,66 @@ export const ProfileSystem = ({
                                     value={detailsForm.hairColor}
                                     onChange={(v) => setDetailsForm((f) => ({ ...f, hairColor: v }))}
                                   />
+                                  <EditableField
+                                    label="Chest (cm)"
+                                    type="number"
+                                    value={detailsForm.chestCm}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, chestCm: v }))}
+                                  />
+                                  <EditableField
+                                    label="Waist (cm)"
+                                    type="number"
+                                    value={detailsForm.waistCm}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, waistCm: v }))}
+                                  />
+                                  <EditableField
+                                    label="Hips (cm)"
+                                    type="number"
+                                    value={detailsForm.hipsCm}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, hipsCm: v }))}
+                                  />
+                                  <EditableField
+                                    label="Shoe Size"
+                                    value={detailsForm.shoeSize}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, shoeSize: v }))}
+                                  />
+                                  <EditableField
+                                    label="Skin Tone"
+                                    value={detailsForm.skinTone}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, skinTone: v }))}
+                                  />
+                                  <EditableField
+                                    label="Playing Age Min"
+                                    type="number"
+                                    value={detailsForm.playingAgeMin}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, playingAgeMin: v }))}
+                                  />
+                                  <EditableField
+                                    label="Playing Age Max"
+                                    type="number"
+                                    value={detailsForm.playingAgeMax}
+                                    onChange={(v) => setDetailsForm((f) => ({ ...f, playingAgeMax: v }))}
+                                  />
+                                </div>
+                                <div className="flex gap-6 pt-1">
+                                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={detailsForm.travelReady}
+                                      onChange={(e) => setDetailsForm((f) => ({ ...f, travelReady: e.target.checked }))}
+                                      className="accent-gold"
+                                    />
+                                    Travel Ready
+                                  </label>
+                                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={detailsForm.passportAvailable}
+                                      onChange={(e) => setDetailsForm((f) => ({ ...f, passportAvailable: e.target.checked }))}
+                                      className="accent-gold"
+                                    />
+                                    Passport Available
+                                  </label>
                                 </div>
                                 <EditableField
                                   label="Years of Experience"
@@ -1256,7 +1504,7 @@ export const ProfileSystem = ({
                             <div>
                               <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
                                 Experience Categories
-                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
                               </h4>
                               <div className="flex gap-2">
                                 <ScaffoldRow className="h-6 w-24" />
@@ -1266,7 +1514,7 @@ export const ProfileSystem = ({
                             <div>
                               <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
                                 Comfort Declaration
-                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
                               </h4>
                               <div className="flex gap-2">
                                 <ScaffoldRow className="h-6 w-20" />
@@ -1276,7 +1524,7 @@ export const ProfileSystem = ({
                             <div>
                               <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
                                 Availability
-                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
                               </h4>
                               <ScaffoldRow className="h-6 w-28" />
                             </div>
@@ -1286,7 +1534,7 @@ export const ProfileSystem = ({
                         <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
                           <div className="text-sm text-white/60">Generate a casting-ready digital resume instantly.</div>
                           <button
-                            onClick={() => show('Resume generation is coming soon.', 'info')}
+                            onClick={() => show('Resume generation is Visit Our App.', 'info')}
                             className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2"
                           >
                             <FileText size={14} /> Generate Resume
@@ -1343,7 +1591,7 @@ export const ProfileSystem = ({
                             </div>
                           </div>
                           <button
-                            onClick={() => show('Presentation generation is coming soon.', 'info')}
+                            onClick={() => show('Presentation generation is Visit Our App.', 'info')}
                             className="w-full bg-gold text-black py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white transition-colors"
                           >
                             Generate Presentation
@@ -1354,34 +1602,70 @@ export const ProfileSystem = ({
                   </div>
 
                   <div className="space-y-8">
-                    {/* Media Gallery — Portfolios is a real, live API
-                        (GET /v1/portfolios), so this shows real portfolios
-                        when they exist. Upload/create isn't built in this
-                        app yet, so that action stays a toast, not fake. */}
+                    {/* Portfolio preview — Portfolios is a real, live API
+                        (GET /v1/portfolios/{id} for the primary portfolio's
+                        items, curl-verified this session), so this plays the
+                        actual uploaded photo/video, not just the portfolio's
+                        title. Same data as the Portfolio tab (delete/share
+                        live there); this is a quick-glance + quick-upload
+                        preview so the two don't duplicate full management UI. */}
                     <HoverGlowPanel className="glass-panel p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold flex items-center gap-2"><Image size={16} className="text-gold" /> Media Gallery</h3>
-                        <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
+                        <h3 className="font-bold flex items-center gap-2"><Image size={16} className="text-gold" /> Portfolio</h3>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
+                          <button onClick={() => setActiveTab('portfolio')} className="text-[9px] uppercase tracking-widest font-bold text-gold hover:underline">
+                            Manage →
+                          </button>
+                        </div>
                       </div>
 
-                      {portfoliosLoading && (
+                      {(portfoliosLoading || portfolioDetailLoading) && (
                         <div className="grid grid-cols-2 gap-3 mb-4">
                           {[0, 1, 2, 3].map((i) => (
-                            <ScaffoldRow key={i} className="aspect-[4/5]" />
+                            <ScaffoldRow key={i} className="aspect-[9/16]" />
                           ))}
                         </div>
                       )}
 
-                      {!portfoliosLoading && (portfolios?.length ?? 0) === 0 && (
+                      {!portfoliosLoading && !portfolioDetailLoading && (portfolios?.length ?? 0) === 0 && (
                         <p className="text-xs text-white/30 italic mb-4">No portfolio yet — this is where your photos, reels, and work samples will show up.</p>
                       )}
 
-                      {!portfoliosLoading && (portfolios?.length ?? 0) > 0 && (
-                        <div className="space-y-2 mb-4">
-                          {portfolios!.map((p) => (
-                            <div key={p.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                              <span className="text-sm font-medium">{p.title}</span>
-                              <span className="text-[9px] uppercase tracking-widest text-white/40">{p.visibility}</span>
+                      {!portfoliosLoading && !portfolioDetailLoading && (portfolios?.length ?? 0) > 0 && (portfolioDetail?.items.length ?? 0) === 0 && (
+                        <p className="text-xs text-white/30 italic mb-4">No media in your portfolio yet — upload a photo or reel below.</p>
+                      )}
+
+                      {!portfolioDetailLoading && (portfolioDetail?.items.length ?? 0) > 0 && (
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          {portfolioDetail!.items.map((item) => (
+                            <div key={item.id} className="relative aspect-[9/16] rounded-xl overflow-hidden bg-cinematic-gray border border-white/10">
+                              {item.mediaAssetId && item.assetType === 'video' && (
+                                <video
+                                  controls
+                                  preload="metadata"
+                                  src={getAssetContentUrl(item.mediaAssetId)}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                              {item.mediaAssetId && item.assetType === 'image' && (
+                                <img
+                                  src={getAssetContentUrl(item.mediaAssetId)}
+                                  alt={item.caption ?? item.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                              {item.mediaAssetId && item.assetType !== 'video' && item.assetType !== 'image' && (
+                                <div className="h-full w-full flex flex-col items-center justify-center gap-2 p-3 text-center">
+                                  <Image size={20} className="text-white/30" />
+                                  <span className="text-[10px] text-white/40 line-clamp-2">{item.caption ?? item.title}</span>
+                                </div>
+                              )}
+                              {!item.mediaAssetId && (
+                                <div className="h-full w-full flex items-center justify-center p-3 text-center">
+                                  <span className="text-[10px] text-white/40 line-clamp-3">{item.itemTitle || item.caption || item.title}</span>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1419,14 +1703,14 @@ export const ProfileSystem = ({
                           <p className="text-xs text-white/30 italic">No website added yet.</p>
                         )}
                         <div className="relative flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                          <span className="absolute top-2 right-2 bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                          <span className="absolute top-2 right-2 bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
                           <div className="flex items-center gap-3">
                             <Instagram size={18} className="text-pink-500" />
                             <ScaffoldRow className="h-4 w-28" />
                           </div>
                         </div>
                         <div className="relative flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                          <span className="absolute top-2 right-2 bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                          <span className="absolute top-2 right-2 bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
                           <div className="flex items-center gap-3">
                             <Youtube size={18} className="text-red-500" />
                             <ScaffoldRow className="h-4 w-28" />
@@ -1452,220 +1736,52 @@ export const ProfileSystem = ({
             )}
 
             {activeTab === 'wallet' && (
-              <motion.div
-                key="wallet"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Total Balance & Withdrawal */}
-                  <div className="relative glass-panel p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
-                    <ComingSoonTag />
-                    <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Total Balance</div>
-                    <div className="text-4xl font-bold text-gold mb-4">xxxx</div>
-                    <div className="flex gap-2 mb-4">
-                      <button className="flex-1 bg-gold text-black py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors">Withdraw</button>
-                      <button className="flex-1 bg-white/5 border border-white/10 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Add Funds</button>
-                    </div>
-                    <div className="text-[10px] text-white/60 bg-black/20 p-2 rounded border border-white/5">
-                      <span className="text-gold font-bold">Withdrawal Policy:</span> Minimum ₹2500 weekly withdrawal on every Sunday at 11:34 PM.
-                    </div>
-                  </div>
-
-                  {/* Pending Clearance */}
-                  <div className="relative glass-panel p-6">
-                    <ComingSoonTag />
-                    <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Pending Clearance</div>
-                    <div className="text-3xl font-bold mb-2">xxxx</div>
-                    <p className="text-xs text-white/40">From 2 active projects. Expected clearance in 5-7 days.</p>
-                  </div>
-
-                  {/* SosrG Coins */}
-                  <div className="relative glass-panel p-6 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
-                    <ComingSoonTag />
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="text-[10px] uppercase tracking-widest text-white/40">SosrG Coins</div>
-                      <Award size={16} className="text-emerald-400" />
-                    </div>
-                    <div className="text-3xl font-bold mb-2 text-emerald-400">xxxx <span className="text-sm">Coins</span></div>
-                    <p className="text-xs text-white/60 mb-3">Earn via referrals, votes, and platform engagement (Available for Users & CP Admins).</p>
-                    <button className="w-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-emerald-500/30 transition-colors">
-                      Redeem Coins
-                    </button>
-                  </div>
-
-                  {/* Tokens */}
-                  <div className="relative glass-panel p-6 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
-                    <ComingSoonTag />
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="text-[10px] uppercase tracking-widest text-white/40">Auction Tokens</div>
-                      <Ticket size={16} className="text-blue-400" />
-                    </div>
-                    <div className="text-3xl font-bold mb-2 text-blue-400">xxxx <span className="text-sm">SGT</span></div>
-                    <p className="text-xs text-white/60 mb-3">Exclusive tokens used for bidding in premium talent auctions and exclusive events.</p>
-                    <button className="w-full bg-blue-500/20 text-blue-400 border border-blue-500/30 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-blue-500/30 transition-colors">
-                      Buy Tokens
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Transaction History */}
-                  <div className="relative lg:col-span-2 glass-panel p-8">
-                    <ComingSoonTag />
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-bold">Transaction History</h3>
-                      <div className="flex gap-2">
-                        <button className="px-3 py-1 bg-white/10 rounded text-xs font-bold">Today</button>
-                        <button className="px-3 py-1 bg-white/5 rounded text-xs font-bold text-white/40 hover:text-white">Weekly</button>
-                        <button className="px-3 py-1 bg-white/5 rounded text-xs font-bold text-white/40 hover:text-white">Monthly</button>
-                        <button className="px-3 py-1 bg-white/5 rounded text-xs font-bold text-white/40 hover:text-white">All Time</button>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      {[0, 1, 2, 3, 4].map((i) => (
-                        <ScaffoldRow key={i} className="h-16" />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Payment Methods */}
-                  <div className="space-y-6">
-                    <div className="relative glass-panel p-6">
-                      <ComingSoonTag />
-                      <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-gold" /> Secure Payment</h3>
-                      <p className="text-xs text-white/60 mb-6">Powered by Razorpay. Add funds securely using your preferred payment method.</p>
-
-                      <div className="space-y-3">
-                        {[0, 1, 2].map((i) => (
-                          <ScaffoldRow key={i} className="h-14" />
-                        ))}
-                      </div>
-
-                      <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-white/40 uppercase tracking-widest">
-                        <Lock size={12} /> 100% Secure Transactions
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <motion.div key="wallet" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Wallet size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Wallet Overview — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A real balance, pending clearance, SosrG Coins, and auction tokens tied to your actual earnings and activity, plus real transaction history and secure Razorpay payment methods — not the static totals shown here today.</p>
               </motion.div>
             )}
 
             {activeTab === 'bookings' && (
-              <motion.div
-                key="bookings"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="relative space-y-6"
-              >
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Booking History</h2>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  This is where confirmed direct bookings and won auctions will show up as a single
-                  timeline — current, past, and auction-sourced work, each with schedule, payment, and
-                  status in one place, instead of scattered across casting applications and messages.
-                </p>
-                <div className="space-y-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <ScaffoldRow key={i} className="h-20" />
-                  ))}
-                </div>
+              <motion.div key="bookings" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Calendar size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Booking History — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Confirmed direct bookings and won auctions as a single timeline — current, past, and auction-sourced work, each with schedule, payment, and status in one place, instead of scattered across casting applications and messages.</p>
               </motion.div>
             )}
 
             {activeTab === 'notifications' && (
-              <motion.div
-                key="notifications"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="glass-panel-pink p-8 text-center py-16"
-              >
-                <Zap className="mx-auto mb-4 text-white/20" size={40} />
-                <h2 className="text-xl font-bold mb-2">Notifications</h2>
-                <p className="text-white/40 text-sm max-w-sm mx-auto">This feature is under development — real notifications aren't wired up yet.</p>
+              <motion.div key="notifications" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap size={24} className="text-gold" />
+                  <h2 className="text-3xl font-bold">Notifications — Visit Our App</h2>
+                </div>
+                <p className="text-white/60 max-w-3xl mb-6">Real-time alerts for new applications, bookings, messages, and auction activity — pushed the moment they happen, not a static inbox.</p>
               </motion.div>
             )}
 
             {activeTab === 'membership' && (
-              <motion.div
-                key="membership"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl font-serif italic mb-4">Membership & <span className="gold-text">Subscription</span></h2>
-                  <p className="text-white/60">Unlock premium benefits, priority casting, and exclusive workshops.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-                  {[
-                    { name: 'Basic', price: "", current: true },
-                    { name: 'Pro', price: '', current: false },
-                    { name: 'Elite', price: '', current: false },
-                  ].map((plan, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'relative flex flex-col h-full glass-panel p-8',
-                        plan.name === 'Pro' ? 'border-gold/50 shadow-[0_0_30px_rgba(255,215,0,0.1)]' : '',
-                      )}
-                    >
-                      <ComingSoonTag />
-                      {plan.name === 'Pro' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gold text-black px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Most Popular</div>}
-                      <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                      <div className="text-3xl font-serif italic text-gold mb-6">{plan.price}</div>
-                      <div className="flex-1 space-y-3 mb-8">
-                        {[0, 1, 2].map((j) => (
-                          <ScaffoldRow key={j} className="h-6" />
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => show('Membership plans are coming soon.', 'info')}
-                        className={cn(
-                          'mt-auto w-full py-3 rounded-xl font-bold uppercase tracking-widest transition-all',
-                          plan.current ? 'bg-white/10 text-white/50 cursor-default' : plan.name === 'Pro' ? 'bg-gold text-black hover:scale-105' : 'bg-white/5 border border-white/10 hover:bg-white/10',
-                        )}
-                      >
-                        {plan.current ? 'Current Plan' : 'Upgrade'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              <motion.div key="membership" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Star size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Membership & Subscription — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Unlock premium benefits, priority casting, and exclusive workshops with a real Basic/Pro/Elite plan tied to your account.</p>
               </motion.div>
             )}
 
             {activeTab === 'reviews' && (
-              <motion.div
-                key="reviews"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="relative space-y-8"
-              >
-                <ComingSoonTag />
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-bold">Ratings & Reviews</h2>
-                  <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl">
-                    <Star className="fill-gold text-gold" size={20} />
-                    <span className="text-xl font-bold">xx</span>
-                    <span className="text-white/40 text-sm">(xx Reviews)</span>
-                  </div>
-                </div>
-                <p className="text-white/40 text-sm -mt-4 max-w-2xl">
-                  Ratings & Reviews is meant to show verified feedback from people you've worked with —
-                  casting directors, collaborators, clients — building a track record tied to real completed
-                  work rather than self-reported claims. <span className="text-white/60 font-medium">Coming soon</span>
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[0, 1, 2, 3].map((i) => (
-                    <ScaffoldRow key={i} className="h-32" />
-                  ))}
-                </div>
+              <motion.div key="reviews" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Star size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Ratings & Reviews — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Verified feedback from people you've worked with — casting directors, collaborators, clients — building a track record tied to real completed work rather than self-reported claims.</p>
               </motion.div>
             )}
 
@@ -1731,16 +1847,11 @@ export const ProfileSystem = ({
                 </div>
                 */}
 
-                <div className="glass-panel p-12 text-center max-w-2xl mx-auto bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
-                  <ShoppingCart className="mx-auto mb-6 text-gold" size={40} />
-                  <h2 className="text-2xl font-bold mb-4">Services & Gigs — Coming Soon</h2>
-                  <p className="text-sm text-white/60 leading-relaxed">
-                    This is where creators will list paid, bookable offerings — coaching sessions, script
-                    reviews, voice-over gigs, workshops — priced and sold directly through SosrG, with
-                    payment held in escrow until delivery is confirmed. It turns a profile from a portfolio
-                    into a storefront.
-                  </p>
-                </div>
+                <div className="flex items-center gap-2 mb-2">
+              <ShoppingCart size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Services & Gigs — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">This is where creators will list paid, bookable offerings — coaching sessions, script reviews, voice-over gigs, workshops — priced and sold directly through SosrG, with payment held in escrow until delivery is confirmed. It turns a profile from a portfolio into a storefront.</p>
               </motion.div>
             )}
 
@@ -1833,7 +1944,7 @@ export const ProfileSystem = ({
                           <h4 className="font-bold text-sm">Two-Factor Authentication (2FA)</h4>
                           <p className="text-xs text-white/50">Add an extra layer of security to your account.</p>
                         </div>
-                        <span className="bg-gold text-black px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest">Coming Soon</span>
+                        <span className="bg-gold text-black px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest">Visit Our App</span>
                       </div>
 
                       <div>
@@ -1888,9 +1999,9 @@ export const ProfileSystem = ({
                   <div className="glass-panel p-6 lg:col-span-2 space-y-6">
                     <h3 className="text-lg font-bold border-b border-white/10 pb-4">Data & Transactions</h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="flex gap-4 items-start">
-                        <div className="p-3 bg-white/5 rounded-xl shrink-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-3 bg-white/5 border border-white/10 rounded-lg p-5">
+                        <div className="p-3 bg-white/5 rounded-lg w-fit">
                           <Lock size={20} className="text-gold" />
                         </div>
                         <div>
@@ -1899,8 +2010,8 @@ export const ProfileSystem = ({
                         </div>
                       </div>
 
-                      <div className="flex gap-4 items-start">
-                        <div className="p-3 bg-white/5 rounded-xl shrink-0">
+                      <div className="flex flex-col gap-3 bg-white/5 border border-white/10 rounded-lg p-5">
+                        <div className="p-3 bg-white/5 rounded-lg w-fit">
                           <ShieldCheck size={20} className="text-emerald-400" />
                         </div>
                         <div>
@@ -1911,12 +2022,12 @@ export const ProfileSystem = ({
                     </div>
 
                     <div className="pt-4 border-t border-white/10 flex justify-end gap-4">
-                      <button disabled className="text-xs text-white/20 cursor-not-allowed" title="Coming soon — no data-export endpoint yet">Download My Data</button>
+                      <button disabled className="text-xs text-white/20 cursor-not-allowed" title="Visit Our App — no data-export endpoint yet">Download My Data</button>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                   <AccordionSection
                     title="Blocked & Muted"
                     icon={UserX}
@@ -2088,116 +2199,32 @@ export const ProfileSystem = ({
             )}
 
             {activeTab === 'dashboard' && (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-              >
-                {/* No activity feed, analytics, or achievements API exists yet
-                    — this used to show invented contracts/connections/scores
-                    as if real. Scaffolded like every other no-live-data
-                    section instead. */}
-                <div className="lg:col-span-2 space-y-8">
-                  <div className="relative glass-panel-orange p-8">
-                    <ComingSoonTag />
-                    <h3 className="text-xl font-bold mb-6">Recent Activity</h3>
-                    <div className="space-y-4">
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} className="flex gap-4 items-start">
-                          <ScaffoldRow className="h-8 w-8 rounded-full shrink-0" />
-                          <div className="flex-1 space-y-2">
-                            <ScaffoldRow className="h-4 w-2/3" />
-                            <ScaffoldRow className="h-3 w-1/3" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="relative glass-panel-green p-8">
-                    <ComingSoonTag />
-                    <h3 className="text-xl font-bold mb-6">Growth Tracking</h3>
-                    <ScaffoldRow className="h-48" />
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="relative glass-panel p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
-                    <ComingSoonTag />
-                    <div className="flex items-center gap-2 mb-4 text-gold">
-                      <Zap size={18} />
-                      <h3 className="font-bold">Smart AI Tip</h3>
-                    </div>
-                    <ScaffoldRow className="h-4 w-full mb-2" />
-                    <ScaffoldRow className="h-4 w-3/4" />
-                  </div>
-
-                  <div className="relative glass-panel p-6">
-                    <ComingSoonTag />
-                    <h3 className="font-bold mb-4 flex items-center gap-2"><Trophy size={16} className="text-gold" /> Achievements</h3>
-                    <div className="space-y-4">
-                      {[0, 1, 2].map((i) => (
-                        <div key={i}>
-                          <ScaffoldRow className="h-3 w-24 mb-2" />
-                          <ScaffoldRow className="h-1 w-full" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <LayoutDashboard size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Overview — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A real activity feed, growth tracking, AI-driven tips, and achievements pulled from your actual profile and bookings — no activity, analytics, or achievements API exists yet, so this stays honest rather than showing invented numbers.</p>
               </motion.div>
             )}
 
             {activeTab === 'projects' && (
               <motion.div key="projects" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <div className="glass-panel p-12 text-center max-w-2xl mx-auto bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
-                  <Briefcase className="mx-auto mb-6 text-gold" size={40} />
-                  <h2 className="text-2xl font-bold mb-4">{profile.type === 'artist' ? 'My Projects' : 'Active Productions'} — Coming Soon</h2>
-                  <p className="text-sm text-white/60 leading-relaxed">
-                    {profile.type === 'artist'
-                      ? 'A real list of the projects you\'re currently working on, pulled from confirmed bookings and accepted applications, with status and progress tracked automatically.'
-                      : 'A real production dashboard for everything you\'re currently running, with status and progress tracked automatically instead of managed by hand.'}
-                  </p>
-                </div>
+                <div className="flex items-center gap-2 mb-2">
+              <Briefcase size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">{profile.type === 'artist' ? 'My Projects' : 'Active Productions'} — Visit Our App on PlayStore</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">{profile.type === 'artist' ? 'A real list of the projects you\'re currently working on, pulled from confirmed bookings and accepted applications, with status and progress tracked automatically.' : 'A real production dashboard for everything you\'re currently running, with status and progress tracked automatically instead of managed by hand.'}</p>
               </motion.div>
             )}
 
             {activeTab === 'finances' && (
-              <motion.div
-                key="finances"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-8"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[
-                    { label: 'Total Earnings', icon: Wallet },
-                    { label: 'Pending Payments', icon: Clock },
-                    { label: 'Active Contracts', icon: ShieldCheck },
-                  ].map((stat, i) => (
-                    <div key={i} className="relative glass-panel p-6">
-                      <ComingSoonTag />
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-white/5 rounded-xl">
-                          <stat.icon className="text-gold" size={24} />
-                        </div>
-                      </div>
-                      <div className="text-2xl font-bold mb-1">xxx</div>
-                      <div className="text-xs text-white/40 uppercase tracking-widest">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="relative glass-panel-blue p-8">
-                  <ComingSoonTag />
-                  <h3 className="text-xl font-bold mb-6">Transaction History</h3>
-                  <div className="space-y-4">
-                    {[0, 1, 2].map((i) => (
-                      <ScaffoldRow key={i} className="h-16" />
-                    ))}
-                  </div>
-                </div>
+              <motion.div key="finances" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Wallet size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Finances — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Real total earnings, pending payments, and active contracts, plus a real transaction history — tied to your actual bookings and payments instead of a static summary.</p>
               </motion.div>
             )}
 
@@ -2269,112 +2296,22 @@ export const ProfileSystem = ({
             )}
 
             {activeTab === 'counselling' && (
-              <motion.div
-                key="counselling"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
-                <div className="relative glass-panel-green p-12 text-center bg-gradient-to-br from-gold/10 to-transparent">
-                  <ComingSoonTag />
-                  <GraduationCap className="mx-auto mb-8 text-gold" size={60} />
-                  <h2 className="text-3xl font-bold mb-4">AI Career Counselling</h2>
-                  <p className="text-white/40 max-w-2xl mx-auto mb-10">
-                    Personalized career roadmaps for the Indian Art industries. Powered by real-time market data and industry trends.
-                  </p>
-                  <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="bg-black/30 border border-white/10 rounded-2xl p-8 text-left">
-                      <h4 className="font-bold mb-4 flex items-center gap-2 text-gold"><Zap size={18} /> Career Roadmap AI</h4>
-                      <ScaffoldRow className="h-16 mb-6" />
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <ScaffoldRow className="h-16" />
-                        <ScaffoldRow className="h-16" />
-                        <ScaffoldRow className="h-16" />
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => show('Career reports are coming soon.', 'info')}
-                      className="w-full bg-gold text-black py-4 rounded-xl font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform"
-                    >
-                      Generate Full Career Report
-                    </button>
-                  </div>
-                </div>
+              <motion.div key="counselling" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <GraduationCap size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">AI Career Counselling — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Personalized career roadmaps for the Indian Art industries, powered by real-time market data and industry trends.</p>
               </motion.div>
             )}
 
             {activeTab === 'management' && (
-              <motion.div
-                key="management"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-8"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 space-y-8">
-                    <div className="relative glass-panel-pink p-8">
-                      <ComingSoonTag />
-                      <div className="flex justify-between items-center mb-8">
-                        <h3 className="text-xl font-bold flex items-center gap-2">
-                          <Settings className="text-gold" /> Active Task Tracking
-                        </h3>
-                        <div className="flex gap-2">
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest">xxxxx Active</span>
-                          <span className="text-[10px] bg-crimson/10 text-crimson px-2 py-1 rounded-full font-bold uppercase tracking-widest">xxxxx Overdue</span>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        {[0, 1, 2].map((i) => (
-                          <ScaffoldRow key={i} className="h-16" />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="relative glass-panel-purple p-8">
-                      <ComingSoonTag />
-                      <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
-                        <Lock className="text-gold" /> Payment Milestone Lock
-                      </h3>
-                      <div className="space-y-6">
-                        {[0, 1, 2].map((i) => (
-                          <ScaffoldRow key={i} className="h-14" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-8">
-                    <div className="relative glass-panel p-6 bg-gradient-to-br from-crimson/10 to-transparent border-crimson/20">
-                      <ComingSoonTag />
-                      <div className="flex items-center gap-2 mb-4 text-crimson">
-                        <AlertCircle size={18} />
-                        <h3 className="font-bold">Deadline Alerts</h3>
-                      </div>
-                      <div className="space-y-4">
-                        <ScaffoldRow className="h-20" />
-                      </div>
-                    </div>
-
-                    <div className="relative glass-panel p-6">
-                      <ComingSoonTag />
-                      <h3 className="font-bold mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-gold" /> Productivity AI</h3>
-                      <div className="text-center py-4">
-                        <div className="text-4xl font-bold text-gold mb-2">xxxxx</div>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest">Efficiency Score</p>
-                        <div className="mt-6 space-y-2">
-                          <div className="flex justify-between text-[10px] uppercase tracking-widest">
-                            <span>Tasks Completed</span>
-                            <span>xxxxx</span>
-                          </div>
-                          <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                            <div className="bg-gold h-full" style={{ width: '0%' }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <motion.div key="management" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Briefcase size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Management — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Real active task tracking, payment milestone locks, deadline alerts, and a productivity score, all tied to your actual projects instead of a static demo.</p>
               </motion.div>
             )}
 
@@ -2385,60 +2322,255 @@ export const ProfileSystem = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="relative space-y-6"
               >
-                <ComingSoonTag />
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold">Portfolio Manager</h3>
-                  <button
-                    onClick={() => show('Uploading and organising media here is coming soon — use Media Gallery in Profile Details for now.', 'info')}
-                    className="bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2"
-                  >
-                    <Plus size={14} /> Add Media
-                  </button>
+                <div className="flex flex-wrap justify-between items-center gap-3">
+                  <div>
+                    <h3 className="text-2xl font-bold flex items-center gap-2">
+                      Portfolio
+                      <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
+                    </h3>
+                    <p className="text-white/40 text-sm mt-1">
+                      Real photos and reels from your portfolio — the same preview shown on Profile Details, with delete and share here.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSharePortfolio}
+                      disabled={!primaryPortfolioId || sharingPortfolio}
+                      className="bg-white/5 border border-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <Share2 size={14} /> {sharingPortfolio ? 'Creating link…' : 'Share Portfolio'}
+                    </button>
+                    <label className={cn(
+                      "bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2 cursor-pointer",
+                      mediaUploading && "opacity-50 pointer-events-none"
+                    )}>
+                      <Plus size={14} /> {mediaUploading ? 'Uploading…' : 'Add Media'}
+                      <input
+                        type="file"
+                        accept="image/*,video/*,audio/*"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadMedia(f); e.target.value = ''; }}
+                      />
+                    </label>
+                  </div>
                 </div>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  A dedicated space to organise showreels, headshots, and clips into collections — with
-                  reordering, cover selection, and per-item visibility — instead of the flat list Media
-                  Gallery shows today.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[0, 1, 2].map((i) => (
-                    <ScaffoldRow key={i} className="aspect-video" />
-                  ))}
-                </div>
+
+                {(portfoliosLoading || portfolioDetailLoading) && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[0, 1, 2].map((i) => (
+                      <ScaffoldRow key={i} className="aspect-video" />
+                    ))}
+                  </div>
+                )}
+
+                {!portfoliosLoading && !portfolioDetailLoading && (portfolios?.length ?? 0) === 0 && (
+                  <p className="text-sm text-white/30 italic">No portfolio yet — click "Add Media" to create one and upload your first piece.</p>
+                )}
+
+                {!portfolioDetailLoading && (portfolioDetail?.items.length ?? 0) === 0 && (portfolios?.length ?? 0) > 0 && (
+                  <p className="text-sm text-white/30 italic">No media yet — click "Add Media" to upload your first photo or reel.</p>
+                )}
+
+                {!portfolioDetailLoading && (portfolioDetail?.items.length ?? 0) > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {portfolioDetail!.items.map((item) => (
+                      <div key={item.id} className="relative aspect-video rounded-xl overflow-hidden bg-cinematic-gray border border-white/10 group">
+                        <button
+                          onClick={() => handleDeleteMediaItem(item.id)}
+                          disabled={deletingItemId === item.id}
+                          aria-label="Remove from portfolio"
+                          className="absolute top-2 right-2 z-10 bg-black/60 hover:bg-red-500/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                        >
+                          <X size={14} />
+                        </button>
+                        {item.mediaAssetId && item.assetType === 'video' && (
+                          <video controls preload="metadata" src={getAssetContentUrl(item.mediaAssetId)} className="h-full w-full object-cover" />
+                        )}
+                        {item.mediaAssetId && item.assetType === 'image' && (
+                          <img src={getAssetContentUrl(item.mediaAssetId)} alt={item.caption ?? item.title} className="h-full w-full object-cover" />
+                        )}
+                        {item.mediaAssetId && item.assetType !== 'video' && item.assetType !== 'image' && (
+                          <div className="h-full w-full flex flex-col items-center justify-center gap-2 p-3 text-center">
+                            <Image size={20} className="text-white/30" />
+                            <span className="text-[10px] text-white/40 line-clamp-2">{item.caption ?? item.title}</span>
+                          </div>
+                        )}
+                        {!item.mediaAssetId && (
+                          <div className="h-full w-full flex items-center justify-center p-3 text-center">
+                            <span className="text-[10px] text-white/40 line-clamp-3">{item.itemTitle || item.caption || item.title}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
             {activeTab === 'auditions' && (
               <motion.div key="auditions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Auditions Applied</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    My Applications
+                    <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
+                  </h2>
+                </div>
                 <p className="text-white/40 text-sm max-w-2xl">
-                  A single tracked list of every audition you've applied to — role, project, and where it
-                  stands (pending, shortlisted, rejected) — pulled directly from your real casting
-                  applications instead of you having to check each casting call individually.
+                  Every casting call and job you've applied to, and where it stands — pulled directly from
+                  your real applications instead of you having to check each listing individually.
                 </p>
-                <div className="space-y-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <ScaffoldRow key={i} className="h-20" />
+
+                <div className="flex flex-wrap gap-2">
+                  {(['all', 'active', 'shortlisted', 'selected', 'rejected', 'withdrawn'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setApplicationFilter(f)}
+                      className={cn(
+                        'px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors',
+                        applicationFilter === f ? 'bg-gold text-black' : 'bg-white/5 text-white/50 hover:text-white/80',
+                      )}
+                    >
+                      {f}
+                    </button>
                   ))}
                 </div>
+
+                {applicationsLoading && (
+                  <div className="space-y-4">
+                    {[0, 1, 2, 3].map((i) => (
+                      <ScaffoldRow key={i} className="h-20" />
+                    ))}
+                  </div>
+                )}
+
+                {!applicationsLoading && castingApplicationsError && (
+                  <div className="flex items-center gap-2 text-xs text-white/40 bg-white/5 border border-white/10 rounded-xl p-3">
+                    <AlertCircle size={14} className="text-white/30 shrink-0" />
+                    Casting applications couldn't be loaded right now ({castingApplicationsError}) — job applications below are unaffected.
+                  </div>
+                )}
+
+                {!applicationsLoading && jobApplicationsError && (
+                  <div className="flex items-center gap-2 text-xs text-white/40 bg-white/5 border border-white/10 rounded-xl p-3">
+                    <AlertCircle size={14} className="text-white/30 shrink-0" />
+                    Job applications couldn't be loaded right now ({jobApplicationsError}).
+                  </div>
+                )}
+
+                {!applicationsLoading && filteredApplications.length === 0 && !castingApplicationsError && !jobApplicationsError && (
+                  <p className="text-sm text-white/30 italic">
+                    {applicationFilter === 'all' ? "You haven't applied to anything yet." : `No applications with status "${applicationFilter}".`}
+                  </p>
+                )}
+
+                {!applicationsLoading && filteredApplications.length > 0 && (
+                  <div className="space-y-3">
+                    {filteredApplications.map((app) => {
+                      const bucket = isTerminalOrPending(app.status);
+                      const pillClass =
+                        bucket === 'selected' ? 'bg-emerald-500/15 text-emerald-400'
+                        : bucket === 'shortlisted' ? 'bg-gold/15 text-gold'
+                        : bucket === 'rejected' ? 'bg-red-500/15 text-red-400'
+                        : bucket === 'withdrawn' ? 'bg-white/10 text-white/40'
+                        : 'bg-blue-500/15 text-blue-400';
+                      const canWithdraw = bucket !== 'withdrawn' && bucket !== 'rejected' && bucket !== 'selected';
+                      const canRequestAudition = app.kind === 'casting' && app.status !== 'audition_requested' && bucket !== 'withdrawn' && bucket !== 'rejected' && bucket !== 'selected';
+                      const audition = applicationAuditions[app.id];
+                      const showSelfTape = app.kind === 'casting' && (audition || app.status === 'audition_requested');
+                      return (
+                        <div key={`${app.kind}-${app.id}`} className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {app.kind === 'casting' ? <Mic size={18} className="text-gold shrink-0" /> : <Briefcase size={18} className="text-gold shrink-0" />}
+                              <div className="min-w-0">
+                                <div className="font-medium truncate">{app.title}</div>
+                                <div className="text-xs text-white/40 flex items-center gap-1.5">
+                                  <Clock size={12} /> Applied {new Date(app.appliedAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className={cn('text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full', pillClass)}>
+                                {bucket.replace('_', ' ')}
+                              </span>
+                              {canRequestAudition && (
+                                <button
+                                  onClick={() => setAuditionFormAppId(auditionFormAppId === app.id ? null : app.id)}
+                                  className="text-xs font-bold uppercase tracking-widest text-gold hover:underline"
+                                >
+                                  Request Audition
+                                </button>
+                              )}
+                              {canWithdraw && (
+                                <button
+                                  onClick={() => handleWithdrawApplication(app)}
+                                  disabled={withdrawingAppId === app.id}
+                                  className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors disabled:opacity-50"
+                                >
+                                  {withdrawingAppId === app.id ? 'Withdrawing…' : 'Withdraw'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {auditionFormAppId === app.id && (
+                            <div className="bg-black/20 rounded-lg p-3 space-y-2 border border-white/10">
+                              <div className="flex gap-3">
+                                {(['self_tape', 'video_call', 'in_person'] as const).map((t) => (
+                                  <label key={t} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                    <input type="radio" name={`audition-type-${app.id}`} checked={auditionType === t} onChange={() => setAuditionType(t)} className="accent-gold" />
+                                    {t.replace('_', ' ')}
+                                  </label>
+                                ))}
+                              </div>
+                              <textarea
+                                value={auditionInstructions}
+                                onChange={(e) => setAuditionInstructions(e.target.value)}
+                                placeholder="Optional note to the casting director (availability, preferred slot, etc.)"
+                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs outline-none focus:border-gold min-h-[60px]"
+                              />
+                              <button
+                                onClick={() => handleRequestAudition(app.id)}
+                                disabled={requestingAuditionAppId === app.id}
+                                className="bg-gold text-black px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-50"
+                              >
+                                {requestingAuditionAppId === app.id ? 'Requesting…' : 'Send Request'}
+                              </button>
+                            </div>
+                          )}
+
+                          {showSelfTape && (
+                            <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+                              <label className={cn(
+                                "text-xs font-bold uppercase tracking-widest text-gold flex items-center gap-2 cursor-pointer",
+                                (submittingSelfTapeAppId === app.id || !audition) && "opacity-50 pointer-events-none",
+                              )}>
+                                <Upload size={14} />
+                                {submittingSelfTapeAppId === app.id ? 'Uploading…' : audition ? 'Submit Self-Tape' : 'Audition requested — self-tape upload available once confirmed'}
+                                <input
+                                  type="file"
+                                  accept="video/*"
+                                  className="hidden"
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSubmitSelfTape(app.id, f); e.target.value = ''; }}
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </motion.div>
             )}
 
             {activeTab === 'availability' && (
-              <motion.div key="availability" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Availability Calendar</h2>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  A real calendar of when you're free to work, kept in sync with your booked jobs, so
-                  casting directors and clients can see your availability before reaching out instead of
-                  guessing or asking directly.
-                </p>
-                <div className="grid grid-cols-7 gap-2">
-                  {Array.from({ length: 35 }).map((_, i) => (
-                    <ScaffoldRow key={i} className="aspect-square" />
-                  ))}
-                </div>
+              <motion.div key="availability" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Calendar size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Availability Calendar — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A real calendar of when you're free to work, kept in sync with your booked jobs, so casting directors and clients can see your availability before reaching out instead of guessing or asking directly.</p>
               </motion.div>
             )}
 
@@ -2460,127 +2592,97 @@ export const ProfileSystem = ({
             )}
 
             {activeTab === 'casting' && (
-              <motion.div key="casting" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Casting Panel</h2>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  Where you'll create and manage casting calls directly from your business profile, and
-                  track real applicants against each open role, instead of using the general Casting page alone.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[0, 1, 2].map((i) => (
-                    <ScaffoldRow key={i} className="h-32" />
-                  ))}
-                </div>
+              <motion.div key="casting" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Users size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Casting Panel — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Create and manage casting calls directly from your business profile, and track real applicants against each open role, instead of using the general Casting page alone.</p>
               </motion.div>
             )}
 
             {activeTab === 'budget' && (
-              <motion.div key="budget" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Budget Manager</h2>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  Real allocated/spent/remaining tracking per production, tied to actual bookings and
-                  payments instead of a static summary.
-                </p>
-                <div className="space-y-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <ScaffoldRow key={i} className="h-16" />
-                  ))}
-                </div>
+              <motion.div key="budget" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Calculator size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Budget Manager — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Real allocated/spent/remaining tracking per production, tied to actual bookings and payments instead of a static summary.</p>
               </motion.div>
             )}
 
             {activeTab === 'workflow' && (
-              <motion.div key="workflow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Workflow Tracker</h2>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  A real pre-production → production → post-production → distribution pipeline view per
-                  project, reflecting actual milestones instead of a fixed demo stage.
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <ScaffoldRow key={i} className="h-28" />
-                  ))}
-                </div>
+              <motion.div key="workflow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <Settings size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Workflow Tracker — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">A real pre-production → production → post-production → distribution pipeline view per project, reflecting actual milestones instead of a fixed demo stage.</p>
               </motion.div>
             )}
 
             {activeTab === 'legal' && (
-              <motion.div key="legal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-6">
-                <ComingSoonTag />
-                <h2 className="text-2xl font-bold">Contracts Vault</h2>
-                <p className="text-white/40 text-sm max-w-2xl">
-                  Where NDA/contract generation, IP timestamping, and your active contracts will live —
-                  real legal documents tied to your real bookings, not the AI-generated blockchain-badge
-                  claims the old build made without anything behind them.
-                </p>
-                <div className="space-y-4">
-                  {[0, 1, 2, 3].map((i) => (
-                    <ScaffoldRow key={i} className="h-16" />
-                  ))}
-                </div>
+              <motion.div key="legal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center gap-2 mb-2">
+              <ShieldCheck size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Contracts Vault — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">NDA/contract generation, IP timestamping, and your active contracts — real legal documents tied to your real bookings, not fabricated claims.</p>
               </motion.div>
             )}
           </AnimatePresence>
         </>
       )}
 
-      {/* Message thread — GET/POST /v1/conversations/{id}/messages, real. */}
+      {/* Message thread — GET/POST /v1/conversations/{id}/messages, real.
+          Inline corner panel (mirrors the WhatsApp button's fixed bottom
+          corner treatment) instead of a full-screen modal, per explicit
+          direction: this shouldn't block the rest of the page. */}
       <AnimatePresence>
         {activeConversation && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-            onMouseDown={(e) => { if (e.target === e.currentTarget) setActiveConversation(null); }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 left-6 z-[60] w-[22rem] max-w-[calc(100vw-3rem)] h-[28rem] max-h-[calc(100vh-3rem)] bg-cinematic-gray border border-white/10 flex flex-col rounded-2xl shadow-2xl overflow-hidden"
           >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-lg h-[70vh] flex flex-col rounded-3xl shadow-2xl overflow-hidden"
-            >
-              <div className="flex items-center justify-between p-5 border-b border-white/10">
-                <h3 className="font-bold">{activeConversation.participants?.[0]?.displayName ?? 'SosrG member'}</h3>
-                <button onClick={() => setActiveConversation(null)} className="text-white/40 hover:text-white p-1">
-                  <X size={20} />
-                </button>
-              </div>
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h3 className="font-bold text-sm">{activeConversation.participants?.[0]?.displayName ?? 'SosrG member'}</h3>
+              <button onClick={() => setActiveConversation(null)} className="text-white/40 hover:text-white p-1">
+                <X size={18} />
+              </button>
+            </div>
 
-              <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                {threadLoading && [0, 1, 2].map((i) => <ScaffoldRow key={i} className="h-10 w-2/3" />)}
-                {!threadLoading && threadMessages?.length === 0 && (
-                  <p className="text-xs text-white/30 italic text-center mt-8">No messages yet — say hello.</p>
-                )}
-                {!threadLoading && threadMessages?.map((m) => (
-                  <div key={m.id} className="bg-white/5 border border-white/10 rounded-xl p-3 max-w-[80%]">
-                    <p className="text-sm">{m.body}</p>
-                    <p className="text-[10px] text-white/30 mt-1">{new Date(m.createdAt).toLocaleTimeString()}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {threadLoading && [0, 1, 2].map((i) => <ScaffoldRow key={i} className="h-10 w-2/3" />)}
+              {!threadLoading && threadMessages?.length === 0 && (
+                <p className="text-xs text-white/30 italic text-center mt-8">No messages yet — say hello.</p>
+              )}
+              {!threadLoading && threadMessages?.map((m) => (
+                <div key={m.id} className="bg-white/5 border border-white/10 rounded-xl p-3 max-w-[80%]">
+                  <p className="text-sm">{m.body}</p>
+                  <p className="text-[10px] text-white/30 mt-1">{new Date(m.createdAt).toLocaleTimeString()}</p>
+                </div>
+              ))}
+            </div>
 
-              <div className="p-4 border-t border-white/10 flex gap-2">
-                <input
-                  type="text"
-                  value={messageDraft}
-                  onChange={(e) => setMessageDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !sendingMessage) handleSendMessage(); }}
-                  placeholder="Write a message…"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-gold"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={sendingMessage || !messageDraft.trim()}
-                  className="bg-gold text-black px-4 rounded-xl font-bold text-sm hover:bg-yellow-500 transition-colors disabled:opacity-50"
-                >
-                  Send
-                </button>
-              </div>
-            </motion.div>
+            <div className="p-3 border-t border-white/10 flex gap-2">
+              <input
+                type="text"
+                value={messageDraft}
+                onChange={(e) => setMessageDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !sendingMessage) handleSendMessage(); }}
+                placeholder="Write a message…"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-gold"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={sendingMessage || !messageDraft.trim()}
+                className="bg-gold text-black px-4 rounded-xl font-bold text-sm hover:bg-yellow-500 transition-colors disabled:opacity-50"
+              >
+                Send
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
