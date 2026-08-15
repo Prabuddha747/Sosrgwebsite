@@ -2,6 +2,17 @@ import { apiFetch } from '../httpClient';
 import { clearTokens, setAccessToken, setRefreshToken } from '../tokenStore';
 import type { AuthAccount, AuthService, AuthSession } from './types';
 
+// Public, unauthenticated deletion request (Play Console requires a web
+// form reachable without login) — distinct from the in-app authService
+// .deleteAccount() flow, which needs a live session + password.
+export async function requestAccountDeletion(email: string, reason?: string): Promise<void> {
+  await apiFetch<void>('/v1/auth/account-deletion/request', {
+    method: 'POST',
+    body: { email, reason },
+    skipAuth: true,
+  });
+}
+
 interface AuthTokens {
   accessToken: string;
   refreshToken: string;

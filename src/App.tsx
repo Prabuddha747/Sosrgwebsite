@@ -23,6 +23,7 @@ import { AdminPage } from './pages/AdminPage';
 import { Sosrg7EPage } from './pages/Sosrg7EPage';
 import { AppLoader } from './components/layout/AppLoader';
 import { BiharDocumentaryRegistration } from './pages/BiharDocumentaryRegistration';
+import { AccountDeletionRequest } from './pages/AccountDeletionRequest';
 import { useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/community" element={<RequireProfile><CommunityHub /></RequireProfile>} />
 
           <Route path="/bihar-untold" element={<BiharDocumentaryRegistration />} />
+          <Route path="/account-deletion" element={<AccountDeletionRequest />} />
 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
