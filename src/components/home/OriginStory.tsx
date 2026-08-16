@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import onSetImage from '../../assets/community/on-set.png';
 import backstageImage from '../../assets/community/backstage.png';
-import openMicImage from '../../assets/community/open-mic.png';
+import portfolioImage from '../../assets/community/portfolio.png';
 import rehearsalImage from '../../assets/community/rehearsal.png';
 import workshopImage from '../../assets/community/workshop.png';
 import sosrgMark from '../../assets/sosrg-mark.jpeg';
@@ -14,7 +14,7 @@ import sosrgMark from '../../assets/sosrg-mark.jpeg';
 const MILESTONES = [
   { label: 'Theatre', desc: 'A passion for performing and storytelling.', image: onSetImage },
   { label: 'Filmmaking', desc: 'Bringing stories to life on screen.', image: backstageImage },
-  { label: 'Writing', desc: 'Crafting words that move hearts.', image: openMicImage },
+  { label: 'Writing', desc: 'Crafting words that move hearts.', image: portfolioImage },
   { label: 'Direction', desc: 'Leading visions and creative teams.', image: rehearsalImage },
   { label: 'Community', desc: 'Building a circle of artists and dreamers.', image: workshopImage },
 ];

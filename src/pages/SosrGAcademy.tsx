@@ -173,7 +173,7 @@ export const SosrGAcademy = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <GraduationCap size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">SosrG Scholarships — Visit Our App</h2>
+              <h2 className="text-3xl font-bold">Apply for SosrG Scholarship</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">
               An AI model evaluating your portfolio, engagement, and talent rating to automatically assess

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Film,
@@ -2458,9 +2459,17 @@ export const ProfileSystem = ({
                 )}
 
                 {!applicationsLoading && filteredApplications.length === 0 && !castingApplicationsError && !jobApplicationsError && (
-                  <p className="text-sm text-white/30 italic">
-                    {applicationFilter === 'all' ? "You haven't applied to anything yet." : `No applications with status "${applicationFilter}".`}
-                  </p>
+                  <div className="flex flex-col items-start gap-3">
+                    <p className="text-sm text-white/30 italic">
+                      {applicationFilter === 'all' ? "You haven't applied to anything yet." : `No applications with status "${applicationFilter}".`}
+                    </p>
+                    <Link
+                      to="/casting"
+                      className="text-xs font-bold uppercase tracking-widest text-gold hover:text-gold/80 transition-colors"
+                    >
+                      Explore more →
+                    </Link>
+                  </div>
                 )}
 
                 {!applicationsLoading && filteredApplications.length > 0 && (

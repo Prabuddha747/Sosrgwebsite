@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Briefcase, Building2, Camera, Check, ChevronLeft, Clapperboard, Landmark, Theater } from 'lucide-react';
+import { Briefcase, Building2, Camera, Check, ChevronLeft, Clapperboard, Landmark, Loader2, Theater, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { profilesService } from '../../services/profiles';
 import type { ApiProfileType, Profession } from '../../services/profiles';
 import { ApiError } from '../../services/httpClient';
-import { Button, Input, Textarea, useToast } from '../../design-system';
+import { Button, Input, Select, useToast } from '../../design-system';
 import { SelectTile, SplitStepImage, StepIndicator, StepTransition } from '../../components/wizard/WizardKit';
 import { cn } from '../../lib/utils';
 
@@ -35,6 +35,14 @@ const PROFESSION_REQUIRED_TYPES: ApiProfileType[] = ['artist', 'model'];
 // "I'm a Studio" CTAs, carried through /signup as a query param — this just
 // preselects the matching tile below, it never removes the others.
 const INTENT_TO_TYPE: Record<string, ApiProfileType> = { artist: 'artist', studio: 'business' };
+
+const GENDER_OPTIONS = [
+  { value: '', label: 'Select…' },
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'non_binary', label: 'Non-binary' },
+  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+];
 
 // Real photos already in the project (src/assets/community) — no new
 // sourcing needed for this rebuild, these already cover every step
@@ -80,12 +88,18 @@ export const ProfileSetupPage = () => {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [pincode, setPincode] = useState('');
-  const [bio, setBio] = useState('');
+  const [genderIdentity, setGenderIdentity] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
 
   const [currentStepId, setCurrentStepId] = useState<StepId>('type');
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+
+  // Debounced live username-availability check: GET /v1/profiles/{username}
+  // returns null (404 PROFILE_NOT_FOUND) when it's free, a profile when
+  // it's taken — no dedicated availability endpoint exists, this repurposes
+  // the public-profile lookup already used by PublicProfilePage.
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
   useEffect(() => {
     profilesService
@@ -94,6 +108,21 @@ export const ProfileSetupPage = () => {
       .catch(() => setProfessions([]))
       .finally(() => setProfessionsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!username || !/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameStatus('idle');
+      return;
+    }
+    setUsernameStatus('checking');
+    const timeout = setTimeout(() => {
+      profilesService
+        .getPublicProfile(username)
+        .then((profile) => setUsernameStatus(profile ? 'taken' : 'available'))
+        .catch(() => setUsernameStatus('idle'));
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [username]);
 
   const professionRequired = profileType != null && PROFESSION_REQUIRED_TYPES.includes(profileType);
 
@@ -120,7 +149,8 @@ export const ProfileSetupPage = () => {
   };
 
   const usernameValid = /^[a-zA-Z0-9_]+$/.test(username);
-  const detailsValid = usernameValid && displayName.trim().length > 0;
+  const detailsValid =
+    usernameValid && usernameStatus !== 'taken' && displayName.trim().length > 0 && pincode.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!profileType) return;
@@ -134,12 +164,15 @@ export const ProfileSetupPage = () => {
         professionId: professionRequired && professionId ? Number(professionId) : undefined,
         pincode: pincode || undefined,
       });
-      if (bio || dateOfBirth) {
+      if (genderIdentity || dateOfBirth) {
         try {
-          await profilesService.updateProfile({ bio: bio || undefined, dateOfBirth: dateOfBirth || undefined });
+          await profilesService.updateProfile({
+            genderIdentity: genderIdentity || undefined,
+            dateOfBirth: dateOfBirth || undefined,
+          });
           await refreshProfile();
         } catch {
-          // Profile itself was created fine — bio/DOB can still be added
+          // Profile itself was created fine — gender/DOB can still be added
           // from Profile → Basic Information if this follow-up call fails.
         }
       }
@@ -249,17 +282,34 @@ export const ProfileSetupPage = () => {
                 <h1 className="font-auth-display text-sosrg-3xl text-text-primary mb-2">Let's complete your profile</h1>
                 <p className="font-body text-sosrg-base text-text-muted mb-8">These details help others find and connect with you.</p>
                 <div className="flex flex-col gap-4">
+                  <Input label="Display name" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                   <Input
                     label="Username"
                     required
+                    prefix="@"
                     pattern="[a-zA-Z0-9_]+"
+                    placeholder="SosrG"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    error={username && !usernameValid ? 'Letters, numbers, and underscores only.' : undefined}
+                    error={
+                      username && !usernameValid
+                        ? 'Letters, numbers, and underscores only.'
+                        : usernameStatus === 'taken'
+                          ? 'That username is already taken.'
+                          : undefined
+                    }
+                    suffix={
+                      usernameStatus === 'checking' ? (
+                        <Loader2 size={16} className="animate-spin text-text-muted" />
+                      ) : usernameStatus === 'available' ? (
+                        <Check size={16} className="text-success" />
+                      ) : usernameStatus === 'taken' ? (
+                        <X size={16} className="text-danger" />
+                      ) : undefined
+                    }
                   />
-                  <Input label="Display name" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                  <Input label="Pincode (optional)" value={pincode} onChange={(e) => setPincode(e.target.value)} />
-                  <Textarea label="Bio (optional)" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself, your journey, and what you love to do…" />
+                  <Select label="Gender" options={GENDER_OPTIONS} value={genderIdentity} onChange={(e) => setGenderIdentity(e.target.value)} />
+                  <Input label="Pincode" required value={pincode} onChange={(e) => setPincode(e.target.value)} />
                   <Input label="Date of birth (optional)" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
                 </div>
                 <div className="flex justify-end mt-8">

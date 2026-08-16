@@ -241,7 +241,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               activeSection === 'bihar-documentary' ? "text-gold" : "text-white/60"
             )}
           >
-            <Film size={14} className="mb-[2px]" /> BHub
+            <Film size={14} className="mb-[2px]" /> BCreators
           </button>
 
           <button
@@ -340,7 +340,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
                     )}
                   >
                     <Film size={18} className={activeSection === 'bihar-documentary' ? "text-gold" : "text-white/40"} />
-                    BHub
+                    BCreators
                   </button>
                 </div>
               </div>

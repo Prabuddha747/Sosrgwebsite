@@ -39,14 +39,18 @@ const FieldWrapper = ({ id, label, error, children }: FieldWrapperProps) => {
   );
 };
 
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id'> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'prefix'> {
   id?: string;
   label: string;
   error?: string;
+  /** Fixed text/icon rendered inside the field's left edge, e.g. "@" on a username input. */
+  prefix?: React.ReactNode;
+  /** Rendered inside the field's right edge, e.g. an inline availability-check status. */
+  suffix?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, id, type, ...props }, ref) => {
+  ({ label, error, className, id, type, prefix, suffix, ...props }, ref) => {
     const generatedId = useId();
     const fieldId = id ?? generatedId;
     const isPassword = type === 'password';
@@ -55,15 +59,23 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <FieldWrapper id={fieldId} label={label} error={error}>
         {(describedBy) => (
           <div className="relative">
+            {prefix && (
+              <span className="absolute left-[1em] top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+                {prefix}
+              </span>
+            )}
             <input
               ref={ref}
               id={fieldId}
               type={isPassword ? (visible ? 'text' : 'password') : type}
               aria-invalid={!!error}
               aria-describedby={describedBy}
-              className={fieldClasses(!!error, cn(isPassword && 'pr-11', className))}
+              className={fieldClasses(!!error, cn(prefix && 'pl-6', (isPassword || suffix) && 'pr-11', className))}
               {...props}
             />
+            {suffix && !isPassword && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2">{suffix}</span>
+            )}
             {isPassword && (
               <button
                 type="button"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Film,
@@ -81,6 +82,7 @@ import {
 import { cn } from '../lib/utils';
 
 export const EcosystemHub = () => {
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'hierarchy' | 'revenue' | 'franchise' | 'monitoring' | 'counselling' | 'grading' | 'event-builder' | 'franchise-structure'>('hierarchy');
   
   const CP_LEVELS = [
@@ -161,6 +163,7 @@ export const EcosystemHub = () => {
           <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
             {[
               { id: 'hierarchy', label: 'CP Hierarchy', icon: Users },
+              { id: '7e', label: 'SosrG 7E', icon: Star },
               { id: 'franchise-structure', label: 'Franchise Structure', icon: Network },
               { id: 'revenue', label: 'Revenue Engine', icon: Wallet },
               { id: 'franchise', label: 'Academy Franchise', icon: Building2 },
@@ -171,7 +174,7 @@ export const EcosystemHub = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveView(tab.id as any)}
+                onClick={() => (tab.id === '7e' ? navigate('/sosrg-7e') : setActiveView(tab.id as any))}
                 className={cn(
                   "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
                   activeView === tab.id ? "bg-gold text-black" : "text-white/60 hover:text-white"
