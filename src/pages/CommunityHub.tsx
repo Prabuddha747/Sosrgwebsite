@@ -24,7 +24,6 @@ import {
   Award,
   TrendingUp,
   Briefcase,
-  Gavel,
   ShoppingBag,
   Wallet,
   MessageSquare,
@@ -81,7 +80,7 @@ import {
 import { cn } from '../lib/utils';
 
 export const CommunityHub = () => {
-  const [activeTab, setActiveTab] = useState<'sharing' | 'news'>('sharing');
+  const [activeTab, setActiveTab] = useState<'sharing' | 'forum' | 'news'>('sharing');
 
   return (
     <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
@@ -93,6 +92,7 @@ export const CommunityHub = () => {
         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
           {[
             { id: 'sharing', label: 'Content Sharing', icon: Share2 },
+            { id: 'forum', label: 'Forum', icon: MessageCircle },
             { id: 'news', label: 'Industry News', icon: Newspaper },
           ].map((tab) => (
             <button
@@ -127,6 +127,26 @@ export const CommunityHub = () => {
               writing with a short description, and the community can discover, like, and comment
               on it. Theatre groups, institutes, and agencies will show up here too going forward,
               folded into this single feed instead of a separate directory.
+            </p>
+          </motion.div>
+        )}
+
+        {activeTab === 'forum' && (
+          <motion.div
+            key="forum"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <MessageCircle size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Forum — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">
+              An open public feed for the whole community — post a short update or question, and
+              anyone can reply, the way a public timeline works. Not the same as Content Sharing's
+              longer posts above: this is for quick, open discussion.
             </p>
           </motion.div>
         )}

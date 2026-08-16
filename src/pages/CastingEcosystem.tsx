@@ -21,7 +21,6 @@ import {
   X,
   Zap,
   Lock,
-  Globe,
   Award,
   TrendingUp,
   Briefcase,
@@ -65,7 +64,6 @@ import {
   UserPlus,
   Home,
   UserCheck,
-  MessageCircle,
   HeartHandshake,
   Newspaper,
   MoreHorizontal,
@@ -103,6 +101,18 @@ function formatCastingBudget(call: { compensationType: string; budgetMinMinor: n
   return `${fmt(call.budgetMinMinor)} – ${fmt(call.budgetMaxMinor)}`;
 }
 
+// Curated preview cards, not live accounts — no crew-search API exists yet.
+// Same treatment as the Talent Directory preview grid: real-looking regional
+// names/roles instead of shimmer, gated behind "visit our app" on click.
+const MOCK_PROFESSIONALS = [
+  { id: '1', name: 'Ravi Malhotra', role: 'Director of Photography', location: 'Mumbai, Maharashtra' },
+  { id: '2', name: 'Fatima Sheikh', role: 'Sound Recordist', location: 'Hyderabad, Telangana' },
+  { id: '3', name: 'Karamjeet Sandhu', role: 'Gaffer', location: 'Chandigarh, Punjab' },
+  { id: '4', name: 'Ritu Chaudhary', role: 'Makeup & Prosthetics Artist', location: 'Lucknow, Uttar Pradesh' },
+  { id: '5', name: 'Ashok Mahato', role: 'Line Producer', location: 'Patna, Bihar' },
+  { id: '6', name: 'Vikram Rathi', role: 'Editor', location: 'Gurugram, Haryana' },
+];
+
 export const CastingEcosystem = () => {
   // Casting Calls is the only tab with real listings behind it, so it's
   // the landing view now instead of the decorative Home tab — arriving at
@@ -112,7 +122,6 @@ export const CastingEcosystem = () => {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [builderMode, setBuilderMode] = useState<'ai' | 'manual'>('ai');
   const [crewMode, setCrewMode] = useState<'jobs' | 'professionals'>('jobs');
-  const [forumMode, setForumMode] = useState<'messages' | 'community'>('community');
   const [crewSector, setCrewSector] = useState('All Sectors');
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedCall, setSelectedCall] = useState<any>(null);
@@ -603,9 +612,9 @@ export const CastingEcosystem = () => {
             doing the hiring — with crew hiring, audition tools, and industry networking on the way.
           </p>
           <p className="text-white/50 text-base">
-            Casting Calls is live now, pulling real listings you can apply to today. Hiring Crew, AI
-            Matchmaking, Audition Studio, Network, Forum, Workshops, and more are still being built —
-            take a look at what's coming.
+            Casting Calls and Hiring Crew job listings are live now, pulling real listings you can
+            apply to today. AI Matchmaking, Audition Studio, Workshops, and more are still being
+            built — take a look at what's coming.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mt-6">
             <button
@@ -638,8 +647,8 @@ export const CastingEcosystem = () => {
               // { id: 'home', label: 'Home', icon: Home },
               // { id: 'matchmaking', label: 'AI Matchmaking', icon: Cpu },
               // { id: 'studio', label: 'Audition Studio', icon: Video },
-              { id: 'network', label: 'Network', icon: Globe },
-              { id: 'forum', label: 'Forum', icon: MessageCircle },
+              // Network/Forum removed — Casting & Forum in Network > Community
+              // already covers this (CommunityHub.tsx), no need to duplicate it here.
               // { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'workshops', label: 'Workshops', icon: BookOpen },
               { id: 'mentorship', label: 'Mentorship', icon: GraduationCap },
@@ -963,34 +972,22 @@ export const CastingEcosystem = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="relative glass-panel p-6">
-                    <ComingSoonTag />
-                    <ScaffoldRow className="h-32" />
-                  </div>
+                {MOCK_PROFESSIONALS.map((person) => (
+                  <button
+                    key={person.id}
+                    onClick={() => show(`To connect with ${person.name} and other professionals like them, visit our app.`, 'info')}
+                    className="glass-panel p-6 text-left hover:border-gold/30 transition-colors"
+                  >
+                    <div className="w-12 h-12 mb-4 rounded-xl bg-white/5 flex items-center justify-center text-gold font-bold">
+                      {person.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <h3 className="font-bold text-sm mb-1">{person.name}</h3>
+                    <p className="text-sm text-white/60 mb-1">{person.role}</p>
+                    <p className="text-xs text-white/40">{person.location}</p>
+                  </button>
                 ))}
               </div>
             )}
-          </motion.div>
-        )}
-
-        {view === 'network' && (
-          <motion.div key="network" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Globe size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Network — Visit Our App</h2>
-            </div>
-            <p className="text-white/60 max-w-3xl mb-6">A directory to connect directly with other casting-industry professionals — casting directors, crew, and fellow talent — beyond the general Community page.</p>
-          </motion.div>
-        )}
-
-        {view === 'forum' && (
-          <motion.div key="forum" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <div className="flex items-center gap-2 mb-2">
-              <MessageCircle size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Forum — Visit Our App</h2>
-            </div>
-            <p className="text-white/60 max-w-3xl mb-6">Sector-specific discussion boards and direct messaging for casting and industry topics, separate from the general Community page.</p>
           </motion.div>
         )}
 
