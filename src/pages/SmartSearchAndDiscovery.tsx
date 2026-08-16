@@ -1,118 +1,83 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Film,
-  Theater,
-  PenTool,
-  Music,
+import {
   User,
   Search,
-  Cpu,
-  ShieldCheck,
-  FileText,
-  LayoutDashboard,
-  Star,
-  ChevronRight,
-  Play,
-  Mic,
-  Video,
-  Menu,
-  X,
-  Zap,
-  Lock,
-  Globe,
-  Award,
-  TrendingUp,
-  Briefcase,
-  Gavel,
-  ShoppingBag,
-  Wallet,
-  MessageSquare,
-  Trophy,
-  Clock,
-  Check,
-  Upload,
-  Settings,
-  ArrowUpRight,
-  ArrowDownRight,
-  Scale,
-  FileCheck,
-  History,
-  CheckCircle,
-  CheckCircle2,
-  AlertCircle,
   Users,
-  Calendar,
-  MapPin,
-  BarChart3,
-  PieChart,
-  Building2,
-  GraduationCap,
-  Heart,
-  Handshake,
-  Calculator,
-  Ticket,
-  Palette,
-  BookOpen,
-  Store,
-  Network,
-  Image,
-  Instagram,
-  Youtube,
-  ExternalLink,
-  Plus,
-  Share2,
   Filter,
-  UserPlus,
-  Home,
-  UserCheck,
-  MessageCircle,
-  HeartHandshake,
-  Newspaper,
-  MoreHorizontal,
-  ShoppingCart,
-  Moon,
-  Sun,
-  Languages,
-  ArrowUp,
-  HelpCircle,
-  ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
+import { useToast } from '../design-system';
+
+type Sector = 'Cinema' | 'Theatre' | 'Literature' | 'Music' | 'Dance' | 'Art & Design' | 'Crafts';
+
+interface TalentPreview {
+  id: string;
+  name: string;
+  role: string;
+  sector: Sector;
+  location: string;
+  isAgency: boolean;
+}
+
+// Curated preview cards, not live accounts — the real directory lives in the
+// app. Spread across each Core Creative Sector and across Haryanvi, Bihari,
+// Mumbai, Hyderabadi, UP, Delhi and Punjabi talent so every sector/tab
+// combination below has something to show.
+const TALENT_PREVIEW: TalentPreview[] = [
+  { id: '1', name: 'Aditya Chaudhary', role: 'Film Director', sector: 'Cinema', location: 'Rohtak, Haryana', isAgency: false },
+  { id: '2', name: 'Neha Sinha', role: 'Lead Actor / Actress', sector: 'Cinema', location: 'Patna, Bihar', isAgency: false },
+  { id: '3', name: 'Rohan Deshmukh', role: 'Stage Performer', sector: 'Theatre', location: 'Mumbai, Maharashtra', isAgency: false },
+  { id: '4', name: 'Simran Kaur', role: 'Theatre Director', sector: 'Theatre', location: 'Amritsar, Punjab', isAgency: false },
+  { id: '5', name: 'Ankit Tiwari', role: 'Screenwriter', sector: 'Literature', location: 'Lucknow, Uttar Pradesh', isAgency: false },
+  { id: '6', name: 'Priya Reddy', role: 'Poet & Author', sector: 'Literature', location: 'Hyderabad, Telangana', isAgency: false },
+  { id: '7', name: 'Gurpreet Singh', role: 'Vocalist & Composer', sector: 'Music', location: 'Ludhiana, Punjab', isAgency: false },
+  { id: '8', name: 'Anjali Yadav', role: 'Music Producer', sector: 'Music', location: 'Varanasi, Uttar Pradesh', isAgency: false },
+  { id: '9', name: 'Sandeep Kumar', role: 'Folk Dance Artist', sector: 'Dance', location: 'Gurugram, Haryana', isAgency: false },
+  { id: '10', name: 'Kavya Nair', role: 'Choreographer', sector: 'Dance', location: 'Hyderabad, Telangana', isAgency: false },
+  { id: '11', name: 'Meera Agarwal', role: 'Creative Director', sector: 'Art & Design', location: 'New Delhi, Delhi', isAgency: false },
+  { id: '12', name: 'Farhan Ali', role: 'Set Designer', sector: 'Art & Design', location: 'Lucknow, Uttar Pradesh', isAgency: false },
+  { id: '13', name: 'Suman Devi', role: 'Handloom Artisan', sector: 'Crafts', location: 'Muzaffarpur, Bihar', isAgency: false },
+  { id: '14', name: 'Harpreet Bhatia', role: 'Costume Artisan', sector: 'Crafts', location: 'Chandigarh, Punjab', isAgency: false },
+  { id: '15', name: 'Delhi Cinema Collective', role: 'Production House', sector: 'Cinema', location: 'New Delhi, Delhi', isAgency: true },
+  { id: '16', name: 'Punjab Rangmanch Society', role: 'Theatre Group', sector: 'Theatre', location: 'Amritsar, Punjab', isAgency: true },
+  { id: '17', name: 'Bihar Sahitya Circle', role: 'Writers Collective', sector: 'Literature', location: 'Patna, Bihar', isAgency: true },
+  { id: '18', name: 'Hyderabad Sound Studio', role: 'Music Label', sector: 'Music', location: 'Hyderabad, Telangana', isAgency: true },
+  { id: '19', name: 'Haryana Nritya Academy', role: 'Dance Academy', sector: 'Dance', location: 'Rohtak, Haryana', isAgency: true },
+  { id: '20', name: 'UP Design House', role: 'Design Studio', sector: 'Art & Design', location: 'Lucknow, Uttar Pradesh', isAgency: true },
+  { id: '21', name: 'Punjab Handicrafts Co-op', role: 'Artisan Collective', sector: 'Crafts', location: 'Ludhiana, Punjab', isAgency: true },
+];
+
+const SECTORS: ('All' | Sector)[] = ['All', 'Cinema', 'Theatre', 'Literature', 'Music', 'Dance', 'Art & Design', 'Crafts'];
 
 export const SmartSearchAndDiscovery = () => {
+  const { show } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSector, setActiveSector] = useState('All');
-  const [activeTab, setActiveTab] = useState<'individuals' | 'agencies'>('individuals');
-  
-  const SECTORS = ['All', 'Cinema', 'Theatre', 'Literature', 'Music', 'Dance', 'Art & Design', 'Crafts'];
+  const [activeSector, setActiveSector] = useState<'All' | Sector>('All');
+  const [activeTab, setActiveTab] = useState<'Creators' | 'agencies'>('Creators');
 
   const [filters, setFilters] = useState({
     role: '',
-    experience: '',
     location: '',
-    verified: false,
-    available: false
   });
 
-  const TALENT_DATA = [
-    { id: 1, name: 'Aisha Sharma', sector: 'Cinema', role: 'Lead Actor', rating: 4.9, location: 'Mumbai', verified: true, available: true, rate: '₹5,000/hr', image: 'https://picsum.photos/seed/aisha/400/400', trending: 'Top 1% this week', portfolio: ['Feature Film X', 'Indie Short Y'] },
-    { id: 2, name: 'Vikram Singh', sector: 'Cinema', role: 'Cinematographer', rating: 4.8, location: 'Delhi', verified: true, available: false, rate: '₹8,000/hr', image: 'https://picsum.photos/seed/vikram/400/400', trending: '3 active auctions', portfolio: ['Award Winning Ad', 'Docu-Series'] },
-    { id: 3, name: 'Neha Gupta', sector: 'Literature', role: 'Screenwriter', rating: 4.7, location: 'Bangalore', verified: false, available: true, rate: '₹3,000/hr', image: 'https://picsum.photos/seed/neha/400/400', trending: 'Script picked by Studio X', portfolio: ['Thriller Script', 'Rom-Com Pitch'] },
-    { id: 4, name: 'Rahul Dev', sector: 'Music', role: 'Music Producer', rating: 4.9, location: 'Chennai', verified: true, available: true, rate: '₹10,000/track', image: 'https://picsum.photos/seed/rahul/400/400', trending: 'Chart Topper', portfolio: ['Indie Pop Album', 'BGM Score'] },
-    { id: 5, name: 'Priya Patel', sector: 'Dance', role: 'Choreographer', rating: 4.8, location: 'Mumbai', verified: true, available: true, rate: '₹4,000/hr', image: 'https://picsum.photos/seed/priya/400/400', trending: 'Viral Routine', portfolio: ['Music Video Z', 'Stage Show'] },
-    { id: 6, name: 'Kabir Khan', sector: 'Theatre', role: 'Stage Director', rating: 4.6, location: 'Kolkata', verified: true, available: false, rate: '₹50,000/play', image: 'https://picsum.photos/seed/kabir/400/400', trending: 'Sold Out Shows', portfolio: ['Modern Adaptation', 'Classic Play'] },
-    { id: 7, name: 'Ananya Rao', sector: 'Art & Design', role: 'Set Designer', rating: 4.9, location: 'Hyderabad', verified: true, available: true, rate: '₹15,000/day', image: 'https://picsum.photos/seed/ananya/400/400', trending: 'Award Winner', portfolio: ['Period Drama Set', 'Sci-Fi Stage'] },
-    { id: 8, name: 'Arjun Das', sector: 'Crafts', role: 'Costume Artisan', rating: 4.7, location: 'Jaipur', verified: false, available: true, rate: '₹2,000/piece', image: 'https://picsum.photos/seed/arjun/400/400', trending: 'Heritage Crafts', portfolio: ['Historical Costumes', 'Handloom Collection'] },
-  ];
+  const filteredTalent = TALENT_PREVIEW.filter((p) => {
+    if (activeTab === 'Creators' && p.isAgency) return false;
+    if (activeTab === 'agencies' && !p.isAgency) return false;
 
-  const filteredTalent = TALENT_DATA.filter(t => 
-    (activeSector === 'All' || t.sector === activeSector) &&
-    (searchQuery === '' || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.role.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (!filters.verified || t.verified) &&
-    (!filters.available || t.available)
-  );
+    if (activeSector !== 'All' && p.sector !== activeSector) return false;
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q && !`${p.name} ${p.role}`.toLowerCase().includes(q)) return false;
+
+    if (filters.role.trim() && !p.role.toLowerCase().includes(filters.role.trim().toLowerCase())) return false;
+    if (filters.location.trim() && !p.location.toLowerCase().includes(filters.location.trim().toLowerCase())) return false;
+
+    return true;
+  });
+
+  const openInApp = (name: string) =>
+    show(`To connect with ${name} and explore more talent like them, visit our app.`, 'info');
 
   return (
     <div className="pt-32 pb-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen">
@@ -123,9 +88,9 @@ export const SmartSearchAndDiscovery = () => {
         </div>
         <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search by name, role, or skill..." 
+          <input
+            type="text"
+            placeholder="Search by name, role, or skill..."
             className="w-full bg-white/5 border border-white/10 rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-gold transition-colors"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,8 +100,8 @@ export const SmartSearchAndDiscovery = () => {
 
       <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar mb-8 w-fit">
         {[
-          { id: 'individuals', label: 'Individuals', icon: User },
-          { id: 'agencies', label: 'Agencies & Groups', icon: Users },
+          { id: 'creators', label: 'creators', icon: User },
+          { id: 'agencies', label: 'Business', icon: Users },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -153,7 +118,7 @@ export const SmartSearchAndDiscovery = () => {
 
       <div className="flex gap-2 overflow-x-auto no-scrollbar mb-8 pb-2">
         {SECTORS.map(sector => (
-          <button 
+          <button
             key={sector}
             onClick={() => setActiveSector(sector)}
             className={cn(
@@ -174,75 +139,29 @@ export const SmartSearchAndDiscovery = () => {
               <Filter size={18} className="text-gold" />
               <h3 className="font-bold uppercase tracking-widest text-sm">Advanced Filters</h3>
             </div>
-            
+
             <div className="space-y-6">
               <div>
                 <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Role</label>
-                <select 
+                <input
+                  type="text"
+                  placeholder="e.g. Actor, Cinematographer"
                   className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-gold"
                   value={filters.role}
-                  onChange={(e) => setFilters({...filters, role: e.target.value})}
-                >
-                  <option value="">All Roles</option>
-                  <option value="actor">Actor</option>
-                  <option value="director">Director</option>
-                  <option value="writer">Writer</option>
-                  <option value="cinematographer">Cinematographer</option>
-                </select>
+                  onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                />
               </div>
 
               <div>
                 <label className="text-xs text-white/40 block mb-2 uppercase tracking-widest">Location</label>
-                <select 
+                <input
+                  type="text"
+                  placeholder="City or state"
                   className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-gold"
                   value={filters.location}
-                  onChange={(e) => setFilters({...filters, location: e.target.value})}
-                >
-                  <option value="">Any Location</option>
-                  <option value="mumbai">Mumbai</option>
-                  <option value="delhi">Delhi</option>
-                  <option value="bangalore">Bangalore</option>
-                  <option value="chennai">Chennai</option>
-                </select>
+                  onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                />
               </div>
-
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className={cn(
-                    "w-5 h-5 rounded border flex items-center justify-center transition-colors",
-                    filters.verified ? "bg-emerald-500 border-emerald-500" : "border-white/20 group-hover:border-white/40"
-                  )}>
-                    {filters.verified && <Check size={14} className="text-white" />}
-                  </div>
-                  <span className="text-sm font-medium">Green ID Verified Only</span>
-                  <input 
-                    type="checkbox" 
-                    className="hidden"
-                    checked={filters.verified}
-                    onChange={(e) => setFilters({...filters, verified: e.target.checked})}
-                  />
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className={cn(
-                    "w-5 h-5 rounded border flex items-center justify-center transition-colors",
-                    filters.available ? "bg-blue-500 border-blue-500" : "border-white/20 group-hover:border-white/40"
-                  )}>
-                    {filters.available && <Check size={14} className="text-white" />}
-                  </div>
-                  <span className="text-sm font-medium">Available for Hire</span>
-                  <input 
-                    type="checkbox" 
-                    className="hidden"
-                    checked={filters.available}
-                    onChange={(e) => setFilters({...filters, available: e.target.checked})}
-                  />
-                </label>
-              </div>
-
-              <button className="w-full bg-white/5 border border-white/10 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
-                Apply Filters
-              </button>
             </div>
           </div>
         </div>
@@ -257,28 +176,26 @@ export const SmartSearchAndDiscovery = () => {
               exit={{ opacity: 0, y: -20 }}
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
-              {filteredTalent.map((artist) => (
-                // Talent Directory has no live search/profile-listing API yet
-                // (see doc/API_REQUIREMENTS.md) — every card is a shimmer
-                // placeholder rather than the invented name/rating/rate data
-                // this page used to show as if it were real.
-                <div key={artist.id} className="relative glass-panel p-4 flex flex-col h-full">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="aspect-[4/5] rounded-xl mb-4 shrink-0" />
-                  <div className="flex-1 flex flex-col gap-2">
-                    <ScaffoldRow className="h-5 w-3/4" />
-                    <ScaffoldRow className="h-4 w-1/2" />
-                    <ScaffoldRow className="h-4 w-full" />
-                    <div className="flex gap-2 mt-auto pt-2">
-                      <button disabled className="flex-1 py-2 bg-white/5 rounded-lg text-xs font-bold text-white/30 cursor-not-allowed">
-                        View Profile
-                      </button>
-                      <button disabled className="flex-1 py-2 bg-white/5 rounded-lg text-xs font-bold text-white/30 cursor-not-allowed">
-                        Hire Now
-                      </button>
-                    </div>
+              {filteredTalent.map((person) => (
+                <button
+                  key={person.id}
+                  onClick={() => openInApp(person.name)}
+                  className="relative glass-panel p-4 flex flex-col h-full text-left hover:border-gold/50 border border-transparent transition-colors"
+                >
+                  <div className="aspect-[4/5] rounded-xl mb-4 shrink-0 overflow-hidden bg-white/5 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-white/20">
+                      {person.name.slice(0, 2).toUpperCase()}
+                    </span>
                   </div>
-                </div>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <h3 className="font-bold truncate">{person.name}</h3>
+                    <p className="text-sm text-white/60 truncate">{person.role}</p>
+                    <p className="text-xs text-white/40 truncate">{person.location}</p>
+                    <span className="mt-auto pt-3 text-xs font-bold uppercase tracking-widest text-gold">
+                      View Profile
+                    </span>
+                  </div>
+                </button>
               ))}
               {filteredTalent.length === 0 && (
                 <div className="col-span-1 md:col-span-2 xl:col-span-3 text-center py-12 text-white/40">
@@ -287,6 +204,16 @@ export const SmartSearchAndDiscovery = () => {
               )}
             </motion.div>
           </AnimatePresence>
+
+          {filteredTalent.length > 0 && (
+            <div className="glass-panel mt-10 p-10 text-center flex flex-col items-center gap-3">
+              <h2 className="text-2xl font-bold">Explore More Like Them — Visit Our App</h2>
+              <p className="text-white/60 max-w-lg">
+                Thousands more creative professionals are discoverable, bookable, and ready to
+                collaborate in the SosrG app — this directory is just a preview.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -10,6 +10,8 @@ import type {
   PrivacySettings,
   ProfileDetails,
   Profession,
+  ProfileSearchParams,
+  ProfileSearchResult,
   ProfilesService,
   SkillProficiencyInput,
   SwitchProfileRoleInput,
@@ -52,6 +54,14 @@ export const apiProfilesService: ProfilesService = {
       if (err instanceof ApiError && err.code === 'PROFILE_NOT_FOUND') return null;
       throw err;
     }
+  },
+
+  // GET /v1/profiles — verified live against the OpenAPI spec at
+  // https://sosrg-api-292824095440.asia-south1.run.app/docs this session.
+  // Powers the Talent Directory grid; no rating/verified/rate fields exist
+  // on this response, only PublicProfileResponseDto's real fields.
+  async searchProfiles(params: ProfileSearchParams = {}) {
+    return apiFetch<ProfileSearchResult>('/v1/profiles', { query: { ...params } });
   },
 
   async updateProfile(input: UpdateProfileInput) {

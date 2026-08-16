@@ -100,6 +100,47 @@ export interface MyProfile {
   details: ProfileDetails;
 }
 
+// Subset of MyProfile actually returned by GET /v1/profiles and
+// GET /v1/profiles/{username} — PublicProfileResponseDto per the live spec.
+// No rating/verified/available/rate fields exist on this DTO; don't invent
+// them for card UI, they weren't real on the old mock data either.
+export interface PublicProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  profileType: ApiProfileType;
+  headline: string | null;
+  bio: string | null;
+  yearsExperience: number | null;
+  profileImagePath: string | null;
+  websiteUrl: string | null;
+  district: string | null;
+  state: string | null;
+  zone: string | null;
+  country: string;
+  tier: 'free' | 'premium' | 'professional';
+  professions: ProfileProfession[];
+  skills: ProfileSkill[];
+  languages: ProfileLanguage[];
+}
+
+export interface ProfileSearchParams {
+  profileType?: ApiProfileType;
+  professionId?: number;
+  skillId?: number;
+  pincode?: string;
+  district?: string;
+  state?: string;
+  zone?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ProfileSearchResult {
+  items: PublicProfile[];
+  nextCursor: string | null;
+}
+
 export interface CreateProfileInput {
   profileType: ApiProfileType;
   username: string;
@@ -202,6 +243,7 @@ export interface ProfilesService {
   getMyProfile(): Promise<MyProfile | null>;
   getProfessions(): Promise<Profession[]>;
   getPublicProfile(username: string): Promise<MyProfile | null>;
+  searchProfiles(params?: ProfileSearchParams): Promise<ProfileSearchResult>;
   updateProfile(input: UpdateProfileInput): Promise<MyProfile>;
   updateProfileDetails(input: UpdateProfileDetailsInput): Promise<ProfileDetails>;
   updatePrivacySettings(input: Partial<PrivacySettings>): Promise<PrivacySettings>;
