@@ -143,6 +143,16 @@ Cross-reference of every endpoint in the live OpenAPI spec against this frontend
 | PATCH /v1/conversations/{id}/preferences | ❌ | Not wrapped — no per-conversation mute/preferences UI |
 | POST /v1/conversations/{id}/messages/{id}/report | ❌ | Not wrapped — no report-message UI |
 
+## Backend-gated features found during section review (not in the OpenAPI spec at all)
+
+These aren't gaps in wiring — the endpoints don't exist on the backend yet. Logged here as they're found so they don't get lost.
+
+| API needed | Route / location | Usage |
+|---|---|---|
+| Create community post (author + short description + attached media + optional link) | Would live in a new `src/services/community/` (doesn't exist) | Backs `CommunityHub.tsx` "Content Sharing" tab's post box (`:167-190`) — currently no `onClick`, posts nowhere |
+| List community post feed (all users) | Same, new service | Backs the feed below the post box (`:192-218`) — currently 3 hardcoded "Coming Soon" placeholder cards |
+| *(already exists)* GET /v1/media/assets/{id}/content | `src/services/media/apiMediaService.ts` → `getAssetContentUrl()` | ✅ Confirmed live, no-auth for `visibility: "public"` assets — this part already works and is reusable the moment posts exist; the missing piece is only the post/feed data model above |
+
 ## Notable gaps worth flagging
 - **Messaging is the least complete surface** (4/9): most critically, there's no way to *start* a new conversation (`POST /v1/conversations/direct` unwrapped) — messaging only works once a conversation already exists.
 - **`GET /v1/profiles`** (profile search/list) is unwrapped — this single endpoint is what both the planned search bar and Nearby You feature need (Phase 2 of the current feature-backlog plan).
