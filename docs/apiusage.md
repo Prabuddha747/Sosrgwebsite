@@ -2,13 +2,13 @@
 
 Cross-reference of every endpoint in the live OpenAPI spec against this frontend's `src/services/` wrappers. "Used" = wrapped by a service method (or, for media content, constructed as a direct URL) and reachable from the app. Endpoints not wrapped are unreachable from this codebase today, even if the backend supports them.
 
-**Total: 75 / 96 endpoints used (~78%)**
+**Total: 76 / 96 endpoints used (~79%)**
 
 | Category | Used |
 |---|---|
 | Health | 0 / 2 |
 | Authentication | 13 / 16 |
-| Profiles | 19 / 21 |
+| Profiles | 20 / 21 |
 | Portfolios | 12 / 13 |
 | Media | 6 / 8 |
 | Job Postings | 7 / 12 |
@@ -46,7 +46,7 @@ Cross-reference of every endpoint in the live OpenAPI spec against this frontend
 |---|---|---|
 | GET /v1/professions | ✅ | `getProfessions()` — `ProfileSetupPage.tsx` profession step |
 | POST /v1/profiles | ✅ | `createProfile()` — `ProfileSetupPage.tsx` submit |
-| GET /v1/profiles | ❌ | **Not wrapped** — this is the search/list endpoint (`ProfileSearchResponseDto`). Planned for the new search bar / Nearby You (Phase 2) |
+| GET /v1/profiles | ✅ | `searchProfiles()` — used by `EcosystemHub.tsx`'s "Nearby" panel (pincode match, falls back to state match). Talent Directory (`SmartSearchAndDiscovery.tsx`) still uses a curated preview dataset instead, since live seed accounts have empty `professions`/no photos and don't read as a real directory — swap-in is small once real profiles exist. Search bar (Phase 2) still unbuilt |
 | GET /v1/profiles/me | ✅ | `getMyProfile()` — `MyProfilePage.tsx` |
 | PATCH /v1/profiles/me | ✅ | `updateProfile()` — `ProfileSystem.tsx` edit forms |
 | PATCH /v1/profiles/me/role | ✅ | `switchProfileRole()` — `ProfileSystem.tsx` role switch |
@@ -152,6 +152,7 @@ These aren't gaps in wiring — the endpoints don't exist on the backend yet. Lo
 | Create community post (author + short description + attached media + optional link) | Would live in a new `src/services/community/` (doesn't exist) | Backs `CommunityHub.tsx` "Content Sharing" tab's post box (`:167-190`) — currently no `onClick`, posts nowhere |
 | List community post feed (all users) | Same, new service | Backs the feed below the post box (`:192-218`) — currently 3 hardcoded "Coming Soon" placeholder cards |
 | *(already exists)* GET /v1/media/assets/{id}/content | `src/services/media/apiMediaService.ts` → `getAssetContentUrl()` | ✅ Confirmed live, no-auth for `visibility: "public"` assets — this part already works and is reusable the moment posts exist; the missing piece is only the post/feed data model above |
+| Forum: public open-discussion feed (post short update, anyone can reply — Twitter-style, not a 1:1 DM) | Would live in a new `src/services/forum/` (doesn't exist) | Backs `CommunityHub.tsx` "Forum" tab (`:136-152`) — currently a "Visit Our App" scaffold. Confirmed against the live spec: every messaging endpoint is scoped to `/v1/conversations/{id}/messages`, and `POST /v1/conversations/direct` only creates 1:1 conversations — no public/group/broadcast conversation type exists, so this can't be built on top of the existing messaging API as-is |
 
 ## Notable gaps worth flagging
 - **Messaging is the least complete surface** (4/9): most critically, there's no way to *start* a new conversation (`POST /v1/conversations/direct` unwrapped) — messaging only works once a conversation already exists.
