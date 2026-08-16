@@ -292,6 +292,16 @@
   box-shadow: 6px 6px 14px rgba(28, 23, 18, 0.12), -6px -6px 14px rgba(249, 115, 22, 0.12);
 }
 
+/* Backdrop for the EcosystemHub India map (IndiaMap.tsx) — was a plain
+   bg-black/30 utility, which reads fine on the dark theme but leaves a
+   black box sitting in an otherwise cream light-mode page. */
+.india-map-panel {
+  background: rgba(0, 0, 0, 0.3);
+}
+.light-mode .india-map-panel {
+  background: rgba(28, 23, 18, 0.06);
+}
+
 .light-mode .text-white { color: #1C1712 !important; }
 .light-mode .text-white\/10 { color: rgba(28, 23, 18, 0.3) !important; }
 .light-mode .text-white\/20 { color: rgba(28, 23, 18, 0.4) !important; }

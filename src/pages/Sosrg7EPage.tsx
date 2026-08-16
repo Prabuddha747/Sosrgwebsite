@@ -1,5 +1,5 @@
-export const Sosrg7EPage = () => (
-  <div className="pt-32 pb-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen space-y-24">
+export const Sosrg7EContent = () => (
+  <>
     {/* Education */}
     <div>
       <h1 className="text-5xl font-extrabold tracking-tight mb-12"><span className="gold-text">Education</span> (Learning)</h1>
@@ -107,5 +107,11 @@ export const Sosrg7EPage = () => (
         </div>
       </div>
     </div>
+  </>
+);
+
+export const Sosrg7EPage = () => (
+  <div className="pt-32 pb-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen space-y-24">
+    <Sosrg7EContent />
   </div>
 );

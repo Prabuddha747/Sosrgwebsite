@@ -56,7 +56,6 @@ import {
   Palette,
   BookOpen,
   Store,
-  Network,
   Image,
   Instagram,
   Youtube,
@@ -77,13 +76,75 @@ import {
   Languages,
   ArrowUp,
   HelpCircle,
-  ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { profilesService, type PublicProfile } from '../services/profiles';
+import { ScaffoldRow } from '../components/ScaffoldUI';
+import { Sosrg7EContent } from './Sosrg7EPage';
+import { IndiaMap } from '../components/ecosystem/IndiaMap';
 
 export const EcosystemHub = () => {
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState<'hierarchy' | 'revenue' | 'franchise' | 'monitoring' | 'counselling' | 'grading' | 'event-builder' | 'franchise-structure'>('hierarchy');
+  const { profile } = useAuth();
+  const homeState = profile?.state ?? null;
+
+  const [nearby, setNearby] = useState<PublicProfile[]>([]);
+  const [nearbyMode, setNearbyMode] = useState<'pincode' | 'state' | null>(null);
+  const [nearbyLoading, setNearbyLoading] = useState(true);
+
+  // Pincode is private (only on the caller's own MyProfile), so "nearby"
+  // means: ask the search API for other profiles sharing it — the API does
+  // the matching server-side and only ever returns district/state back, the
+  // raw pincode itself never appears in anyone else's response. Falls back
+  // to same-state matches when there's no pincode match (or none set).
+  useEffect(() => {
+    if (!profile) return;
+    let cancelled = false;
+    setNearbyLoading(true);
+
+    const withoutSelf = (items: PublicProfile[]) => items.filter((p) => p.id !== profile.id);
+
+    (async () => {
+      if (profile.pincode) {
+        const byPincode = await profilesService.searchProfiles({ pincode: profile.pincode, limit: 6 });
+        const matches = withoutSelf(byPincode.items);
+        if (matches.length > 0) {
+          if (!cancelled) {
+            setNearby(matches);
+            setNearbyMode('pincode');
+          }
+          return;
+        }
+      }
+      if (profile.state) {
+        const byState = await profilesService.searchProfiles({ state: profile.state, limit: 6 });
+        if (!cancelled) {
+          setNearby(withoutSelf(byState.items));
+          setNearbyMode('state');
+        }
+        return;
+      }
+      if (!cancelled) {
+        setNearby([]);
+        setNearbyMode(null);
+      }
+    })()
+      .catch(() => {
+        if (!cancelled) {
+          setNearby([]);
+          setNearbyMode(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setNearbyLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile]);
+  const [activeView, setActiveView] = useState<'hierarchy' | '7e' | 'franchise' | 'monitoring' | 'counselling' | 'grading' | 'event-builder'>('hierarchy');
   
   const CP_LEVELS = [
     { 
@@ -154,56 +215,32 @@ export const EcosystemHub = () => {
 
   return (
     <div className="pt-32 px-6 w-full max-w-400 mx-auto min-h-screen pb-24">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+      <div className="flex flex-col gap-6 mb-12">
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">SosrG <span className="gold-text">Ecosystem</span></h1>
           <p className="text-white/50">The infrastructure behind SosrG — AI-supported, multi-level, and built to grow with every Connecting Partner in it.</p>
         </div>
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
-            {[
-              { id: 'hierarchy', label: 'CP Hierarchy', icon: Users },
-              { id: '7e', label: 'SosrG 7E', icon: Star },
-              { id: 'franchise-structure', label: 'Franchise Structure', icon: Network },
-              { id: 'revenue', label: 'Revenue Engine', icon: Wallet },
-              { id: 'franchise', label: 'Academy Franchise', icon: Building2 },
-              // { id: 'monitoring', label: 'AI Monitoring', icon: BarChart3 },
-              // { id: 'counselling', label: 'AI Counselling', icon: GraduationCap },
-              // { id: 'grading', label: 'AI Grading', icon: Star },
-              // { id: 'event-builder', label: 'AI Event Builder', icon: Calendar },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => (tab.id === '7e' ? navigate('/sosrg-7e') : setActiveView(tab.id as any))}
-                className={cn(
-                  "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                  activeView === tab.id ? "bg-gold text-black" : "text-white/60 hover:text-white"
-                )}
-              >
-                <tab.icon size={16} /> {tab.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-fit">
+          {[
+            { id: 'hierarchy', label: 'CP Hierarchy', icon: Users },
+            { id: '7e', label: 'SosrG 7E', icon: Star },
+            { id: 'franchise', label: 'Apply for Franchise', icon: Building2 },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveView(tab.id as any)}
+              className={cn(
+                "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                activeView === tab.id ? "bg-gold text-black" : "text-white/60 hover:text-white"
+              )}
+            >
+              <tab.icon size={16} /> {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
       <AnimatePresence mode="wait">
-        {activeView === 'franchise-structure' && (
-          <motion.div
-            key="franchise-structure"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <Network size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Franchise Structure — Visit Our App</h2>
-            </div>
-            <p className="text-white/60 max-w-3xl mb-6">A multi-tiered franchise model for regional leaders and Connecting Partners, with performance tracking at every level.</p>
-          </motion.div>
-        )}
-
         {activeView === 'hierarchy' && (
           <motion.div
             key="hierarchy"
@@ -214,11 +251,11 @@ export const EcosystemHub = () => {
           >
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               {CP_LEVELS.map((cp, i) => (
-                <button 
-                  key={cp.id} 
+                <button
+                  key={cp.id}
                   onClick={() => setSelectedCP(cp)}
                   className={cn(
-                    "glass-panel p-6 text-center relative group transition-all",
+                    "glass-panel p-6 text-center relative transition-all",
                     selectedCP?.id === cp.id ? "border-gold shadow-lg shadow-gold/10" : "hover:border-gold/30"
                   )}
                 >
@@ -307,13 +344,16 @@ export const EcosystemHub = () => {
                 <MapPin className="text-gold" /> Location-Based Artist Connection
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-black/30 rounded-2xl border border-white/10 h-[400px] relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-20 bg-[url('https://picsum.photos/seed/india-map/1200/800')] bg-cover bg-center" />
-                  <div className="absolute inset-0 flex items-center justify-center">
+                <div className="lg:col-span-2 india-map-panel rounded-2xl border border-white/10 h-[400px] relative overflow-hidden p-4">
+                  <IndiaMap highlightState={homeState} />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="text-center">
-                      <Globe className="text-gold/20 mx-auto mb-4" size={80} />
-                      <p className="text-white/40 text-sm">Interactive India Artist Map</p>
-                      <p className="text-[10px] uppercase tracking-widest text-gold mt-2 animate-pulse">Scanning 28 States & 8 UTs...</p>
+                      <p className="text-white/50 text-sm font-medium">
+                        {homeState ? `Interactive ${homeState} Artist Map` : 'Interactive India Artist Map'}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest text-gold mt-2 animate-pulse">
+                        {homeState ? `Scanning ${homeState}...` : 'Scanning 28 States & 8 UTs...'}
+                      </p>
                     </div>
                   </div>
                   {/* Mock Pins */}
@@ -322,42 +362,57 @@ export const EcosystemHub = () => {
                   <div className="absolute bottom-1/3 right-1/4 w-3 h-3 bg-blue-500 rounded-full blue-glow animate-ping" />
                 </div>
                 <div className="space-y-4">
-                  <h4 className="font-bold text-sm uppercase tracking-widest text-white/60">Nearby Artists</h4>
-                  {[
-                    { name: 'Rahul V.', role: 'Actor', dist: '2.4 km', status: 'Available' },
-                    { name: 'Sneha K.', role: 'Dancer', dist: '5.1 km', status: 'In Project' },
-                    { name: 'Amit S.', role: 'Director', dist: '8.9 km', status: 'Available' },
-                    { name: 'Priya M.', role: 'Writer', dist: '12.4 km', status: 'Available' },
-                  ].map((artist, i) => (
-                    <div key={i} className="p-4 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center">
-                      <div>
-                        <div className="font-bold text-sm">{artist.name}</div>
-                        <div className="text-[10px] text-white/40 uppercase tracking-widest">{artist.role} • {artist.dist}</div>
-                      </div>
-                      <span className={cn("text-[8px] font-bold px-2 py-1 rounded uppercase tracking-widest", artist.status === 'Available' ? "bg-emerald-500/10 text-emerald-400" : "bg-white/10 text-white/40")}>
-                        {artist.status}
-                      </span>
-                    </div>
-                  ))}
+                  <h4 className="font-bold text-sm uppercase tracking-widest text-white/60">
+                    Nearby{nearbyMode === 'pincode' ? ' — Same Pincode' : nearbyMode === 'state' ? ` — ${homeState}` : ''}
+                  </h4>
+
+                  {nearbyLoading && (
+                    <>
+                      <ScaffoldRow className="h-14" />
+                      <ScaffoldRow className="h-14" />
+                      <ScaffoldRow className="h-14" />
+                    </>
+                  )}
+
+                  {!nearbyLoading && nearby.length === 0 && (
+                    <p className="text-xs text-white/40 p-4 bg-white/5 rounded-xl border border-white/5">
+                      {profile?.pincode || profile?.state
+                        ? 'No other creators found near you yet.'
+                        : 'Add your pincode to your profile to discover nearby creators.'}
+                    </p>
+                  )}
+
+                  {!nearbyLoading &&
+                    nearby.map((person) => (
+                      <button
+                        key={person.id}
+                        onClick={() => navigate(`/profile/${person.username}`)}
+                        className="w-full p-4 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center text-left hover:border-gold/30 transition-colors"
+                      >
+                        <div>
+                          <div className="font-bold text-sm">{person.displayName}</div>
+                          <div className="text-[10px] text-white/40 uppercase tracking-widest">
+                            {person.professions[0]?.name ?? person.profileType.replace('_', ' ')}
+                            {person.district ? ` • ${person.district}` : ''}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </div>
             </div>
           </motion.div>
         )}
 
-        {activeView === 'revenue' && (
+        {activeView === '7e' && (
           <motion.div
-            key="revenue"
+            key="7e"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
+            className="space-y-24"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <Wallet size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Revenue Engine — Visit Our App</h2>
-            </div>
-            <p className="text-white/60 max-w-3xl mb-6">Real-time revenue tracking and payout breakdowns across the franchise network — commission splits, regional performance, and settlement status.</p>
+            <Sosrg7EContent />
           </motion.div>
         )}
 
@@ -371,9 +426,13 @@ export const EcosystemHub = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <Building2 size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Academy Franchise — Visit Our App</h2>
+              <h2 className="text-3xl font-bold">Apply for Franchise — Visit Our App</h2>
             </div>
-            <p className="text-white/60 max-w-3xl mb-6">A franchise pathway for running a local SosrG Academy — training programs, enrollment, and revenue share for franchise partners.</p>
+            <p className="text-white/60 max-w-3xl mb-6">
+              A multi-tiered franchise model for regional leaders and Connecting Partners — open a
+              local SosrG Academy or franchise, with training programs, enrollment, revenue share,
+              and performance tracking at every level.
+            </p>
           </motion.div>
         )}
 
