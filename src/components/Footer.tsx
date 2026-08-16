@@ -129,9 +129,13 @@ const Footer = () => {
             © {new Date().getFullYear()} Society Of Self Recognising Grace
           </p>
           <div className="flex gap-8 md:gap-12">
-            {['Privacy', 'Engagement', 'Protocols'].map((item, i) => (
-              <Link key={i} to="#" className="text-[9px] text-[#F5F4F2]/20 hover:text-[#B9914A] uppercase tracking-[0.4em] font-black transition-all">
-                {item}
+            {[
+              { name: 'Privacy', path: '/privacy-policy' },
+              { name: 'Engagement', path: '#' },
+              { name: 'Protocols', path: '#' },
+            ].map((item, i) => (
+              <Link key={i} to={item.path} className="text-[9px] text-[#F5F4F2]/20 hover:text-[#B9914A] uppercase tracking-[0.4em] font-black transition-all">
+                {item.name}
               </Link>
             ))}
           </div>
