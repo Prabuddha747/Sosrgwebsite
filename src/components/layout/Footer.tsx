@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Film,
@@ -120,7 +121,7 @@ export const Footer = () => (
     <div className="max-w-[1600px] mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/20">
       <p>© 2026 SosrG Creative Industry Platform. All rights reserved.</p>
       <div className="flex gap-8">
-        <a href="#">Privacy Policy</a>
+        <Link to="/privacy-policy">Privacy Policy</Link>
         <a href="#">Terms of Service</a>
         <a href="#">Cookie Policy</a>
       </div>
