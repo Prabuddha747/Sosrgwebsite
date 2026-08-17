@@ -426,7 +426,7 @@ export const ProfileSystem = ({
     setSavingPrivacyField('portfolioVisibility');
     try {
       await profilesService.updatePrivacySettings({ portfolioVisibility: value });
-      show('Portfolio visibility updated.', 'success');
+      show('My Clips visibility updated.', 'success');
     } catch (err) {
       setPrivacy((p) => ({ ...p, portfolioVisibility: prev }));
       show(err instanceof ApiError ? err.message : 'Could not update portfolio visibility.', 'error');
@@ -1135,7 +1135,7 @@ export const ProfileSystem = ({
               { id: 'membership', label: 'Membership', icon: Star },
               { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'services', label: 'Services & Gigs', icon: Briefcase },
-              { id: 'portfolio', label: 'Portfolio', icon: User },
+              { id: 'portfolio', label: 'My Clips', icon: User },
               ...(profile.type === 'artist' ? [
                 // { id: 'availability', label: 'Availability Calendar', icon: Calendar },
                 // { id: 'ai-insights', label: 'AI Match Suggestions', icon: Zap },
@@ -1612,7 +1612,7 @@ export const ProfileSystem = ({
                         preview so the two don't duplicate full management UI. */}
                     <HoverGlowPanel className="glass-panel p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold flex items-center gap-2"><Image size={16} className="text-gold" /> Portfolio</h3>
+                        <h3 className="font-bold flex items-center gap-2"><Image size={16} className="text-gold" /> My Clips</h3>
                         <div className="flex items-center gap-3">
                           <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
                           <button onClick={() => setActiveTab('portfolio')} className="text-[9px] uppercase tracking-widest font-bold text-gold hover:underline">
@@ -1630,11 +1630,11 @@ export const ProfileSystem = ({
                       )}
 
                       {!portfoliosLoading && !portfolioDetailLoading && (portfolios?.length ?? 0) === 0 && (
-                        <p className="text-xs text-white/30 italic mb-4">No portfolio yet — this is where your photos, reels, and work samples will show up.</p>
+                        <p className="text-xs text-white/30 italic mb-4">No clips yet — this is where your photos, reels, and work samples will show up.</p>
                       )}
 
                       {!portfoliosLoading && !portfolioDetailLoading && (portfolios?.length ?? 0) > 0 && (portfolioDetail?.items.length ?? 0) === 0 && (
-                        <p className="text-xs text-white/30 italic mb-4">No media in your portfolio yet — upload a photo or reel below.</p>
+                        <p className="text-xs text-white/30 italic mb-4">No clips yet — upload a photo or reel below.</p>
                       )}
 
                       {!portfolioDetailLoading && (portfolioDetail?.items.length ?? 0) > 0 && (
@@ -1917,7 +1917,7 @@ export const ProfileSystem = ({
 
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-bold text-sm">Portfolio Visibility</h4>
+                          <h4 className="font-bold text-sm">My Clips Visibility</h4>
                           <p className="text-xs text-white/50">Control who can see your media assets.</p>
                         </div>
                         <select
@@ -2326,11 +2326,11 @@ export const ProfileSystem = ({
                 <div className="flex flex-wrap justify-between items-center gap-3">
                   <div>
                     <h3 className="text-2xl font-bold flex items-center gap-2">
-                      Portfolio
+                      My Clips
                       <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
                     </h3>
                     <p className="text-white/40 text-sm mt-1">
-                      Real photos and reels from your portfolio — the same preview shown on Profile Details, with delete and share here.
+                      Your real photos and reels — the same preview shown on Profile Details, with delete and share here.
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -2339,7 +2339,7 @@ export const ProfileSystem = ({
                       disabled={!primaryPortfolioId || sharingPortfolio}
                       className="bg-white/5 border border-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      <Share2 size={14} /> {sharingPortfolio ? 'Creating link…' : 'Share Portfolio'}
+                      <Share2 size={14} /> {sharingPortfolio ? 'Creating link…' : 'Share My Clips'}
                     </button>
                     <label className={cn(
                       "bg-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2 cursor-pointer",
@@ -2365,11 +2365,11 @@ export const ProfileSystem = ({
                 )}
 
                 {!portfoliosLoading && !portfolioDetailLoading && (portfolios?.length ?? 0) === 0 && (
-                  <p className="text-sm text-white/30 italic">No portfolio yet — click "Add Media" to create one and upload your first piece.</p>
+                  <p className="text-sm text-white/30 italic">No clips yet — click "Add Media" to upload your first photo or reel.</p>
                 )}
 
                 {!portfolioDetailLoading && (portfolioDetail?.items.length ?? 0) === 0 && (portfolios?.length ?? 0) > 0 && (
-                  <p className="text-sm text-white/30 italic">No media yet — click "Add Media" to upload your first photo or reel.</p>
+                  <p className="text-sm text-white/30 italic">No clips yet — click "Add Media" to upload your first photo or reel.</p>
                 )}
 
                 {!portfolioDetailLoading && (portfolioDetail?.items.length ?? 0) > 0 && (
@@ -2379,8 +2379,8 @@ export const ProfileSystem = ({
                         <button
                           onClick={() => handleDeleteMediaItem(item.id)}
                           disabled={deletingItemId === item.id}
-                          aria-label="Remove from portfolio"
-                          className="absolute top-2 right-2 z-10 bg-black/60 hover:bg-red-500/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                          aria-label="Remove from My Clips"
+                          className="absolute top-2 right-2 z-10 bg-black/60 hover:bg-red-500/80 text-white rounded-full p-1.5 transition-colors disabled:opacity-50"
                         >
                           <X size={14} />
                         </button>

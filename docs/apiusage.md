@@ -96,39 +96,41 @@ Cross-reference of every endpoint in the live OpenAPI spec against this frontend
 | POST /v1/media/assets/{id}/download | ❌ | Not wrapped — no "download original" UI exists |
 
 ## Job Postings (`src/services/jobs/`)
-| Endpoint | Used | Where / why not |
-|---|---|---|
-| POST /v1/job-posts | ✅ | `createJobPost()` |
-| GET /v1/job-posts | ✅ | `listJobPosts()` — `CastingEcosystem.tsx` Hiring Crew tab |
-| GET /v1/job-posts/{id} | ✅ | `getJobPost()` |
-| PATCH /v1/job-posts/{id} | ❌ | Not wrapped — no "edit job post" UI |
-| POST /v1/job-posts/{id}/submit-review | ✅ | `submitJobPostForReview()` |
-| POST /v1/job-posts/{id}/close | ❌ | Not wrapped — no close-job-post UI (casting calls have this, job posts don't) |
-| POST /v1/job-posts/{id}/cancel | ❌ | Not wrapped — same gap |
-| POST /v1/job-posts/{id}/applications | ✅ | `applyToJobPost()` — "Apply Now" |
-| GET /v1/job-posts/{id}/applications | ❌ | Not wrapped — recruiter-side "view applicants to my job post" has no UI |
-| GET /v1/job-applications/me | ✅ | `listMyJobApplications()` — "My Applications" tab |
-| POST /v1/job-applications/{id}/withdraw | ✅ | `withdrawJobApplication()` |
-| PATCH /v1/job-applications/{id}/status | ❌ | Not wrapped — recruiter-side status update (shortlist/reject) has no UI for job posts |
+"Used" = wrapped by a service method. That's not the same as reachable in the UI — see the new **Reachable from UI** column: a couple of these are wired, verified-live service methods that no component currently calls.
+
+| Endpoint | Used | Reachable from UI | Where / why not |
+|---|---|---|---|
+| POST /v1/job-posts | ✅ | ❌ Redirects to app | `createJobPost()` exists, curl-verified live, but `CastingEcosystem.tsx`'s "Create Job Post" tab is a "Visit Our App" placeholder — no component calls this method |
+| GET /v1/job-posts | ✅ | ✅ Live | `listJobPosts()` — `CastingEcosystem.tsx` Hiring Crew tab |
+| GET /v1/job-posts/{id} | ✅ | ✅ Live | `getJobPost()` |
+| PATCH /v1/job-posts/{id} | ❌ | — | Not wrapped — no "edit job post" UI |
+| POST /v1/job-posts/{id}/submit-review | ✅ | ❌ Redirects to app | `submitJobPostForReview()` exists but is unreachable for the same reason as `createJobPost()` above — the form that would call it doesn't exist in the UI |
+| POST /v1/job-posts/{id}/close | ❌ | — | Not wrapped — no close-job-post UI (casting calls have this, job posts don't) |
+| POST /v1/job-posts/{id}/cancel | ❌ | — | Not wrapped — same gap |
+| POST /v1/job-posts/{id}/applications | ✅ | ✅ Live | `applyToJobPost()` — "Apply Now" |
+| GET /v1/job-posts/{id}/applications | ❌ | — | Not wrapped — recruiter-side "view applicants to my job post" has no UI |
+| GET /v1/job-applications/me | ✅ | ✅ Live | `listMyJobApplications()` — "My Applications" tab |
+| POST /v1/job-applications/{id}/withdraw | ✅ | ✅ Live | `withdrawJobApplication()` |
+| PATCH /v1/job-applications/{id}/status | ❌ | — | Not wrapped — recruiter-side status update (shortlist/reject) has no UI for job posts |
 
 ## Casting Calls (`src/services/casting/`)
-| Endpoint | Used | Where / why not |
-|---|---|---|
-| POST /v1/casting-calls | ✅ | `createCastingCall()` |
-| GET /v1/casting-calls | ✅ | `listCastingCalls()` — `CastingEcosystem.tsx` |
-| GET /v1/casting-calls/{id} | ✅ | `getCastingCall()` |
-| PATCH /v1/casting-calls/{id} | ✅ | `updateCastingCall()` |
-| POST /v1/casting-calls/{id}/roles | ❌ | Not wrapped — adding individual roles to a call has no UI |
-| POST /v1/casting-calls/{id}/submit-review | ✅ | `submitCastingCallForReview()` |
-| POST /v1/casting-calls/{id}/close | ✅ | `closeCastingCall()` |
-| POST /v1/casting-calls/{id}/cancel | ✅ | `cancelCastingCall()` |
-| POST /v1/casting-calls/{id}/applications | ✅ | `applyToCastingCall()` — "Apply Now" |
-| GET /v1/casting-calls/{id}/applications | ✅ | `listApplicationsForCall()` — recruiter applicant review |
-| GET /v1/casting-applications/me | ✅ | `listMyCastingApplications()` — "My Applications" tab |
-| POST /v1/casting-applications/{id}/withdraw | ✅ | `withdrawCastingApplication()` |
-| PATCH /v1/casting-applications/{id}/status | ✅ | `updateApplicationStatus()` |
-| POST /v1/casting-applications/{id}/auditions | ✅ | `requestAudition()` |
-| POST /v1/auditions/{id}/self-tape | ✅ | `submitSelfTape()` |
+| Endpoint | Used | Reachable from UI | Where / why not |
+|---|---|---|---|
+| POST /v1/casting-calls | ✅ | ❌ Redirects to app | `createCastingCall()` exists, curl-verified live, but `CastingEcosystem.tsx`'s "Create Casting Call" tab is a "Visit Our App" placeholder — no component calls this method |
+| GET /v1/casting-calls | ✅ | ✅ Live | `listCastingCalls()` — `CastingEcosystem.tsx` |
+| GET /v1/casting-calls/{id} | ✅ | ✅ Live | `getCastingCall()` |
+| PATCH /v1/casting-calls/{id} | ✅ | ✅ Live | `updateCastingCall()` |
+| POST /v1/casting-calls/{id}/roles | ❌ | — | Not wrapped — adding individual roles to a call has no UI |
+| POST /v1/casting-calls/{id}/submit-review | ✅ | ❌ Redirects to app | `submitCastingCallForReview()` exists but is unreachable for the same reason as `createCastingCall()` above |
+| POST /v1/casting-calls/{id}/close | ✅ | ✅ Live | `closeCastingCall()` |
+| POST /v1/casting-calls/{id}/cancel | ✅ | ✅ Live | `cancelCastingCall()` |
+| POST /v1/casting-calls/{id}/applications | ✅ | ✅ Live | `applyToCastingCall()` — "Apply Now" |
+| GET /v1/casting-calls/{id}/applications | ✅ | ✅ Live | `listApplicationsForCall()` — recruiter applicant review |
+| GET /v1/casting-applications/me | ✅ | ✅ Live | `listMyCastingApplications()` — "My Applications" tab |
+| POST /v1/casting-applications/{id}/withdraw | ✅ | ✅ Live | `withdrawCastingApplication()` |
+| PATCH /v1/casting-applications/{id}/status | ✅ | ✅ Live | `updateApplicationStatus()` |
+| POST /v1/casting-applications/{id}/auditions | ✅ | ✅ Live | `requestAudition()` |
+| POST /v1/auditions/{id}/self-tape | ✅ | ✅ Live | `submitSelfTape()` |
 
 ## Messaging (`src/services/messaging/`)
 | Endpoint | Used | Where / why not |
