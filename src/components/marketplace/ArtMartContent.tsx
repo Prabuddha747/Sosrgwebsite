@@ -76,20 +76,38 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ScaffoldRow, ComingSoonTag } from '../ScaffoldUI';
+import cameraImg from '../../assets/marketplace/camera.webp';
+import studioLightImg from '../../assets/marketplace/studio-light.webp';
+import shotgunMicImg from '../../assets/marketplace/shotgun-mic.webp';
+import sketchbookImg from '../../assets/marketplace/sketchbook-pencils.webp';
+import canvasImg from '../../assets/marketplace/canvas-painting.webp';
+import drawingTabletImg from '../../assets/marketplace/drawing-tablet.webp';
+import ghungrooImg from '../../assets/marketplace/ghungroo.webp';
 
+// Mock catalogue — no live Art Mart listings API exists yet
+// (doc/API_REQUIREMENTS.md), so these are illustrative sample images, not
+// real inventory. "Buy Now" is intentionally a "visit our app" toast rather
+// than a checkout flow — there's no live product/payment backend behind it.
 export const ArtMartContent = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'sell' | 'custom-orders' | 'wishlist'>('browse');
   const [category, setCategory] = useState('All Items');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const CATEGORIES = ['All Items', 'Cinema', 'Theatre', 'Literature', 'Music', 'Dance', 'Art & Design', 'Crafts'];
 
   const PRODUCTS = [
-    { id: 1, name: 'MacBook Pro M3 Max', type: 'Cinema', condition: 'New', price: '₹3,50,000', image: 'https://picsum.photos/seed/camera-mart/400/400', isDigital: false },
-    { id: 2, name: 'Ergonomic Office Chair', type: 'Theatre', condition: 'Used', price: '₹8,500', image: 'https://picsum.photos/seed/light-mart/400/400', isDigital: false },
-    { id: 3, name: 'Handcrafted Kathak Ghungroo', type: 'Dance', condition: 'New', price: '₹2,200', image: 'https://picsum.photos/seed/dance-mart/400/400', isDigital: false },
-    { id: 4, name: 'Professional Boom Mic Set', type: 'Music', condition: 'Used', price: '₹15,000', image: 'https://picsum.photos/seed/mic-mart/400/400', isDigital: false },
-    { id: 5, name: 'Abstract Oil Painting "Monsoon"', type: 'Art & Design', condition: 'New', price: '₹45,000', image: 'https://picsum.photos/seed/painting-mart/400/400', isDigital: false },
-    { id: 6, name: 'Sci-Fi Concept Art Bundle', type: 'Art & Design', condition: 'Digital', price: '₹12,000', image: 'https://picsum.photos/seed/digital-mart/400/400', isDigital: true },
+    { id: 1, name: 'Mirrorless Cinema Camera', type: 'Cinema', description: 'Full-frame body with a fast prime lens, ready for cinema-grade shoots.', image: cameraImg },
+    { id: 2, name: 'Studio Softbox Light', type: 'Theatre', description: 'Umbrella softbox on an adjustable stand for even, diffused set lighting.', image: studioLightImg },
+    { id: 3, name: 'Handcrafted Kathak Ghungroo', type: 'Dance', description: 'Traditional brass ghungroo strand, hand-strung for classical dance practice.', image: ghungrooImg },
+    { id: 4, name: 'Shotgun Mic with Desk Stand', type: 'Music', description: 'Directional shotgun microphone with foam windscreen, for clean dialogue and voiceover.', image: shotgunMicImg },
+    { id: 5, name: 'Framed Oil Painting on Canvas', type: 'Art & Design', description: 'Original textured oil painting, framed and easel-ready for display.', image: canvasImg },
+    { id: 6, name: 'Graphics Drawing Tablet', type: 'Art & Design', description: 'Pen display tablet for digital illustration and concept art work.', image: drawingTabletImg },
+    { id: 7, name: 'Sketchbook & Pencil Set', type: 'Art & Design', description: 'Spiral sketchbook with a graded set of graphite pencils and blending stumps.', image: sketchbookImg },
   ];
 
   const filteredProducts = category === 'All Items' ? PRODUCTS : PRODUCTS.filter(p => p.type === category);
@@ -151,18 +169,24 @@ export const ArtMartContent = () => {
               </div>
             </div>
             <div className="lg:col-span-3">
-              <h2 className="text-2xl font-bold mb-6">Browse — Visit Our App</h2>
-              {/* No live Art Mart listings API yet (doc/API_REQUIREMENTS.md)
-                  — cards are shimmer placeholders rather than the invented
-                  product catalogue this page used to show as if it were real. */}
+              <h2 className="text-2xl font-bold mb-2">Browse</h2>
+              <p className="text-white/40 text-sm mb-6">Sample listings — no live Art Mart inventory yet (doc/API_REQUIREMENTS.md). "Buy Now" points to the app until real checkout exists.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
                   <div key={product.id} className="relative glass-panel overflow-hidden flex flex-col">
-                    <ComingSoonTag />
-                    <ScaffoldRow className="aspect-square" />
+                    <div className="aspect-square bg-white">
+                      <img src={product.image} alt={product.name} className="h-full w-full object-contain" />
+                    </div>
                     <div className="p-4 flex flex-col flex-1 gap-2">
-                      <ScaffoldRow className="h-4 w-2/3" />
-                      <ScaffoldRow className="h-3 w-1/3" />
+                      <span className="text-[9px] uppercase tracking-widest font-bold text-gold">{product.type}</span>
+                      <h4 className="font-bold text-sm leading-snug">{product.name}</h4>
+                      <p className="text-xs text-white/50 flex-1">{product.description}</p>
+                      <button
+                        onClick={() => showToast('Please visit our app to know more about this product.')}
+                        className="mt-2 flex items-center justify-center gap-2 bg-gold/10 text-gold hover:bg-gold hover:text-black px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+                      >
+                        <ShoppingCart size={14} /> Buy Now
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -234,6 +258,19 @@ export const ArtMartContent = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 right-8 bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 font-bold"
+          >
+            <CheckCircle size={20} />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
