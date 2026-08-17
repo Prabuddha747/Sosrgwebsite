@@ -68,6 +68,20 @@ One block per gap below, in the same shape as the OpenAPI spec you already publi
     "openQuestion": "Uniqueness check + likely a rate limit (once every N days) since username is also the public-profile URL slug (`GET /v1/profiles/{username}`) — old links would 404 after a change unless old usernames redirect or stay reserved."
   },
   {
+    "gap": "Profession catalogue is too sparse for the industry-first onboarding flow (§2.4h)",
+    "requests": [
+      { "method": "POST", "path": "/v1/professions", "input": { "industry": "string", "name": "string" }, "output": "ProfessionCatalogueResponseDto ({id, industry, name})" }
+    ],
+    "openQuestion": "Not a new endpoint (an admin-side POST/bulk-import onto the existing `profession_catalog` table would do) — this is a content-population ask: today `GET /v1/professions` returns exactly 5 rows, covering only Cinema (2), Theatre (1), Music (1), Art & Design (1). Literature, Dance, and Craft have zero entries, so those three of the onboarding flow's 7 industry buttons currently dead-end into an empty picker. Needs real curated entries per industry, ideally grouped (Performance/Direction/Production/Technical/Other per the product's own taxonomy proposal) — grouping would need a new `category` column alongside `industry`/`name` if adopted."
+  },
+  {
+    "gap": "No catalogue endpoint for skills — `PUT /v1/profiles/me/skills` exists but `skillId` values are undiscoverable (§2.4i)",
+    "requests": [
+      { "method": "GET", "path": "/v1/skills", "input": null, "output": { "data": "[{id: number, name: string, category: string | null}]" } }
+    ],
+    "openQuestion": "Mirror `GET /v1/professions`'s shape exactly. Without this, `PUT /v1/profiles/me/skills` (`{skills: [{skillId, proficiency, yearsExperience?}]}`) is unusable from the frontend — there's no way to know what skillId values mean anything, so no skill picker (e.g. \"which instrument do you play\") can be built honestly."
+  },
+  {
     "gap": "Notifications (§3 — DB schema already exists)",
     "requests": [
       { "method": "GET", "path": "/v1/notifications", "input": { "query": { "cursor": "string | null", "limit": "number" } }, "output": { "items": "Notification[]", "unreadCount": "number", "nextCursor": "string | null" } },
@@ -192,6 +206,23 @@ Both the main profile page (Booking History) and the Casting/Hiring page's "My P
 
 **Suggested shape:** `PATCH /v1/profiles/me/username` — `{username: string}` → `{username: string, changedAt: string}`. Since `username` doubles as the public-profile URL slug (`GET /v1/profiles/{username}`), this needs a uniqueness check (same as signup) and probably a cooldown (e.g. once every 30 days) to stop churn; worth deciding whether an old username 404s immediately after a change or stays reserved/redirects for a grace period, since existing shared profile links would otherwise break silently.
 
+### 2.4h Profession catalogue is too sparse for the industry-first onboarding flow
+
+This session's signup rebuild added an industry-first step (7 fixed buttons: Literature, Theatre, Cinema, Music, Dance, Art & Design, Craft — the product's "7 Core Creative Sectors"), filtering `GET /v1/professions` by the chosen industry for the profession-picker step that follows. Curl-verified live: **the entire catalogue is 5 rows** —
+
+```
+Art & Design: Creative Director
+Cinema:       Film Director, Lead Actor / Actress
+Music:        Vocalist & Composer
+Theatre:      Stage Performer
+```
+
+Literature, Dance, and Craft have zero entries. Three of the seven industry buttons currently lead straight to an honest "no professions listed yet, skip for now" state — not a frontend bug, just a direct consequence of how thin the catalogue is today. This needs real content work: curated profession names per industry, at the depth the product side has already sketched out (grouped into categories like Performance / Direction & Creation / Production & Technical / Other per industry, e.g. Theatre alone was scoped with ~25 distinct professions across those groups). That's a `category` column addition to `profession_catalog` plus real data entry, not new API surface — the existing `POST`-style admin path (however professions are currently seeded) just needs to be run again with a much longer list.
+
+### 2.4i No skills catalogue endpoint
+
+`PUT /v1/profiles/me/skills` is real and live (`{skills: [{skillId: number, proficiency: 'beginner'|'intermediate'|'advanced'|'native', yearsExperience?: number}]}`), and the frontend already wraps it (`profilesService.updateSkills`). But unlike professions, **there is no `GET /v1/skills`** — no way to discover what `skillId` values exist or mean anything. This blocks a real use case the product side wants: profession-specific one-word prompts (e.g. "which instrument?" for a Vocalist, "which craft material?" for an Artisan) backed by real skill tags instead of free text. Needs a catalogue endpoint mirroring `GET /v1/professions`'s exact shape (`{id, name, category?}`) before any skill-picker UI can be built honestly.
+
 ### 2.5 `ApplyCastingCallDto.mediaAssetIds` — real, but not yet wired frontend-side
 
 Not a backend gap — flagging so it doesn't get lost. `mediaAssetIds` on a casting application is a real, live field, and Media/Portfolios have real upload endpoints (`POST /v1/media/uploads`, `POST /v1/portfolios/{id}/items`). The frontend's current application flow only submits `coverNote` and honestly labels portfolio attachment as "coming soon" in the UI rather than faking it — wiring that up is frontend follow-up work, not something blocked on the backend.
@@ -233,6 +264,7 @@ Ordered by (a) how many frontend features it unblocks and (b) how cheap it looks
 1. **`fieldErrors` population (§2.1)** — cheapest, highest-leverage, affects every form everywhere.
 2. **Response schemas in the OpenAPI spec (§2.2)** — removes a whole class of drift bugs for every future integration.
 3. **Casting call status enum + organisation display name (§2.3, §2.4)** — small, unblocks a better Casting UI immediately.
-4. **Notifications, Events, Community APIs (§3)** — schema already exists for all three; this is the next real feature-unlock tier.
-5. **Realtime messaging transport decision (§3)** — not urgent, but worth deciding before frontend chat UI work starts so it isn't built twice.
-6. **Admin/moderation action endpoints, referrals/coins, account-tier system, auctions (§3, §4)** — genuinely new backend work, needs product/schema design before an API can be scoped.
+4. **Profession catalogue content + a skills catalogue endpoint (§2.4h, §2.4i)** — content/data work more than engineering, but directly blocks the new industry-first onboarding flow for 3 of 7 industries today.
+5. **Notifications, Events, Community APIs (§3)** — schema already exists for all three; this is the next real feature-unlock tier.
+6. **Realtime messaging transport decision (§3)** — not urgent, but worth deciding before frontend chat UI work starts so it isn't built twice.
+7. **Admin/moderation action endpoints, referrals/coins, account-tier system, auctions (§3, §4)** — genuinely new backend work, needs product/schema design before an API can be scoped.

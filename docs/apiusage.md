@@ -2,13 +2,13 @@
 
 Cross-reference of every endpoint in the live OpenAPI spec against this frontend's `src/services/` wrappers. "Used" = wrapped by a service method (or, for media content, constructed as a direct URL) and reachable from the app. Endpoints not wrapped are unreachable from this codebase today, even if the backend supports them.
 
-**Total: 76 / 96 endpoints used (~79%)**
+**Total: 77 / 96 endpoints used (~80%)**
 
 | Category | Used |
 |---|---|
 | Health | 0 / 2 |
 | Authentication | 13 / 16 |
-| Profiles | 20 / 21 |
+| Profiles | 21 / 21 |
 | Portfolios | 12 / 13 |
 | Media | 6 / 8 |
 | Job Postings | 7 / 12 |
@@ -51,7 +51,7 @@ Cross-reference of every endpoint in the live OpenAPI spec against this frontend
 | PATCH /v1/profiles/me | ✅ | `updateProfile()` — `ProfileSystem.tsx` edit forms |
 | PATCH /v1/profiles/me/role | ✅ | `switchProfileRole()` — `ProfileSystem.tsx` role switch |
 | GET /v1/profiles/{username} | ✅ | `getPublicProfile()` — `PublicProfilePage.tsx`; also the planned username-availability check (Phase 0) |
-| PUT /v1/profiles/me/professions | ❌ | **Not wrapped** — planned for second/secondary profession (Phase 1) |
+| PUT /v1/profiles/me/professions | ✅ | `updateProfessions()` — `ProfileSystem.tsx` "Second Profession / Other Interest" edit |
 | PUT /v1/profiles/me/skills | ✅ | `updateSkills()` — `ProfileSystem.tsx` skills tab |
 | PUT /v1/profiles/me/languages | ✅ | `updateLanguages()` |
 | PATCH /v1/profiles/me/privacy | ✅ | `updatePrivacySettings()` — `ProfileSystem.tsx` privacy tab |
@@ -155,8 +155,6 @@ These aren't gaps in wiring — the endpoints don't exist on the backend yet. Lo
 | List community post feed (all users) | Same, new service | Backs the feed below the post box (`:192-218`) — currently 3 hardcoded "Coming Soon" placeholder cards |
 | *(already exists)* GET /v1/media/assets/{id}/content | `src/services/media/apiMediaService.ts` → `getAssetContentUrl()` | ✅ Confirmed live, no-auth for `visibility: "public"` assets — this part already works and is reusable the moment posts exist; the missing piece is only the post/feed data model above |
 | Forum: public open-discussion feed (post short update, anyone can reply — Twitter-style, not a 1:1 DM) | Would live in a new `src/services/forum/` (doesn't exist) | Backs `CommunityHub.tsx` "Forum" tab (`:136-152`) — currently a "Visit Our App" scaffold. Confirmed against the live spec: every messaging endpoint is scoped to `/v1/conversations/{id}/messages`, and `POST /v1/conversations/direct` only creates 1:1 conversations — no public/group/broadcast conversation type exists, so this can't be built on top of the existing messaging API as-is |
+| `GET /v1/professions` needs curated content for Literature, Dance, Craft (currently 0 entries each; only 5 total across all 7 industries) | Existing endpoint, content gap — not a new route | Blocks individual Creator signup entirely for those 3 industries, since `POST /v1/profiles` rejects artist/model profiles with no `professionId`. `ProfileSetupPage.tsx` now detects this (`industryHasNoCatalogueProfessions`) and disables/explains the Creator tab instead of faking a profession |
 
-## Notable gaps worth flagging
-- **Messaging is the least complete surface** (4/9): most critically, there's no way to *start* a new conversation (`POST /v1/conversations/direct` unwrapped) — messaging only works once a conversation already exists.
-- **`GET /v1/profiles`** (profile search/list) is unwrapped — this single endpoint is what both the planned search bar and Nearby You feature need (Phase 2 of the current feature-backlog plan).
-- **Job posts lag casting calls** in completeness (7/12 vs 14/15) — no edit/close/cancel/applicant-list/status-update for job posts, even though the equivalent casting-call endpoints are all wrapped.
+
