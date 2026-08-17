@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Film,
@@ -77,11 +77,10 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Section, ProfileType, ExperienceLevel } from '../types';
-import { ProfileSetupFlow } from '../components/profile/ProfileSetupFlow';
 import { useToast } from '../design-system';
 import { useAuth } from '../contexts/AuthContext';
 import { profilesService } from '../services/profiles';
-import type { ContactVisibility, PortfolioVisibility, BlockedProfile, MutedProfile, KycDocument, KycDocumentType } from '../services/profiles';
+import type { ContactVisibility, PortfolioVisibility, BlockedProfile, MutedProfile, KycDocument, KycDocumentType, Profession } from '../services/profiles';
 import { authService } from '../services/auth';
 import type { AuthSession } from '../services/auth';
 import { mediaService, getAssetContentUrl } from '../services/media';
@@ -240,9 +239,9 @@ export const ProfileSystem = ({
   /** When provided, renders a real Log Out control in the header instead of the mock experience-level switcher — see that switcher's removal note below. */
   onLogout?: () => void;
 }) => {
-  const [isSettingUp, setIsSettingUp] = useState(false);
   const { show } = useToast();
   const { profile: authProfile, refreshProfile } = useAuth();
+  const navigate = useNavigate();
 
   // Privacy & Security tab — wired to the real Profiles/Auth APIs. Current
   // values are seeded from GET /v1/profiles/me's nested `.privacy` (see
@@ -506,24 +505,68 @@ export const ProfileSystem = ({
     }
   };
 
-  // Switch Profile Role — PATCH /v1/profiles/me/role, real and live (see
-  // SwitchProfileRoleInput in services/profiles/types.ts). Only accepts
-  // 'artist' or 'industry_professional' as the target, but works from any
-  // starting type. Surfaced so an account mistyped as a business-like role
-  // (Industry Professional, Casting Director, etc.) can move to the artist
-  // dashboard without needing a new signup.
-  const [switchingRole, setSwitchingRole] = useState(false);
+  // Second profession / "other interest" — PUT /v1/profiles/me/professions,
+  // curl-verified live: takes the full professionIds list plus which one is
+  // primary. The primary profession (set at signup) is kept as-is; this
+  // just adds a second entry from the same catalogue GET /v1/professions
+  // already uses at signup.
+  const [professionCatalogue, setProfessionCatalogue] = useState<Profession[]>([]);
+  const [editingSecondProfession, setEditingSecondProfession] = useState(false);
+  const [secondProfessionId, setSecondProfessionId] = useState('');
+  const [savingSecondProfession, setSavingSecondProfession] = useState(false);
 
-  const handleSwitchToArtist = async () => {
-    setSwitchingRole(true);
+  const openSecondProfessionEdit = () => {
+    if (professionCatalogue.length === 0) {
+      profilesService.getProfessions().then(setProfessionCatalogue).catch(() => setProfessionCatalogue([]));
+    }
+    setSecondProfessionId(String(authProfile?.professions?.[1]?.id ?? ''));
+    setEditingSecondProfession(true);
+  };
+
+  const handleSaveSecondProfession = async () => {
+    const primaryId = authProfile?.professions?.[0]?.id;
+    if (!primaryId || !secondProfessionId) return;
+    setSavingSecondProfession(true);
     try {
-      await profilesService.switchProfileRole({ profileType: 'artist' });
+      await profilesService.updateProfessions({
+        professionIds: [primaryId, Number(secondProfessionId)],
+        primaryProfessionId: primaryId,
+      });
       await refreshProfile();
-      show('Switched to Artist profile.', 'success');
+      show('Second profession added.', 'success');
+      setEditingSecondProfession(false);
     } catch (err) {
-      show(err instanceof ApiError ? err.message : 'Could not switch profile type.', 'error');
+      show(err instanceof ApiError ? err.message : 'Could not save second profession.', 'error');
     } finally {
-      setSwitchingRole(false);
+      setSavingSecondProfession(false);
+    }
+  };
+
+  // Business Profile panel's own scoped edit — each panel edits only its
+  // own displayed content, not the whole Basic Information form. websiteUrl
+  // is a real PATCH /v1/profiles/me field, same one Basic Information's
+  // edit form writes to; this just gives Business Profile its own inline
+  // control instead of routing through that unrelated form.
+  const [editingWebsite, setEditingWebsite] = useState(false);
+  const [websiteForm, setWebsiteForm] = useState('');
+  const [savingWebsite, setSavingWebsite] = useState(false);
+
+  const openWebsiteEdit = () => {
+    setWebsiteForm(authProfile?.websiteUrl ?? '');
+    setEditingWebsite(true);
+  };
+
+  const handleSaveWebsite = async () => {
+    setSavingWebsite(true);
+    try {
+      await profilesService.updateProfile({ websiteUrl: websiteForm || null });
+      await refreshProfile();
+      show('Website updated.', 'success');
+      setEditingWebsite(false);
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not save website.', 'error');
+    } finally {
+      setSavingWebsite(false);
     }
   };
 
@@ -948,23 +991,6 @@ export const ProfileSystem = ({
 
   return (
     <div className="pt-32 px-6 w-full max-w-400 mx-auto min-h-screen pb-24">
-      {isSettingUp ? (
-        <ProfileSetupFlow onComplete={(data) => {
-          setProfile({
-            ...profile,
-            type: data.type,
-            industry: data.industry,
-            secondaryIndustry: data.secondaryIndustry,
-            profession: data.profession,
-            level: data.level,
-            name: data.type === 'artist' ? 'SiDdhaRtha SosrG' : data.type === 'buyer' ? 'John Doe' : data.type === 'casting_director' ? 'Sarah Smith' : 'SosrG Productions',
-            hasGreenId: data.hasGreenId,
-            sosrgId: data.sosrgId || profile.sosrgId
-          });
-          setIsSettingUp(false);
-        }} />
-      ) : (
-        <>
           {/* Profile Header & Controls */}
           <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start mb-12 gap-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
@@ -1072,26 +1098,12 @@ export const ProfileSystem = ({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-              <button
-                onClick={() => {
-                  if (realProfile) {
-                    openBasicEdit();
-                  } else {
-                    setIsSettingUp(true);
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all"
-              >
-                <Settings size={14} /> Edit Profile
-              </button>
-              {realProfile && authProfile && authProfile.profileType !== 'artist' && authProfile.profileType !== 'model' && (
+              {!realProfile && (
                 <button
-                  onClick={handleSwitchToArtist}
-                  disabled={switchingRole}
-                  title="This account is currently typed as a business-like role — switch it to Artist to get the artist dashboard."
-                  className="flex items-center justify-center gap-2 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => navigate('/profile/setup')}
+                  className="flex items-center justify-center gap-2 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all"
                 >
-                  <User size={14} /> {switchingRole ? 'Switching…' : 'Switch to Artist Profile'}
+                  <Settings size={14} /> Complete Profile
                 </button>
               )}
               {/*
@@ -1202,14 +1214,14 @@ export const ProfileSystem = ({
                             <ProfileField label="Gender" value={authProfile?.genderIdentity} hint="Not set — your self-described gender identity." />
                             <ProfileField label="Date of Birth" value={authProfile?.dateOfBirth?.slice(0, 10)} hint="Not set — helps match you to age-appropriate roles." />
                             <ProfileField
-                              label="Profession"
-                              value={authProfile?.professions?.[0]?.name}
-                              hint="No profession added yet — this is what casting directors see you're skilled at."
-                            />
-                            <ProfileField
                               label="Location"
                               value={authProfile ? [authProfile.district, authProfile.state].filter(Boolean).join(', ') || undefined : profile.location}
                               hint="No location set — helps nearby casting calls find you."
+                            />
+                            <ProfileField
+                              label="Headline"
+                              value={authProfile?.headline}
+                              hint="No headline yet — a one-line summary shown at the top of your public profile."
                             />
                           </div>
                           <div>
@@ -1222,30 +1234,50 @@ export const ProfileSystem = ({
                               </p>
                             )}
                           </div>
-                          <div className="mt-6">
-                            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-2">Skill Tags</div>
-                            {authProfile ? (
-                              authProfile.skills.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                  {authProfile.skills.map((skill) => (
-                                    <span key={skill.id} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
-                                      {skill.name}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-xs text-white/30 italic">No skills added yet — skills help you show up in casting searches.</p>
-                              )
-                            ) : (
-                              <div className="flex flex-wrap gap-2">
-                                {profile.skills.map((skill, i) => (
-                                  <span key={i} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium">
-                                    {skill}
-                                  </span>
-                                ))}
+                          {authProfile && (
+                            <div className="mt-6">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="text-[10px] uppercase tracking-widest text-white/40">Second Profession / Other Interest</div>
+                                {!editingSecondProfession && authProfile.professions?.[0] && (
+                                  <button onClick={openSecondProfessionEdit} className="text-[10px] text-gold hover:underline uppercase tracking-widest">
+                                    {authProfile.professions?.[1] ? 'Change' : 'Add'}
+                                  </button>
+                                )}
                               </div>
-                            )}
-                          </div>
+                              {editingSecondProfession ? (
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    value={secondProfessionId}
+                                    onChange={(e) => setSecondProfessionId(e.target.value)}
+                                    className="flex-1 bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-gold"
+                                  >
+                                    <option value="">Select a profession…</option>
+                                    {professionCatalogue
+                                      .filter((p) => p.id !== authProfile.professions?.[0]?.id)
+                                      .map((p) => (
+                                        <option key={p.id} value={p.id}>{p.industry} — {p.name}</option>
+                                      ))}
+                                  </select>
+                                  <button
+                                    onClick={handleSaveSecondProfession}
+                                    disabled={savingSecondProfession || !secondProfessionId}
+                                    className="bg-gold text-black px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
+                                  >
+                                    {savingSecondProfession ? 'Saving…' : 'Save'}
+                                  </button>
+                                  <button onClick={() => setEditingSecondProfession(false)} className="text-white/40 hover:text-white text-xs px-2">
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : authProfile.professions?.[1] ? (
+                                <div className="font-bold">{authProfile.professions[1].name}</div>
+                              ) : authProfile.professions?.[0] ? (
+                                <p className="text-xs text-white/30 italic">No second profession yet — add another interest, e.g. a musician who also acts.</p>
+                              ) : (
+                                <p className="text-xs text-white/30 italic">Add a primary profession first from your profile before adding a second one.</p>
+                              )}
+                            </div>
+                          )}
                         </>
                       ) : (
                         <div className="space-y-4">
@@ -1545,59 +1577,56 @@ export const ProfileSystem = ({
                     )}
 
                     {profile.type === 'business' && (
-                      <HoverGlowPanel className="relative glass-panel-blue p-8">
-                        <ComingSoonTag />
+                      <HoverGlowPanel className="glass-panel-blue p-8">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Briefcase size={20} className="text-gold" /> Business Profile</h3>
+                          {!editingWebsite && (
+                            <button onClick={openWebsiteEdit} className="text-xs text-gold hover:underline flex items-center gap-1">
+                              <Settings size={14} /> Edit
+                            </button>
+                          )}
                         </div>
 
-                        {/* None of legalStatus/businessRole/address exist anywhere in
-                            OwnProfileResponseDto — there are no business-specific
-                            fields in the real schema at all, only the generic
-                            profile fields every account type shares. websiteUrl is
-                            the one real field here, same as Social Links above. */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        {/* Legal status / business role / registered address don't
+                            exist anywhere in OwnProfileResponseDto — no
+                            business-specific fields in the real schema at all, only
+                            the generic fields every account type shares. websiteUrl
+                            is the one real field here (same as Social Links above),
+                            so it's the only one shown — with its own scoped edit
+                            control rather than opening the unrelated Basic
+                            Information form. */}
+                        {editingWebsite ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="url"
+                              value={websiteForm}
+                              onChange={(e) => setWebsiteForm(e.target.value)}
+                              placeholder="https://…"
+                              className="flex-1 bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-gold"
+                            />
+                            <button
+                              onClick={handleSaveWebsite}
+                              disabled={savingWebsite}
+                              className="bg-gold text-black px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
+                            >
+                              {savingWebsite ? 'Saving…' : 'Save'}
+                            </button>
+                            <button onClick={() => setEditingWebsite(false)} className="text-white/40 hover:text-white text-xs px-2">
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
                           <div>
-                            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Legal Status</div>
-                            <ScaffoldRow className="h-5 w-24" />
-                          </div>
-                          <div>
-                            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Business Role</div>
-                            <ScaffoldRow className="h-5 w-32" />
-                          </div>
-                          <div className="md:col-span-2">
-                            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Registered Address</div>
-                            <ScaffoldRow className="h-5 w-48" />
-                          </div>
-                          <div className="md:col-span-2">
                             <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Website</div>
                             {authProfile?.websiteUrl ? (
                               <a href={authProfile.websiteUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-400 hover:underline flex items-center gap-1">
                                 {authProfile.websiteUrl} <ExternalLink size={12} />
                               </a>
                             ) : (
-                              <p className="text-xs text-white/30 italic">No website added yet.</p>
+                              <span className="font-bold text-sm">xx</span>
                             )}
                           </div>
-                        </div>
-
-                        <div className="p-6 bg-gradient-to-br from-gold/10 to-transparent border border-gold/20 rounded-2xl">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
-                              <Zap size={20} className="text-gold" />
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-gold">AI Branding Resume</h4>
-                              <p className="text-xs text-white/60">Generate a company presentation for partnerships.</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => show('Presentation generation is Visit Our App.', 'info')}
-                            className="w-full bg-gold text-black py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white transition-colors"
-                          >
-                            Generate Presentation
-                          </button>
-                        </div>
+                        )}
                       </HoverGlowPanel>
                     )}
                   </div>
@@ -2640,8 +2669,6 @@ export const ProfileSystem = ({
               </motion.div>
             )}
           </AnimatePresence>
-        </>
-      )}
 
       {/* Message thread — GET/POST /v1/conversations/{id}/messages, real.
           Inline corner panel (mirrors the WhatsApp button's fixed bottom

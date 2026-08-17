@@ -199,6 +199,16 @@ export interface SwitchProfileRoleResult {
   professionId: number | null;
 }
 
+// PUT /v1/profiles/me/professions — verified against the live OpenAPI spec.
+// professionIds must include primaryProfessionId; both reference the same
+// /v1/professions catalogue used at signup. Response is just
+// {success: boolean}, not the updated profession list — call
+// refreshProfile() after this to get the real MyProfile.professions back.
+export interface UpdateProfessionsInput {
+  professionIds: number[];
+  primaryProfessionId: number;
+}
+
 export interface BlockedProfile {
   id: string;
   username: string;
@@ -248,6 +258,7 @@ export interface ProfilesService {
   updateProfileDetails(input: UpdateProfileDetailsInput): Promise<ProfileDetails>;
   updatePrivacySettings(input: Partial<PrivacySettings>): Promise<PrivacySettings>;
   switchProfileRole(input: SwitchProfileRoleInput): Promise<SwitchProfileRoleResult>;
+  updateProfessions(input: UpdateProfessionsInput): Promise<{ success: boolean }>;
   blockProfile(profileId: string): Promise<void>;
   unblockProfile(profileId: string): Promise<void>;
   muteProfile(profileId: string): Promise<void>;

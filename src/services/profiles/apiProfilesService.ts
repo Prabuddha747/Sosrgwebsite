@@ -16,6 +16,7 @@ import type {
   SkillProficiencyInput,
   SwitchProfileRoleInput,
   SwitchProfileRoleResult,
+  UpdateProfessionsInput,
   UpdateProfileDetailsInput,
   UpdateProfileInput,
 } from './types';
@@ -82,6 +83,10 @@ export const apiProfilesService: ProfilesService = {
 
   async switchProfileRole(input: SwitchProfileRoleInput) {
     return apiFetch<SwitchProfileRoleResult>('/v1/profiles/me/role', { method: 'PATCH', body: input });
+  },
+
+  async updateProfessions(input: UpdateProfessionsInput) {
+    return apiFetch<{ success: boolean }>('/v1/profiles/me/professions', { method: 'PUT', body: input });
   },
 
   async blockProfile(profileId: string) {

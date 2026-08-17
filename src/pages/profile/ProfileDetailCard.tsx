@@ -47,6 +47,18 @@ export const ProfileDetailCard = ({ profile }: { profile: MyProfile }) => (
         <dt className="text-text-muted">Plan</dt>
         <dd className="text-text-primary">{PLAN_LABEL[profile.tier]}</dd>
       </div>
+      {profile.professions[0] && (
+        <div>
+          <dt className="text-text-muted">Industry</dt>
+          <dd className="text-text-primary">{profile.professions[0].industry}</dd>
+        </div>
+      )}
+      {profile.professions[0] && (
+        <div>
+          <dt className="text-text-muted">Profession</dt>
+          <dd className="text-text-primary">{profile.professions.map((p) => p.name).join(', ')}</dd>
+        </div>
+      )}
       {profile.yearsExperience != null && (
         <div>
           <dt className="text-text-muted">Experience</dt>
