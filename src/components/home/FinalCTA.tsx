@@ -28,20 +28,20 @@ export const FinalCTA = () => (
       <p className="photo-text-muted mb-2">Bring what you're dreaming about.</p>
       <p className="font-bold mb-10">Bring it to SOSRG.</p>
 
-      {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Link
           to="/signup?intent=artist"
           className="w-full sm:w-auto bg-gold text-black px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:scale-105 transition-transform"
         >
-          Join as an Artist
+          I'm a Creator
         </Link>
         <Link
           to="/signup?intent=studio"
           className="photo-text w-full sm:w-auto bg-[rgba(247,243,232,0.08)] backdrop-blur-md border border-[rgba(247,243,232,0.3)] px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-[rgba(247,243,232,0.15)] transition-colors"
         >
-          Join as a Studio
+          I'm Hiring
         </Link>
-      </div> */}
+      </div>
       <p className="photo-text-muted mt-8 text-sm italic">Everyone starts somewhere.</p>
     </motion.div>
   </section>

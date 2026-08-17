@@ -70,7 +70,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               type={isPassword ? (visible ? 'text' : 'password') : type}
               aria-invalid={!!error}
               aria-describedby={describedBy}
-              className={fieldClasses(!!error, cn(prefix && 'pl-6', (isPassword || suffix) && 'pr-11', className))}
+              className={fieldClasses(!!error, cn(prefix && '!pl-[2.5em]', (isPassword || suffix) && 'pr-11', className))}
               {...props}
             />
             {suffix && !isPassword && (
