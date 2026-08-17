@@ -170,7 +170,10 @@ export const ArtMartContent = () => {
             </div>
             <div className="lg:col-span-3">
               <h2 className="text-2xl font-bold mb-2">Browse</h2>
-              <p className="text-white/40 text-sm mb-6">Sample listings — no live Art Mart inventory yet (doc/API_REQUIREMENTS.md). "Buy Now" points to the app until real checkout exists.</p>
+    
+              {filteredProducts.length === 0 && (
+                <div className="glass-panel p-8 text-center text-sm text-white/60">Nothing listed in {category} yet — check back soon.</div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {filteredProducts.map((product) => (
                   <div key={product.id} className="relative glass-panel overflow-hidden flex flex-col h-full">
