@@ -79,20 +79,38 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
+import { ScaffoldRow } from '../components/ScaffoldUI';
+import clapperboardImg from '../assets/auction/clapperboard.webp';
+import cameraMonitorImg from '../assets/auction/camera-monitor.webp';
+import typewriterImg from '../assets/auction/typewriter.webp';
+import cinemaCameraImg from '../assets/auction/cinema-camera.webp';
+import studioConsoleImg from '../assets/auction/studio-console.webp';
+import colorGradingPanelImg from '../assets/auction/color-grading-panel.webp';
 
 export const TalentAuction = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'create' | 'analytics' | 'contracts' | 'upcoming' | 'wallet'>('browse');
   const [showAIPredictor, setShowAIPredictor] = useState(false);
   const [selectedSector, setSelectedSector] = useState('All Sectors');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const SECTORS = ['All Sectors', 'Acting', 'Direction', 'Writing', 'Cinematography', 'Editing', 'Music', 'Art & Design'];
 
+  // Sample lots, not live auctions — no live auction/bidding API exists yet
+  // (doc/API_REQUIREMENTS.md), so no bid amounts or countdowns are shown
+  // (those would just be invented numbers). "Buy Now" is an honest "visit
+  // our app" toast rather than a real bid/purchase flow.
   const AUCTIONS = [
-    { id: 1, title: 'Lead Role: "The Last Monsoon"', artist: 'Rajesh K.', sector: 'Acting', currentBid: '₹1,20,000', buyNow: '₹3,00,000', endsIn: '2h 15m', image: 'https://picsum.photos/seed/actor-auction/400/300' },
-    { id: 2, title: 'Original Screenplay: "Cyber City"', artist: 'Meera V.', sector: 'Writing', currentBid: '₹45,000', buyNow: '₹1,50,000', endsIn: '4h 30m', image: 'https://picsum.photos/seed/script-auction/400/300' },
-    { id: 3, title: 'Exclusive Music Score Rights', artist: 'Amit S.', sector: 'Music', currentBid: '₹2,50,000', buyNow: '₹5,00,000', endsIn: '12h 05m', image: 'https://picsum.photos/seed/music-auction/400/300' },
-    { id: 4, title: 'Cinematography for Short Film', artist: 'Vikram D.', sector: 'Cinematography', currentBid: '₹80,000', buyNow: '₹1,20,000', endsIn: '1d 4h', image: 'https://picsum.photos/seed/camera-auction/400/300' },
+    { id: 1, title: 'Lead Role: "The Last Monsoon"', sector: 'Acting', description: 'A feature-length lead role, cast directly through a competitive bid.', image: clapperboardImg },
+    { id: 2, title: 'Directing Slot: Short Film Anthology', sector: 'Direction', description: 'A directing seat on a multi-segment short film anthology.', image: cameraMonitorImg },
+    { id: 3, title: 'Original Screenplay: "Cyber City"', sector: 'Writing', description: 'Full rights to an original feature screenplay, ready for production.', image: typewriterImg },
+    { id: 4, title: 'Cinematography for Short Film', sector: 'Cinematography', description: 'A DoP engagement for an independent short film shoot.', image: cinemaCameraImg },
+    { id: 5, title: 'Exclusive Music Score Rights', sector: 'Music', description: 'Exclusive rights to an original score, composed for licensing.', image: studioConsoleImg },
+    { id: 6, title: 'Post-Production Editing Slot', sector: 'Editing', description: 'A full post-production and color grading engagement for a feature.', image: colorGradingPanelImg },
   ];
 
   const filteredAuctions = selectedSector === 'All Sectors' ? AUCTIONS : AUCTIONS.filter(a => a.sector === selectedSector);
@@ -214,20 +232,25 @@ export const TalentAuction = () => {
               ))}
             </div>
 
-            {/* No live auction API yet (doc/API_REQUIREMENTS.md) — cards are
-                shimmer placeholders rather than the invented listings this
-                page used to show as if they were real, active auctions. */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredAuctions.length === 0 && (
+              <div className="glass-panel p-8 text-center text-sm text-white/60">Nothing listed in {selectedSector} yet — check back soon.</div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
               {filteredAuctions.map((auction) => (
-                <div key={auction.id} className="relative glass-panel overflow-hidden flex flex-col">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-48" />
-                  <div className="p-6 flex flex-col flex-1 gap-3">
-                    <ScaffoldRow className="h-5 w-3/4" />
-                    <ScaffoldRow className="h-3 w-1/3" />
-                    <div className="mt-auto space-y-3">
-                      <button disabled className="w-full bg-white/10 border border-white/10 text-white/50 py-2 rounded-lg text-xs font-bold cursor-not-allowed">Bidding not open yet</button>
-                    </div>
+                <div key={auction.id} className="relative glass-panel overflow-hidden flex flex-col h-full">
+                  <div className="h-56 shrink-0 bg-white">
+                    <img src={auction.image} alt={auction.title} className="h-full w-full object-contain" />
+                  </div>
+                  <div className="p-6 flex flex-col flex-1 gap-2">
+                    <span className="text-[9px] uppercase tracking-widest font-bold text-gold">{auction.sector}</span>
+                    <h4 className="font-bold text-sm leading-snug">{auction.title}</h4>
+                    <p className="text-xs text-white/50 flex-1">{auction.description}</p>
+                    <button
+                      onClick={() => showToast('Please visit our app to know more about this auction.')}
+                      className="mt-2 flex items-center justify-center gap-2 bg-gold/10 text-gold hover:bg-gold hover:text-black px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+                    >
+                      <Gavel size={14} /> Buy Now
+                    </button>
                   </div>
                 </div>
               ))}
@@ -306,6 +329,20 @@ export const TalentAuction = () => {
               <h2 className="text-3xl font-bold">My Wallet — Visit Our App</h2>
             </div>
             <p className="text-white/60 max-w-3xl mb-6">A verified wallet for bidding, buy-now purchases, and payouts — plus SosrG Coins and leaderboard rewards tied to real auction activity, not a demo balance.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 right-8 bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 font-bold"
+          >
+            <CheckCircle size={20} />
+            {toastMessage}
           </motion.div>
         )}
       </AnimatePresence>
