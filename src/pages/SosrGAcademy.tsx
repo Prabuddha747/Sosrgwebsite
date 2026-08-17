@@ -82,7 +82,7 @@ import { cn } from '../lib/utils';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 
 export const SosrGAcademy = () => {
-  const [activeTab, setActiveTab] = useState<'learning-paths' | 'scholarships' | 'progress'>('learning-paths');
+  const [activeTab, setActiveTab] = useState<'learning-paths' | 'scholarships' | 'workshops' | 'mentorship' | 'progress'>('learning-paths');
 
   return (
     <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
@@ -99,6 +99,8 @@ export const SosrGAcademy = () => {
           {[
             { id: 'learning-paths', label: 'AI Learning Paths', icon: BookOpen },
             { id: 'scholarships', label: 'SosrG Scholarships', icon: GraduationCap },
+            { id: 'workshops', label: 'Workshops', icon: BookOpen },
+            { id: 'mentorship', label: 'Mentorship', icon: Handshake },
             // { id: 'progress', label: 'Progress Tracking', icon: TrendingUp },
           ].map((tab) => (
             <button
@@ -180,6 +182,26 @@ export const SosrGAcademy = () => {
               scholarship eligibility for premium courses and mentorship programs — real, merit-based
               funding instead of a manual application process.
             </p>
+          </motion.div>
+        )}
+
+        {activeTab === 'workshops' && (
+          <motion.div key="workshops" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Workshops — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Skill-building workshops and masterclasses run by industry professionals, with registration and scheduling.</p>
+          </motion.div>
+        )}
+
+        {activeTab === 'mentorship' && (
+          <motion.div key="mentorship" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Handshake size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Mentorship — Visit Our App</h2>
+            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Structured mentorship pairing with experienced industry professionals for career guidance.</p>
           </motion.div>
         )}
 

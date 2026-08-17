@@ -75,7 +75,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { ScaffoldRow, ComingSoonTag } from '../ScaffoldUI';
 import cameraImg from '../../assets/marketplace/camera.webp';
 import studioLightImg from '../../assets/marketplace/studio-light.webp';
 import shotgunMicImg from '../../assets/marketplace/shotgun-mic.webp';
@@ -161,12 +160,12 @@ export const ArtMartContent = () => {
                   ))}
                 </div>
               </div>
-              <div className="relative glass-panel p-6">
+              {/* <div className="relative glass-panel p-6">
                 <ComingSoonTag />
                 <h3 className="font-bold mb-4 uppercase tracking-widest text-xs">AI Recommendations</h3>
                 <p className="text-[10px] text-white/40 mb-4">Based on your profile, you might need:</p>
                 <ScaffoldRow className="h-14" />
-              </div>
+              </div> */}
             </div>
             <div className="lg:col-span-3">
               <h2 className="text-2xl font-bold mb-2">Browse</h2>
@@ -219,44 +218,12 @@ export const ArtMartContent = () => {
         )}
 
         {activeTab === 'wishlist' && (
-          <motion.div
-            key="wishlist"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-          >
-            <div className="relative lg:col-span-2 glass-panel p-8">
-              <ComingSoonTag />
-              <div className="flex items-center gap-2 mb-6">
-                <Heart size={20} className="text-crimson" />
-                <h2 className="text-3xl font-bold">My Wishlist</h2>
-              </div>
-              {/* <div className="space-y-4">
-                {[0, 1].map((i) => (
-                  <ScaffoldRow key={i} className="h-20" />
-                ))}
-              </div> */}
+          <motion.div key="wishlist" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Heart size={24} className="text-gold" />
+              <h2 className="text-3xl font-bold">Wishlist & Referrals — Visit Our App</h2>
             </div>
-
-            <div className="relative lg:col-span-1 glass-panel p-8 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
-              <ComingSoonTag />
-              <div className="flex items-center gap-2 mb-6">
-                <Share2 size={20} className="text-blue-400" />
-                <h2 className="text-2xl font-bold">Refer & Earn</h2>
-              </div>
-              <p className="text-sm text-white/60 mb-6">Share product links with your network. When someone buys through your link, you both get a discount!</p>
-
-              <div className="space-y-2">
-                <div className="text-xs font-bold mb-2">Your Referral Stats</div>
-                {['Links Shared', 'Successful Purchases', 'Discounts Earned'].map((label) => (
-                  <div key={label} className="flex justify-between items-center text-sm p-2 bg-white/5 rounded">
-                    <span className="text-white/60">{label}</span>
-                    {/* <ScaffoldRow className="h-4 w-10" /> */}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="text-white/60 max-w-3xl mb-6">Save listings to a wishlist, and share product links with your network — when someone buys through your link, you both get a discount.</p>
           </motion.div>
         )}
       </AnimatePresence>

@@ -79,9 +79,20 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const EventManagement = () => {
+  const [monthOffset, setMonthOffset] = useState(0);
+  const today = new Date();
+  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+
   return (
     <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
@@ -96,62 +107,55 @@ export const EventManagement = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-8">
-          <div className="relative glass-panel p-8">
-            <ComingSoonTag />
+          <div className="glass-panel p-8">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-bold">Calendar</h3>
+              <h3 className="text-xl font-bold">{monthLabel}</h3>
               <div className="flex gap-2">
-                <button disabled className="p-2 bg-white/5 rounded-lg text-white/20 cursor-not-allowed"><ChevronRight className="rotate-180" size={20} /></button>
-                <button disabled className="p-2 bg-white/5 rounded-lg text-white/20 cursor-not-allowed"><ChevronRight size={20} /></button>
+                <button onClick={() => setMonthOffset((o) => o - 1)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"><ChevronRight className="rotate-180" size={20} /></button>
+                <button onClick={() => setMonthOffset((o) => o + 1)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"><ChevronRight size={20} /></button>
               </div>
             </div>
             <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              {WEEKDAY_LABELS.map(day => (
                 <div key={day} className="text-center text-[8px] sm:text-[10px] uppercase tracking-widest text-white/40 font-bold py-2">{day}</div>
               ))}
-              {Array.from({ length: 35 }).map((_, i) => (
-                <ScaffoldRow key={i} className="aspect-square" />
+              {Array.from({ length: firstWeekday }).map((_, i) => (
+                <div key={`blank-${i}`} />
+              ))}
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                <div
+                  key={day}
+                  className={cn(
+                    "aspect-square flex items-center justify-center rounded-lg text-xs sm:text-sm",
+                    isCurrentMonth && day === today.getDate()
+                      ? "bg-gold text-black font-bold"
+                      : "bg-white/5 text-white/60"
+                  )}
+                >
+                  {day}
+                </div>
               ))}
             </div>
           </div>
 
           <div>
-            <h3 className="text-xl font-bold mb-2">Upcoming Events</h3>
-            <p className="text-white/40 text-sm mb-4 max-w-2xl">
+            <h3 className="text-xl font-bold mb-2 flex items-center gap-2"><Calendar size={20} className="text-gold" /> Upcoming Events — Visit Our App</h3>
+            <p className="text-white/40 text-sm max-w-2xl">
               Real event listings you can browse and book — with dates, venues, and pricing pulled from
               actual organisers, not a static demo calendar.
             </p>
-            <div className="space-y-4">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="relative glass-panel p-6">
-                  <ComingSoonTag />
-                  <ScaffoldRow className="h-16" />
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
         <div className="space-y-8">
-          <div className="relative glass-panel p-8 bg-gradient-to-br from-blue-500/10 to-transparent">
-            <ComingSoonTag />
-            <h3 className="font-bold mb-6 flex items-center gap-2"><Star size={18} className="text-blue-400" /> Featured Event</h3>
-            <ScaffoldRow className="aspect-[4/3] mb-6" />
-            <ScaffoldRow className="h-5 w-2/3 mb-2" />
-            <ScaffoldRow className="h-4" />
+          <div>
+            <h3 className="font-bold mb-2 flex items-center gap-2"><Star size={18} className="text-gold" /> Featured Event — Visit Our App</h3>
+            <p className="text-white/40 text-sm">A spotlighted event pulled from real bookings and organiser activity, not a curated demo pick.</p>
           </div>
 
-          <div className="relative glass-panel p-8">
-            <ComingSoonTag />
-            <h3 className="font-bold mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-gold" /> Event Insights</h3>
-            <div className="space-y-4">
-              {['Total Bookings', 'Active Venues', 'Revenue Growth'].map((label) => (
-                <div key={label} className="flex justify-between items-center">
-                  <span className="text-xs text-white/60">{label}</span>
-                  <ScaffoldRow className="h-5 w-16" />
-                </div>
-              ))}
-            </div>
+          <div>
+            <h3 className="font-bold mb-2 flex items-center gap-2"><TrendingUp size={18} className="text-gold" /> Event Insights — Visit Our App</h3>
+            <p className="text-white/40 text-sm">Total bookings, active venues, and revenue growth, tracked from real event activity.</p>
           </div>
         </div>
       </div>

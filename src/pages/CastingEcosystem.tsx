@@ -118,7 +118,7 @@ export const CastingEcosystem = () => {
   // the landing view now instead of the decorative Home tab — arriving at
   // /casting (from the hero CTA, navbar, anywhere) drops straight into
   // real data rather than a preview screen you then have to click through.
-  const [view, setView] = useState<'home' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'workshops' | 'mentorship' | 'events' | 'volunteer' | 'grants' | 'post-job' | 'post-casting-call'>('calls');
+  const [view, setView] = useState<'home' | 'calls' | 'studio' | 'dashboard' | 'builder' | 'matchmaking' | 'crew' | 'applications' | 'network' | 'forum' | 'events' | 'volunteer' | 'grants' | 'post-job' | 'post-casting-call'>('calls');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [builderMode, setBuilderMode] = useState<'ai' | 'manual'>('ai');
   const [crewMode, setCrewMode] = useState<'jobs' | 'professionals'>('jobs');
@@ -650,8 +650,7 @@ export const CastingEcosystem = () => {
               // Network/Forum removed — Casting & Forum in Network > Community
               // already covers this (CommunityHub.tsx), no need to duplicate it here.
               // { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-              { id: 'workshops', label: 'Workshops', icon: BookOpen },
-              { id: 'mentorship', label: 'Mentorship', icon: GraduationCap },
+              // Workshops/Mentorship moved to SosrG Academy, next to Scholarships.
               // { id: 'events', label: 'Events', icon: Calendar },
               // { id: 'volunteer', label: 'Volunteer', icon: HeartHandshake },
               // { id: 'grants', label: 'Grants', icon: Award },
@@ -1143,26 +1142,6 @@ export const CastingEcosystem = () => {
                 )}
               </>
             )}
-          </motion.div>
-        )}
-
-        {view === 'workshops' && (
-          <motion.div key="workshops" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Workshops — Visit Our App</h2>
-            </div>
-            <p className="text-white/60 max-w-3xl mb-6">Skill-building workshops and masterclasses run by industry professionals, with registration and scheduling.</p>
-          </motion.div>
-        )}
-
-        {view === 'mentorship' && (
-          <motion.div key="mentorship" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <div className="flex items-center gap-2 mb-2">
-              <GraduationCap size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Mentorship — Visit Our App</h2>
-            </div>
-            <p className="text-white/60 max-w-3xl mb-6">Structured mentorship pairing with experienced industry professionals for career guidance.</p>
           </motion.div>
         )}
 

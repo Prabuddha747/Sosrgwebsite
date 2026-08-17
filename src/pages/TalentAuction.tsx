@@ -89,7 +89,6 @@ import colorGradingPanelImg from '../assets/auction/color-grading-panel.webp';
 
 export const TalentAuction = () => {
   const [activeTab, setActiveTab] = useState<'browse' | 'create' | 'analytics' | 'contracts' | 'upcoming' | 'wallet'>('browse');
-  const [showAIPredictor, setShowAIPredictor] = useState(false);
   const [selectedSector, setSelectedSector] = useState('All Sectors');
   const [toastMessage, setToastMessage] = useState('');
 
@@ -128,12 +127,6 @@ export const TalentAuction = () => {
           </p>
         </div>
         <div className="flex flex-col items-start md:items-end gap-4 w-full md:w-auto">
-          <button 
-            onClick={() => setShowAIPredictor(true)}
-            className="flex items-center gap-2 bg-crimson/10 text-crimson border border-crimson/30 px-4 py-2 rounded-xl text-xs font-bold hover:bg-crimson hover:text-white transition-all w-full md:w-auto justify-center md:justify-start"
-          >
-            <Cpu size={14} /> AI Value Predictor
-          </button>
           <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
             {[
               { id: 'browse', label: 'Browse & Bid', icon: Gavel },
@@ -157,55 +150,6 @@ export const TalentAuction = () => {
           </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {showAIPredictor && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-cinematic-gray border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Cpu className="text-gold" /> AI Value Predictor
-                </h2>
-                <button onClick={() => setShowAIPredictor(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs text-white/40 block mb-2">Creative Sector</label>
-                  <select className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-gold">
-                    {SECTORS.filter(s => s !== 'All Sectors').map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-white/40 block mb-2">Description / Metadata</label>
-                  <textarea 
-                    placeholder="Enter details for AI valuation (e.g., past experience, project scope)..."
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm h-32 resize-none focus:outline-none focus:border-gold"
-                  />
-                </div>
-                <button disabled className="w-full bg-white/10 border border-white/10 text-white/50 py-4 rounded-xl font-bold uppercase tracking-widest cursor-not-allowed">
-                  Predict Market Value — Coming Soon
-                </button>
-                <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-center">
-                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Estimated Value Range</p>
-                  <ScaffoldRow className="h-8 w-40 mx-auto" />
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {activeTab === 'browse' && (
