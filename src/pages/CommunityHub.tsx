@@ -78,9 +78,40 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { ApiError } from '../services/httpClient';
+import { communityService, CONTENT_SHARE_INDUSTRIES } from '../services/community';
+import type { ContentShare, ContentShareIndustry } from '../services/community';
+import { ContentShareFeedItem } from '../components/community/ContentShareFeedItem';
+import { ContentShareComposer } from '../components/community/ContentShareComposer';
 
 export const CommunityHub = () => {
   const [activeTab, setActiveTab] = useState<'sharing' | 'forum' | 'news'>('sharing');
+
+  const [industryFilter, setIndustryFilter] = useState<ContentShareIndustry | 'All'>('All');
+  const [feed, setFeed] = useState<ContentShare[] | null>(null);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState<string>();
+
+  useEffect(() => {
+    if (activeTab !== 'sharing') return;
+    let cancelled = false;
+    setFeedLoading(true);
+    setFeedError(undefined);
+    communityService
+      .getFeed(industryFilter === 'All' ? {} : { industry: industryFilter })
+      .then((items) => {
+        if (!cancelled) setFeed(items);
+      })
+      .catch((err) => {
+        if (!cancelled) setFeedError(err instanceof ApiError ? err.message : 'Could not load the feed.');
+      })
+      .finally(() => {
+        if (!cancelled) setFeedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, industryFilter]);
 
   return (
     <div className="pt-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen pb-24">
@@ -118,16 +149,74 @@ export const CommunityHub = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <Share2 size={24} className="text-gold" />
-              <h2 className="text-3xl font-bold">Content Sharing — Visit Our App</h2>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-2">
+                <Share2 size={24} className="text-gold" />
+                <h2 className="text-3xl font-bold">Content Sharing</h2>
+              </div>
+              <ContentShareComposer
+                onCreated={(share) => setFeed((prev) => [share, ...(prev ?? [])])}
+              />
             </div>
             <p className="text-white/60 max-w-3xl mb-6">
-              One shared space for every kind of creative work — post a clip, photo, or piece of
-              writing with a short description, and the community can discover, like, and comment
-              on it. Theatre groups, institutes, and agencies will show up here too going forward,
-              folded into this single feed instead of a separate directory.
+              Paste a YouTube link and it shows up here for the whole community to scroll through —
+              tag it with your industry, or browse everyone's together.
             </p>
+
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              {(['All', ...CONTENT_SHARE_INDUSTRIES] as const).map((ind) => (
+                <button
+                  key={ind}
+                  onClick={() => setIndustryFilter(ind)}
+                  className={cn(
+                    'px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors border',
+                    industryFilter === ind
+                      ? 'bg-gold border-gold text-black'
+                      : 'bg-white/5 border-white/10 text-white/60 hover:text-white',
+                  )}
+                >
+                  {ind}
+                </button>
+              ))}
+            </div>
+
+            {feedLoading && (
+              <div className="max-w-sm mx-auto aspect-[9/16] rounded-2xl bg-white/5 animate-pulse" />
+            )}
+
+            {!feedLoading && feedError && (
+              <div className="glass-panel p-8 text-center text-sm text-white/60">{feedError}</div>
+            )}
+
+            {!feedLoading && !feedError && (feed?.length ?? 0) === 0 && (
+              <div className="glass-panel p-8 text-center text-sm text-white/60">
+                Nothing shared {industryFilter === 'All' ? 'yet' : `in ${industryFilter} yet`} — be the first to post a clip.
+              </div>
+            )}
+
+            {!feedLoading && !feedError && feed && feed.length > 0 && (
+              <div className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {feed.map((share) => (
+                    <ContentShareFeedItem key={share.id} share={share} />
+                  ))}
+                </div>
+
+                <div className="flex flex-col items-center gap-3 py-10 text-center">
+                  <CheckCircle2 size={28} className="text-gold" />
+                  <p className="font-bold">You're all caught up</p>
+                  <p className="text-sm text-white/40 max-w-xs">
+                    That's every clip {industryFilter === 'All' ? '' : `in ${industryFilter} `}for now — come back later for new updates.
+                  </p>
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="flex items-center gap-2 mt-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold uppercase tracking-widest transition-colors"
+                  >
+                    <ArrowUp size={14} /> Back to top
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 

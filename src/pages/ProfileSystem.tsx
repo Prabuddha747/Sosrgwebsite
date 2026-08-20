@@ -93,6 +93,11 @@ import type { Audition, AuditionType, MyCastingApplication } from '../services/c
 import { jobsService } from '../services/jobs';
 import type { MyJobApplication } from '../services/jobs';
 import { ApiError } from '../services/httpClient';
+import { communityService } from '../services/community';
+import type { ContentShare } from '../services/community';
+import { ContentShareCard } from '../components/community/ContentShareCard';
+import { ContentShareComposer } from '../components/community/ContentShareComposer';
+import { ContentShareEditPanel } from '../components/community/ContentShareEditPanel';
 import { ScaffoldRow, ComingSoonTag } from '../components/ScaffoldUI';
 import { HoverGlowPanel } from '../components/ui/hover-effect';
 import { PasswordInput } from '../components/common/PasswordInput';
@@ -913,6 +918,41 @@ export const ProfileSystem = ({
     );
   }, [activeTab, applicationsLoaded]);
 
+  // My Shared Videos — the content-sharing feature's own posts, filtered
+  // client-side from the community feed (no "my shares" endpoint exists
+  // yet server-side, see services/community/apiCommunityService.ts).
+  const [myShares, setMyShares] = useState<ContentShare[] | null>(null);
+  const [mySharesLoading, setMySharesLoading] = useState(true);
+  const [mySharesLoaded, setMySharesLoaded] = useState(false);
+  const [mySharesError, setMySharesError] = useState<string>();
+
+  useEffect(() => {
+    if (activeTab !== 'my-shared-videos' || mySharesLoaded || !authProfile) return;
+    setMySharesLoading(true);
+    setMySharesLoaded(true);
+    communityService
+      .getMyShares(authProfile.id)
+      .then(setMyShares)
+      .catch((err) => setMySharesError(err instanceof ApiError ? err.message : 'Could not load your shared clips.'))
+      .finally(() => setMySharesLoading(false));
+  }, [activeTab, mySharesLoaded, authProfile]);
+
+  const [editingShareId, setEditingShareId] = useState<string | null>(null);
+  const [deletingShareId, setDeletingShareId] = useState<string | null>(null);
+
+  const handleDeleteShare = async (share: ContentShare) => {
+    setDeletingShareId(share.id);
+    try {
+      await communityService.deleteContentShare(share.id);
+      setMyShares((prev) => prev?.filter((s) => s.id !== share.id) ?? null);
+      show('Clip deleted.', 'success');
+    } catch (err) {
+      show(err instanceof ApiError ? err.message : 'Could not delete this clip.', 'error');
+    } finally {
+      setDeletingShareId(null);
+    }
+  };
+
   const unifiedApplications: UnifiedApplication[] = [
     ...(jobApplications ?? []).map((a): UnifiedApplication => ({ id: a.id, kind: 'job', title: a.jobTitle, status: a.status, appliedAt: a.appliedAt })),
     ...(castingApplications ?? []).map((a): UnifiedApplication => ({ id: a.id, kind: 'casting', title: a.castingCallTitle ?? 'Casting Call', status: a.status, appliedAt: a.appliedAt })),
@@ -1148,6 +1188,7 @@ export const ProfileSystem = ({
               { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'services', label: 'Services & Gigs', icon: Briefcase },
               { id: 'portfolio', label: 'My Clips', icon: User },
+              { id: 'my-shared-videos', label: 'My Shared Clips', icon: Youtube },
               ...(profile.type === 'artist' ? [
                 // { id: 'availability', label: 'Availability Calendar', icon: Calendar },
                 // { id: 'ai-insights', label: 'AI Match Suggestions', icon: Zap },
@@ -2431,6 +2472,71 @@ export const ProfileSystem = ({
                           </div>
                         )}
                       </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'my-shared-videos' && (
+              <motion.div
+                key="my-shared-videos"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative space-y-6"
+              >
+                <div className="flex flex-wrap justify-between items-center gap-3">
+                  <div>
+                    <h3 className="text-2xl font-bold flex items-center gap-2">
+                      My Shared Clips
+                      <span className="text-[9px] uppercase tracking-widest font-bold text-emerald-400">Live from SosrG</span>
+                    </h3>
+                    <p className="text-white/40 text-sm mt-1">
+                      YouTube clips you've posted to Community Content Sharing — same cards, your own feed.
+                    </p>
+                  </div>
+                  <ContentShareComposer onCreated={(share) => setMyShares((prev) => [share, ...(prev ?? [])])} />
+                </div>
+
+                {editingShareId && myShares?.find((s) => s.id === editingShareId) && (
+                  <ContentShareEditPanel
+                    share={myShares.find((s) => s.id === editingShareId)!}
+                    onCancel={() => setEditingShareId(null)}
+                    onSaved={(updated) => {
+                      setMyShares((prev) => prev?.map((s) => (s.id === updated.id ? updated : s)) ?? null);
+                      setEditingShareId(null);
+                    }}
+                  />
+                )}
+
+                {mySharesLoading && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className="aspect-[9/16] rounded-2xl bg-white/5 animate-pulse" />
+                    ))}
+                  </div>
+                )}
+
+                {!mySharesLoading && mySharesError && (
+                  <p className="text-sm text-red-400">{mySharesError}</p>
+                )}
+
+                {!mySharesLoading && !mySharesError && (myShares?.length ?? 0) === 0 && (
+                  <p className="text-sm text-white/30 italic">No clips shared yet — click "Create Clip" to post your first YouTube link.</p>
+                )}
+
+                {!mySharesLoading && !mySharesError && (myShares?.length ?? 0) > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {myShares!.map((share) => (
+                      <ContentShareCard
+                        key={share.id}
+                        share={share}
+                        layout="grid"
+                        editable
+                        onEdit={() => setEditingShareId(share.id)}
+                        onDelete={() => handleDeleteShare(share)}
+                        deleting={deletingShareId === share.id}
+                      />
                     ))}
                   </div>
                 )}
