@@ -196,7 +196,7 @@ export const CommunityHub = () => {
 
             {!feedLoading && !feedError && feed && feed.length > 0 && (
               <div className="max-w-6xl mx-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                   {feed.map((share) => (
                     <ContentShareFeedItem key={share.id} share={share} />
                   ))}
