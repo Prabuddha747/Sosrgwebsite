@@ -8,13 +8,15 @@ function humanizeProfileType(profileType: string): string {
     .join(' ');
 }
 
-// One cell of the Content Sharing grid — video on the left, poster's name +
-// profession + caption in a card on the right. The feed lays these out in a
-// 2-column grid.
+// Content Sharing feed item. sm: and up — video + caption side by side at a
+// matched fixed width, laid out in a 2-column grid. Below sm — each stacks
+// full-width (video on top), so a phone gets one big video per screen and
+// scrolls down for the caption and the next clip, instead of squeezing both
+// into a narrow row.
 export const ContentShareFeedItem = ({ share }: { share: ContentShare }) => (
-  <div className="flex gap-4 items-stretch">
-    <div className="w-64 shrink-0">
-      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-black border border-white/10">
+  <div className="flex flex-col sm:flex-row items-stretch">
+    <div className="w-full sm:w-64 shrink-0">
+      <div className="relative aspect-[9/16] overflow-hidden bg-black border border-white/10 rounded-t-2xl sm:rounded-t-none sm:rounded-l-2xl">
         <iframe
           src={`https://www.youtube.com/embed/${share.youtubeVideoId}`}
           title={share.caption ?? 'Shared clip'}
@@ -26,7 +28,7 @@ export const ContentShareFeedItem = ({ share }: { share: ContentShare }) => (
       </div>
     </div>
 
-    <div className="glass-panel w-64 shrink-0 p-4 flex flex-col gap-2">
+    <div className="glass-panel w-full sm:w-64 shrink-0 p-4 flex flex-col gap-2 rounded-t-none! rounded-b-2xl! sm:rounded-b-none! sm:rounded-r-2xl!">
       <div>
         <p className="font-bold text-sm">{share.authorDisplayName}</p>
         <p className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">
