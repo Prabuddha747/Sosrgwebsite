@@ -2,9 +2,9 @@
 // (ProfileSetupPage's INDUSTRIES) and matched exactly against the backend's
 // community_posts.industry CHECK constraint.
 export const CONTENT_SHARE_INDUSTRIES = [
+  'Literature',
   'Theatre',
   'Cinema',
-  'Literature',
   'Music',
   'Dance',
   'Art & Design',

@@ -25,7 +25,7 @@ export const ContentShareFeedItem = ({ share }: { share: ContentShare }) => (
       />
     </div>
 
-    <div className="glass-panel p-3 flex flex-col gap-1.5 rounded-t-none! rounded-b-2xl!">
+    <div className="glass-panel h-32 p-3 flex flex-col gap-1.5 rounded-t-none! rounded-b-2xl!">
       <div>
         <p className="font-bold text-xs truncate">{share.authorDisplayName}</p>
         <p className="text-[9px] text-white/50 uppercase tracking-widest mt-0.5">
@@ -37,7 +37,7 @@ export const ContentShareFeedItem = ({ share }: { share: ContentShare }) => (
         <Youtube size={9} /> {share.industry}
       </span>
 
-      {share.caption && <p className="text-[11px] text-white/80 leading-relaxed line-clamp-3">{share.caption}</p>}
+      <p className="text-[11px] text-white/80 leading-relaxed line-clamp-2">{share.caption}</p>
     </div>
   </div>
 );
