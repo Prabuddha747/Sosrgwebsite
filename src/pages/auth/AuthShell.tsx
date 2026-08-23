@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../design-system';
 import { cn } from '../../lib/utils';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 
 // Same split layout as ProfileSetupPage's wizard steps (half-page real
 // photo + content directly on the page, not a small card floating over a

@@ -9,7 +9,7 @@ import { Button, Input, Select, useToast } from '../../design-system';
 import { SelectTile, SplitStepImage, StepIndicator, StepTransition } from '../../components/wizard/WizardKit';
 import { cn } from '../../lib/utils';
 
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 import craftImage from '../../assets/community/craft.png';
 import auditionImage from '../../assets/community/audition.png';
 import backstageImage from '../../assets/community/backstage.png';

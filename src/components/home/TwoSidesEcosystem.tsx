@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 import creatorImage from '../../assets/creator.png';
 import businessImage from '../../assets/business.png';
 
@@ -32,7 +32,7 @@ export const TwoSidesEcosystem = () => (
 
     <div className="relative grid md:grid-cols-2 gap-1 rounded-2xl overflow-hidden">
       <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-20 h-20 rounded-full bg-[#140F0A] border border-gold/40 items-center justify-center overflow-hidden">
-        <img src={logo} alt="SOSRG" className="w-12 h-12 object-contain" />
+        <img src={logo} alt="SosrG" className="w-12 h-12 object-contain" />
       </div>
 
       {SIDES.map((side, i) => (

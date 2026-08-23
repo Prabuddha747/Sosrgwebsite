@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 
 // Shown while AuthContext resolves the initial session check (GET /v1/me +
 // GET /v1/profiles/me) — previously that state existed but nothing ever

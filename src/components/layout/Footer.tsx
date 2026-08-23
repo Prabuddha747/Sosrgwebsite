@@ -83,7 +83,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 
 export const Footer = () => (
   <footer className="bg-cinematic-black/80 backdrop-blur-xl border-t border-white/10 py-16 px-6">

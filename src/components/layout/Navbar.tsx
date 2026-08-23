@@ -80,7 +80,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Section } from '../../types';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
 import {
   MotionNavigationMenu,
   MotionNavigationMenuContent,
