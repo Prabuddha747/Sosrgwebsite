@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Award,
@@ -15,23 +15,27 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button, Card, Input, Textarea, useToast } from '../design-system';
-import { SelectTile, SplitStepImage, StepIndicator, StepTransition } from '../components/wizard/WizardKit';
+import { SplitStepImage, StepIndicator, StepTransition } from '../components/wizard/WizardKit';
+import { ApiError } from '../services/httpClient';
+import { biharUntoldService } from '../services/biharUntold';
+import type { BiharUntoldOptions, BiharUntoldPortfolioFile, ExperienceRange } from '../services/biharUntold';
 
 import heroBg from '../assets/bihar/hero-bg.png';
+import personalBg from '../assets/bihar/personal-bg.png';
+import artformsBg from '../assets/bihar/artforms-bg.png';
 
-// No real photo exists per named art form (64 of them) — using one
-// representative, verified-live Unsplash photo per broad category instead
-// of inventing a specific depiction for each. Same convention already used
-// elsewhere on the site (e.g. TALENT_CATEGORIES) for category imagery.
-const CATEGORY_IMAGE: Record<string, string> = {
-  'Art & Design': 'https://images.unsplash.com/photo-1461344577544-4e5dc9487184?q=80&w=400&auto=format&fit=crop',
-  Craft: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=400&auto=format&fit=crop',
-  Dance: 'https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=400&auto=format&fit=crop',
-  Music: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=400&auto=format&fit=crop',
-  Theatre: 'https://images.unsplash.com/photo-1503095396549-807759245b35?q=80&w=400&auto=format&fit=crop',
-  Literature: 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?q=80&w=400&auto=format&fit=crop',
-  Cinema: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=400&auto=format&fit=crop',
-};
+// Letters, spaces, and the handful of punctuation marks real names use
+// (apostrophe, hyphen, period) — no digits or other special characters.
+const NAME_PATTERN = /^[A-Za-z][A-Za-z .'-]{1,59}$/;
+const isValidName = (v: string) => NAME_PATTERN.test(v.trim());
+
+// Strips a leading +91/91 country code and any spaces/dashes so "+91 98765
+// 43210" and "9876543210" both validate the same way; Indian mobile numbers
+// start 6-9.
+const normalizePhone = (v: string) => v.trim().replace(/[\s-]/g, '').replace(/^\+?91/, '');
+const isValidPhone = (v: string) => /^[6-9]\d{9}$/.test(normalizePhone(v));
+
+const isValidAadhaar = (v: string) => /^\d{12}$/.test(v.trim().replace(/\s/g, ''));
 
 // Per-step full-bleed card backgrounds. Real cropped assets (heroBg) are
 // reused where they fit; the rest are verified-live, generically-themed
@@ -40,8 +44,8 @@ const CATEGORY_IMAGE: Record<string, string> = {
 // reference sheet).
 const STEP_IMAGE: Record<StepId, string> = {
   welcome: heroBg,
-  personal: 'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?q=80&w=1200&auto=format&fit=crop',
-  artforms: 'https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1200&auto=format&fit=crop',
+  personal: personalBg,
+  artforms: artformsBg,
   experience: 'https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=1200&auto=format&fit=crop',
   creations: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=1200&auto=format&fit=crop',
   engagement1: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1200&auto=format&fit=crop',
@@ -70,74 +74,41 @@ const BIHAR_DISTRICTS = [
   'Supaul', 'Vaishali', 'West Champaran (Bettiah)',
 ];
 
-// Art forms as given for this campaign — kept verbatim rather than
-// paraphrased, since these are specific named traditions/crafts.
-const ART_FORMS = [
-  { name: 'Madhubani Painting', industry: 'Art & Design' },
-  { name: 'Sikki Art', industry: 'Art & Design' },
-  { name: 'Tikuli Art', industry: 'Art & Design' },
-  { name: 'Patachitra/Patwa Art', industry: 'Art & Design' },
-  { name: 'Papier-mâché Handicraft', industry: 'Craft' },
-  { name: 'Bamboo Art & Products', industry: 'Craft' },
-  { name: 'Stone & Wood Sculpture', industry: 'Craft' },
-  { name: 'Terracotta & Pottery Art', industry: 'Craft' },
-  { name: 'Glass Painting & Embroidery', industry: 'Art & Design' },
-  { name: 'Fabric Art & Designing', industry: 'Craft' },
-  { name: 'Metal Art', industry: 'Craft' },
-  { name: 'Bhojpuri Sohrai Painting', industry: 'Art & Design' },
-  { name: 'Wooden Toy Making', industry: 'Craft' },
-  { name: 'Conch Shell Art', industry: 'Craft' },
-  { name: 'Leaf Painting', industry: 'Art & Design' },
-  { name: 'Folk Dance', industry: 'Dance' },
-  { name: 'Classical Dance', industry: 'Dance' },
-  { name: 'Folk Singing', industry: 'Music' },
-  { name: 'Classical Singing', industry: 'Music' },
-  { name: 'Art of Playing Musical Instruments', industry: 'Music' },
-  { name: 'Theatre & Drama', industry: 'Theatre' },
-  { name: 'Story & Screenplay Writing', industry: 'Literature' },
-  { name: 'Nautanki & Bahurupiya Art', industry: 'Theatre' },
-  { name: 'Pandavani Singing', industry: 'Music' },
-  { name: 'Chaupat Dance', industry: 'Dance' },
-  { name: 'Launda Naach', industry: 'Dance' },
-  { name: 'Bhagait Singing', industry: 'Music' },
-  { name: 'Photography', industry: 'Cinema' },
-  { name: 'Film Making', industry: 'Cinema' },
-  { name: 'Documentary Film Making', industry: 'Cinema' },
-  { name: 'Video Editing & Post Production', industry: 'Cinema' },
-  { name: 'VFX & Motion Graphics', industry: 'Cinema' },
-  { name: 'Animation & Graphic Designing', industry: 'Art & Design' },
-  { name: 'Music Video Production', industry: 'Cinema' },
-  { name: 'Folk Tales & Story Writing', industry: 'Literature' },
-  { name: 'Folk Songs & Bhajan Writing', industry: 'Literature' },
-  { name: 'Drama & Script Writing', industry: 'Literature' },
-  { name: 'Ghazal & Shayari Writing', industry: 'Literature' },
-  { name: 'Handwritten Manuscript Art', industry: 'Literature' },
-  { name: 'Vidyapati Poetry Tradition', industry: 'Literature' },
-  { name: 'Bundel Art', industry: 'Craft' },
-  { name: 'Sujni Embroidery & Zari Work', industry: 'Craft' },
-  { name: 'Tussar Silk & Bhagalpuri Silk', industry: 'Craft' },
-  { name: 'Iron & Brass Art', industry: 'Craft' },
-  { name: 'Clay Pottery', industry: 'Craft' },
-];
+// Art forms come from GET /v1/bihar-untold/options (fetched at mount, see
+// `options` state below) rather than a hardcoded list — the backend
+// validates saveArtForms() against exactly that catalog and 400s
+// (VALIDATION_FAILED) on anything else (curl-verified live), so any art
+// form not in the live catalog has to go through the free-text
+// `otherArtForm` field instead of being offered as a tile.
 
+// These two preference lists and the years-of-experience buckets ARE
+// validated against fixed backend ids too, but the ids are stable slugs for
+// this campaign's own fixed catalog (curl-verified against GET /options) —
+// paired positionally with the existing display copy rather than
+// hardcoding ids in the JSX.
 const ENGAGEMENT_WAYS = [
-  'For online sales (E-commerce, Website, Digital Marketing)',
-  'To conduct live workshops and training (Offline/Online)',
-  'To participate in art exhibitions, workshops, cultural events and fairs',
-  'To perform in art tourism and cultural events',
-  'For assistance in branding and digital marketing',
+  { label: 'For online sales (E-commerce, Website, Digital Marketing)', id: 'online_sales' },
+  { label: 'To conduct live workshops and training (Offline/Online)', id: 'workshops_training' },
+  { label: 'To participate in art exhibitions, workshops, cultural events and fairs', id: 'exhibitions_events_fairs' },
+  { label: 'To perform in art tourism and cultural events', id: 'art_tourism_events' },
+  { label: 'For assistance in branding and digital marketing', id: 'branding_digital_marketing' },
 ];
 
 const ASSISTANCE_NEEDS = [
-  'A beautiful Documentary on your art or institution/business',
-  'Financial Support for your art or art business setup',
-  'Marketing & Promotion',
-  'Art Workshop/Training & Upskilling',
-  'Access to the right market and buyers for art',
-  'Legal & Licensing Support like Copyright/trademark',
+  { label: 'A beautiful Documentary on your art or institution/business', id: 'documentary' },
+  { label: 'Financial Support for your art or art business setup', id: 'financial_support' },
+  { label: 'Marketing & Promotion', id: 'marketing_promotion' },
+  { label: 'Art Workshop/Training & Upskilling', id: 'training_upskilling' },
+  { label: 'Access to the right market and buyers for art', id: 'market_buyer_access' },
+  { label: 'Legal & Licensing Support like Copyright/trademark', id: 'legal_licensing' },
 ];
 
-const YEARS_OPTIONS = ['1 to 2 years', '3 to 5 years', '6 to 10 years', 'More than 10 years'];
+const YEARS_OPTIONS: { label: string; id: ExperienceRange }[] = [
+  { label: '1 to 2 years', id: '1_to_2' },
+  { label: '3 to 5 years', id: '3_to_5' },
+  { label: '6 to 10 years', id: '6_to_10' },
+  { label: 'More than 10 years', id: 'more_than_10' },
+];
 
 type YesNo = 'yes' | 'no';
 type YesNoMaybe = 'yes' | 'no' | 'maybe';
@@ -159,8 +130,7 @@ interface FormState {
   earnsLivelihood: YesNo | '';
   hasCertification: YesNo | '';
   hasAwards: YesNo | '';
-  portfolioFiles: string[];
-  portfolioStatus: 'sent' | 'not_yet' | '';
+  portfolioFiles: BiharUntoldPortfolioFile[];
   engagementWays: string[];
   assistanceNeeds: string[];
   interestedInSelling: YesNoMaybe | '';
@@ -172,7 +142,7 @@ interface FormState {
 const INITIAL_FORM: FormState = {
   email: '', fullName: '', dob: '', gender: '', mobile: '', aadhaar: '', guardianName: '', guardianContact: '',
   district: '', artForms: [], otherArtForm: '', yearsInvolved: '', formalTraining: '', earnsLivelihood: '',
-  hasCertification: '', hasAwards: '', portfolioFiles: [], portfolioStatus: '', engagementWays: [], assistanceNeeds: [],
+  hasCertification: '', hasAwards: '', portfolioFiles: [], engagementWays: [], assistanceNeeds: [],
   interestedInSelling: '', promotionSuggestion: '', otherComments: '', wantsToJoinCampaign: '',
 };
 
@@ -236,6 +206,27 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
   const [submitted, setSubmitted] = useState(false);
   const { show } = useToast();
 
+  // Draft submission created on leaving the "personal" step (createSubmission
+  // needs those fields). Every later step PATCHes this same draft, identified
+  // by id + the editToken sent back as X-Submission-Token.
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [editToken, setEditToken] = useState<string | null>(null);
+  const [stepSaving, setStepSaving] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  const [options, setOptions] = useState<BiharUntoldOptions | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    biharUntoldService
+      .getOptions()
+      .then((opts) => { if (!cancelled) setOptions(opts); })
+      .catch((err) => {
+        if (cancelled) return;
+        show(err instanceof ApiError ? err.message : 'Could not load the art-form catalogue.', 'error');
+      });
+    return () => { cancelled = true; };
+  }, [show]);
+
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const toggleInArray = (key: 'artForms' | 'engagementWays' | 'assistanceNeeds', value: string) => {
@@ -265,23 +256,132 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
   // Image alternates sides per step, same rhythm as ProfileSetupPage.
   const imageOnRight = currentIndex % 2 === 0;
 
+  const artFormOptions = options?.artForms ?? [];
   const filteredArtForms = useMemo(
-    () => ART_FORMS.filter((a) => a.name.toLowerCase().includes(artSearch.toLowerCase())),
-    [artSearch],
+    () => artFormOptions.filter((a) => a.name.toLowerCase().includes(artSearch.toLowerCase())),
+    [artFormOptions, artSearch],
   );
 
-  // No live endpoint for this campaign yet — everything above is real and
-  // fillable (a locked/inert preview made people fill out nothing at all),
-  // but the actual submit stays honest rather than pretending to send this
-  // anywhere: no data leaves the browser.
-  const handleSubmit = () => {
-    show("Registration isn't open yet — this campaign hasn't launched. We'll announce when applications open.", 'info');
-    setSubmitted(true);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const personalValid =
+    !!form.email &&
+    isValidName(form.fullName) &&
+    !!form.dob &&
+    form.dob <= todayStr &&
+    !!form.gender &&
+    isValidPhone(form.mobile) &&
+    isValidAadhaar(form.aadhaar) &&
+    isValidName(form.guardianName) &&
+    isValidPhone(form.guardianContact) &&
+    !!form.district;
+
+  const apiErrorMessage = (err: unknown, fallback: string) => (err instanceof ApiError ? err.message : fallback);
+
+  // One save-then-advance handler per step, so a failed PATCH keeps the user
+  // on the step (with a toast) instead of silently losing that step's data.
+  const runStep = async (action: () => Promise<unknown>, fallbackMessage: string) => {
+    setStepSaving(true);
+    try {
+      await action();
+      goNext();
+    } catch (err) {
+      show(apiErrorMessage(err, fallbackMessage), 'error');
+    } finally {
+      setStepSaving(false);
+    }
   };
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    set('portfolioFiles', [...form.portfolioFiles, ...Array.from(files).map((f) => f.name)]);
+  const submitPersonal = () =>
+    runStep(async () => {
+      const ref = await biharUntoldService.createSubmission({
+        email: form.email.trim(),
+        fullName: form.fullName.trim(),
+        dateOfBirth: form.dob,
+        gender: form.gender,
+        mobileNumber: normalizePhone(form.mobile),
+        aadhaarNumber: form.aadhaar.trim().replace(/\s/g, ''),
+        parentName: form.guardianName.trim(),
+        parentContactNumber: normalizePhone(form.guardianContact),
+        district: form.district,
+      });
+      setSubmissionId(ref.id);
+      setEditToken(ref.editToken);
+    }, 'Could not save your details. Please try again.');
+
+  const submitArtForms = () =>
+    runStep(
+      () => biharUntoldService.saveArtForms(submissionId!, editToken!, form.artForms, form.otherArtForm || undefined),
+      'Could not save your art forms. Please try again.',
+    );
+
+  const submitExperience = () =>
+    runStep(
+      () =>
+        biharUntoldService.saveExperience(submissionId!, editToken!, {
+          experienceRange: (YEARS_OPTIONS.find((y) => y.label === form.yearsInvolved)?.id ?? '1_to_2') as ExperienceRange,
+          formalTraining: form.formalTraining === 'yes',
+          earnsLivelihood: form.earnsLivelihood === 'yes',
+          hasCertification: form.hasCertification === 'yes',
+          hasRecognition: form.hasAwards === 'yes',
+        }),
+      'Could not save your experience. Please try again.',
+    );
+
+  const submitCreations = () =>
+    runStep(
+      () => biharUntoldService.saveCreations(submissionId!, editToken!),
+      'Could not save your portfolio. Please try again.',
+    );
+
+  const submitEngagement = () =>
+    runStep(
+      () =>
+        biharUntoldService.saveEngagement(submissionId!, editToken!, {
+          engagementPreferences: form.engagementWays,
+          assistancePreferences: form.assistanceNeeds,
+        }),
+      'Could not save your engagement preferences. Please try again.',
+    );
+
+  const submitVisions = () =>
+    runStep(
+      () =>
+        biharUntoldService.saveVisions(submissionId!, editToken!, {
+          interestedInSelling: form.interestedInSelling || 'maybe',
+          promotionIdeas: form.promotionSuggestion || undefined,
+          suggestions: form.otherComments || undefined,
+          wantsToJoin: form.wantsToJoinCampaign || 'maybe',
+        }),
+      'Could not save your answers. Please try again.',
+    );
+
+  const handleSubmit = async () => {
+    if (!submissionId || !editToken) return;
+    setStepSaving(true);
+    try {
+      await biharUntoldService.submit(submissionId, editToken);
+      show("You're in! We'll be in touch about the Bihar Untold documentary.", 'success');
+      setSubmitted(true);
+    } catch (err) {
+      show(apiErrorMessage(err, 'Could not submit your registration. Please try again.'), 'error');
+    } finally {
+      setStepSaving(false);
+    }
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !submissionId || !editToken) return;
+    setUploadingFile(true);
+    try {
+      for (const file of Array.from(files)) {
+        const uploaded = await biharUntoldService.uploadPortfolioFile(submissionId, editToken, file);
+        setForm((f) => ({ ...f, portfolioFiles: [...f.portfolioFiles, uploaded] }));
+      }
+    } catch (err) {
+      show(apiErrorMessage(err, 'Could not upload that file.'), 'error');
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const stepContent = (
@@ -289,7 +389,7 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
       {currentStepId === 'welcome' && (
         <>
           <div className="mb-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/15 border border-gold-500/40 text-sosrg-xs font-bold uppercase tracking-widest text-gold-700">
-            <CheckCircle2 size={14} /> Registration isn't open yet — you can fill this out, submissions aren't collected yet
+            <CheckCircle2 size={14} /> Registration is open — your progress is saved as you go
           </div>
           <h1 className="font-auth-display text-sosrg-3xl text-text-primary mt-4 mb-2">
             Bihar <span className="text-gold-700">Untold</span>
@@ -335,8 +435,22 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
           <p className="font-body text-sosrg-base text-text-muted mb-6">Let's begin with some basic details.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Email" type="email" required value={form.email} onChange={(e) => set('email', e.target.value)} />
-            <Input label="Full Name" required value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
-            <Input label="Date of Birth" type="date" required value={form.dob} onChange={(e) => set('dob', e.target.value)} />
+            <Input
+              label="Full Name"
+              required
+              value={form.fullName}
+              onChange={(e) => set('fullName', e.target.value)}
+              error={form.fullName && !isValidName(form.fullName) ? 'Letters and spaces only — no numbers or special characters.' : undefined}
+            />
+            <Input
+              label="Date of Birth"
+              type="date"
+              required
+              max={todayStr}
+              value={form.dob}
+              onChange={(e) => set('dob', e.target.value)}
+              error={form.dob && form.dob > todayStr ? "Date of birth can't be in the future." : undefined}
+            />
             <div>
               <FieldLabel>Gender</FieldLabel>
               <select
@@ -351,10 +465,37 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
                 <option value="prefer_not_to_say">Prefer not to say</option>
               </select>
             </div>
-            <Input label="Mobile Number" type="tel" required value={form.mobile} onChange={(e) => set('mobile', e.target.value)} placeholder="+91" />
-            <Input label="Aadhaar Number" required value={form.aadhaar} onChange={(e) => set('aadhaar', e.target.value)} />
-            <Input label="Father / Mother's Name" required value={form.guardianName} onChange={(e) => set('guardianName', e.target.value)} />
-            <Input label="Parents Contact Number" type="tel" required value={form.guardianContact} onChange={(e) => set('guardianContact', e.target.value)} />
+            <Input
+              label="Mobile Number"
+              type="tel"
+              required
+              value={form.mobile}
+              onChange={(e) => set('mobile', e.target.value)}
+              placeholder="+91"
+              error={form.mobile && !isValidPhone(form.mobile) ? '10-digit Indian mobile number (with or without +91).' : undefined}
+            />
+            <Input
+              label="Aadhaar Number"
+              required
+              value={form.aadhaar}
+              onChange={(e) => set('aadhaar', e.target.value)}
+              error={form.aadhaar && !isValidAadhaar(form.aadhaar) ? 'Aadhaar number must be exactly 12 digits.' : undefined}
+            />
+            <Input
+              label="Father / Mother's Name"
+              required
+              value={form.guardianName}
+              onChange={(e) => set('guardianName', e.target.value)}
+              error={form.guardianName && !isValidName(form.guardianName) ? 'Letters and spaces only — no numbers or special characters.' : undefined}
+            />
+            <Input
+              label="Parents Contact Number"
+              type="tel"
+              required
+              value={form.guardianContact}
+              onChange={(e) => set('guardianContact', e.target.value)}
+              error={form.guardianContact && !isValidPhone(form.guardianContact) ? '10-digit Indian mobile number (with or without +91).' : undefined}
+            />
             <div className="md:col-span-2">
               <FieldLabel>District</FieldLabel>
               <select
@@ -368,7 +509,9 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
             </div>
           </div>
           <div className="flex justify-end mt-8">
-            <Button onClick={goNext} disabled={!form.email || !form.fullName || !form.district}>Continue</Button>
+            <Button onClick={submitPersonal} disabled={stepSaving || !personalValid}>
+              {stepSaving ? 'Saving…' : 'Continue'}
+            </Button>
           </div>
         </>
       )}
@@ -391,37 +534,53 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
             />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[24rem] overflow-y-auto pr-1 mb-4">
-            {filteredArtForms.map((art) => (
-              <SelectTile
-                key={art.name}
-                selected={form.artForms.includes(art.name)}
-                onClick={() => toggleInArray('artForms', art.name)}
-                className="p-0 overflow-hidden"
-              >
-                <div className="relative">
-                  <img src={CATEGORY_IMAGE[art.industry]} alt="" aria-hidden="true" className="w-full h-20 object-cover" />
-                  {form.artForms.includes(art.name) && (
-                    <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-gold-500 flex items-center justify-center">
-                      <Check size={12} className="text-text-primary" />
-                    </div>
+          {!options && (
+            <p className="font-body text-sosrg-sm text-text-muted italic mb-4">Loading art forms…</p>
+          )}
+
+          {/* Text-only pills, same primary/secondary vocabulary as the signup
+              wizard's profession picker (ProfileSetupPage.tsx) — no per-item
+              photo, since there's no real image for most of these forms
+              anyway (see the removed CATEGORY_IMAGE comment history). */}
+          {/* Fixed height (not just a cap) so filtering down to a handful of
+              matches — or zero — doesn't collapse this box and yank
+              everything below it up the page; it scrolls internally instead
+              of resizing with the result count. */}
+          <div className="min-h-[24rem] max-h-[24rem] flex flex-wrap content-start gap-2 overflow-y-auto pr-1 mb-4">
+            {filteredArtForms.map((art) => {
+              const selected = form.artForms.includes(art.id);
+              return (
+                <button
+                  key={art.id}
+                  type="button"
+                  onClick={() => toggleInArray('artForms', art.id)}
+                  className={cn(
+                    'sosrg-focus-ring px-4 py-2 rounded-full text-sosrg-sm font-body border transition-colors',
+                    selected
+                      ? 'bg-gold-500 border-gold-500 text-cream-50 font-semibold'
+                      : 'bg-cream-50 border-cream-200 text-text-primary hover:border-gold-500',
                   )}
-                </div>
-                <div className="p-[0.75em]">
-                  <div className="font-body text-[10px] uppercase tracking-widest text-gold-700">{art.industry}</div>
-                  <div className="font-body font-semibold text-sosrg-xs text-text-primary mt-0.5 leading-tight">{art.name}</div>
-                </div>
-              </SelectTile>
-            ))}
-            {filteredArtForms.length === 0 && (
-              <p className="col-span-full font-body text-sosrg-base text-text-muted italic py-4 text-center">No art forms match "{artSearch}".</p>
+                >
+                  {art.name}
+                </button>
+              );
+            })}
+            {options && filteredArtForms.length === 0 && (
+              <p className="w-full font-body text-sosrg-base text-text-muted italic py-4 text-center">No art forms match "{artSearch}".</p>
             )}
           </div>
 
-          <Input label="Other (please specify)" value={form.otherArtForm} onChange={(e) => set('otherArtForm', e.target.value)} placeholder="Specify other artistic dimensions…" />
+          <Input
+            label="Other (please specify)"
+            value={form.otherArtForm}
+            onChange={(e) => set('otherArtForm', e.target.value)}
+            placeholder="Not listed above? Name your art form, craft, or discipline…"
+          />
 
           <div className="flex justify-end mt-8">
-            <Button onClick={goNext} disabled={form.artForms.length === 0 && !form.otherArtForm}>Continue</Button>
+            <Button onClick={submitArtForms} disabled={stepSaving || (form.artForms.length === 0 && !form.otherArtForm)}>
+              {stepSaving ? 'Saving…' : 'Continue'}
+            </Button>
           </div>
         </>
       )}
@@ -440,17 +599,17 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
               <div className="flex flex-wrap gap-2">
                 {YEARS_OPTIONS.map((opt) => (
                   <button
-                    key={opt}
+                    key={opt.id}
                     type="button"
-                    onClick={() => set('yearsInvolved', opt)}
+                    onClick={() => set('yearsInvolved', opt.label)}
                     className={cn(
                       'px-4 py-[0.6em] rounded-lg text-sosrg-xs font-bold uppercase tracking-widest border-2 transition-colors',
-                      form.yearsInvolved === opt
+                      form.yearsInvolved === opt.label
                         ? 'bg-gold-500 text-text-primary border-gold-500'
                         : 'bg-cream-100 text-text-muted border-cream-200 hover:border-gold-500/50',
                     )}
                   >
-                    {opt}
+                    {opt.label}
                   </button>
                 ))}
               </div>
@@ -473,7 +632,9 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
             </div>
           </div>
           <div className="flex justify-end mt-8">
-            <Button onClick={goNext} disabled={!form.yearsInvolved}>Continue</Button>
+            <Button onClick={submitExperience} disabled={stepSaving || !form.yearsInvolved}>
+              {stepSaving ? 'Saving…' : 'Continue'}
+            </Button>
           </div>
         </>
       )}
@@ -486,53 +647,45 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
           </h1>
           <p className="font-body text-sosrg-base text-text-muted mb-6">Showcase your work with us.</p>
 
-          <label className="sosrg-focus-ring flex flex-col items-center justify-center gap-2 border-2 border-dashed border-cream-200 rounded-xl py-8 cursor-pointer hover:border-gold-500 transition-colors mb-4 bg-cream-100">
+          <label
+            className={cn(
+              'sosrg-focus-ring flex flex-col items-center justify-center gap-2 border-2 border-dashed border-cream-200 rounded-xl py-8 transition-colors mb-4 bg-cream-100',
+              uploadingFile || !submissionId ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-gold-500',
+            )}
+          >
             <Send size={22} className="text-gold-700 rotate-90" />
-            <span className="font-body text-sosrg-base text-text-primary font-semibold">Upload images / videos / documents</span>
+            <span className="font-body text-sosrg-base text-text-primary font-semibold">
+              {uploadingFile ? 'Uploading…' : 'Upload images / videos / documents'}
+            </span>
             <span className="font-body text-sosrg-xs text-text-muted">JPG, PNG, MP4 or PDF (Max 25MB each)</span>
-            <input type="file" multiple accept="image/*,video/*,.pdf" className="hidden" onChange={(e) => handleFileUpload(e.target.files)} />
+            <input
+              type="file"
+              multiple
+              accept="image/*,video/*,.pdf"
+              className="hidden"
+              disabled={uploadingFile || !submissionId}
+              onChange={(e) => { void handleFileUpload(e.target.files); e.target.value = ''; }}
+            />
           </label>
 
           {form.portfolioFiles.length > 0 && (
             <ul className="mb-4 space-y-1">
-              {form.portfolioFiles.map((name, i) => (
-                <li key={`${name}-${i}`} className="font-body text-sosrg-xs text-text-muted flex items-center gap-2">
-                  <Check size={12} className="text-gold-700" /> {name}
+              {form.portfolioFiles.map((f) => (
+                <li key={f.id} className="font-body text-sosrg-xs text-text-muted flex items-center gap-2">
+                  <Check size={12} className="text-gold-700" /> {f.filename}
                 </li>
               ))}
             </ul>
           )}
 
-          <Card variant="flat" className="p-[1em] rounded-lg bg-cream-100 max-w-xl">
-            <p className="font-body text-sosrg-base text-text-muted mb-3">
-              WhatsApp Portfolio: <span className="text-gold-700 font-bold">+91 70799 17079</span>
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => set('portfolioStatus', 'sent')}
-                className={cn(
-                  'px-4 py-[0.6em] rounded-lg text-sosrg-xs font-bold uppercase tracking-widest border-2 transition-colors',
-                  form.portfolioStatus === 'sent' ? 'bg-gold-500 text-text-primary border-gold-500' : 'bg-cream-50 text-text-muted border-cream-200',
-                )}
-              >
-                Sent on WhatsApp
-              </button>
-              <button
-                type="button"
-                onClick={() => set('portfolioStatus', 'not_yet')}
-                className={cn(
-                  'px-4 py-[0.6em] rounded-lg text-sosrg-xs font-bold uppercase tracking-widest border-2 transition-colors',
-                  form.portfolioStatus === 'not_yet' ? 'bg-gold-500 text-text-primary border-gold-500' : 'bg-cream-50 text-text-muted border-cream-200',
-                )}
-              >
-                Don't have yet
-              </button>
-            </div>
-          </Card>
+          {form.portfolioFiles.length === 0 && (
+            <p className="font-body text-sosrg-xs text-text-muted italic mb-4">Upload at least one sample to continue.</p>
+          )}
 
           <div className="flex justify-end mt-8">
-            <Button onClick={goNext}>Continue</Button>
+            <Button onClick={submitCreations} disabled={stepSaving || uploadingFile || form.portfolioFiles.length === 0}>
+              {stepSaving ? 'Saving…' : 'Continue'}
+            </Button>
           </div>
         </>
       )}
@@ -550,9 +703,9 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
               <FieldLabel>In what ways would you like to work with us?</FieldLabel>
               <div className="space-y-2">
                 {ENGAGEMENT_WAYS.map((way) => (
-                  <label key={way} className="flex items-center gap-3 p-[0.75em] bg-cream-100 border border-cream-200 rounded-xl cursor-pointer hover:border-gold-500/50 transition-colors">
-                    <input type="checkbox" className="accent-gold-500 w-4 h-4" checked={form.engagementWays.includes(way)} onChange={() => toggleInArray('engagementWays', way)} />
-                    <span className="font-body text-sosrg-base text-text-primary">{way}</span>
+                  <label key={way.id} className="flex items-center gap-3 p-[0.75em] bg-cream-100 border border-cream-200 rounded-xl cursor-pointer hover:border-gold-500/50 transition-colors">
+                    <input type="checkbox" className="accent-gold-500 w-4 h-4" checked={form.engagementWays.includes(way.id)} onChange={() => toggleInArray('engagementWays', way.id)} />
+                    <span className="font-body text-sosrg-base text-text-primary">{way.label}</span>
                   </label>
                 ))}
               </div>
@@ -561,16 +714,18 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
               <FieldLabel>Do you need any special assistance in the field of art?</FieldLabel>
               <div className="space-y-2">
                 {ASSISTANCE_NEEDS.map((need) => (
-                  <label key={need} className="flex items-center gap-3 p-[0.75em] bg-cream-100 border border-cream-200 rounded-xl cursor-pointer hover:border-gold-500/50 transition-colors">
-                    <input type="checkbox" className="accent-gold-500 w-4 h-4" checked={form.assistanceNeeds.includes(need)} onChange={() => toggleInArray('assistanceNeeds', need)} />
-                    <span className="font-body text-sosrg-base text-text-primary">{need}</span>
+                  <label key={need.id} className="flex items-center gap-3 p-[0.75em] bg-cream-100 border border-cream-200 rounded-xl cursor-pointer hover:border-gold-500/50 transition-colors">
+                    <input type="checkbox" className="accent-gold-500 w-4 h-4" checked={form.assistanceNeeds.includes(need.id)} onChange={() => toggleInArray('assistanceNeeds', need.id)} />
+                    <span className="font-body text-sosrg-base text-text-primary">{need.label}</span>
                   </label>
                 ))}
               </div>
             </div>
           </div>
           <div className="flex justify-end mt-8">
-            <Button onClick={goNext}>Continue</Button>
+            <Button onClick={submitEngagement} disabled={stepSaving}>
+              {stepSaving ? 'Saving…' : 'Continue'}
+            </Button>
           </div>
         </>
       )}
@@ -594,7 +749,9 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
           </div>
 
           <div className="flex justify-end mt-8">
-            <Button onClick={goNext}>Continue</Button>
+            <Button onClick={submitVisions} disabled={stepSaving}>
+              {stepSaving ? 'Saving…' : 'Continue'}
+            </Button>
           </div>
         </>
       )}
@@ -608,10 +765,10 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
           <Card variant="flat" className="p-[1em] rounded-lg bg-cream-100 flex flex-col gap-3 mb-6 max-w-xl">
             <div><div className="font-body text-sosrg-sm text-text-muted">Name</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.fullName || '—'}</div></div>
             <div><div className="font-body text-sosrg-sm text-text-muted">Email</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.email || '—'}</div></div>
-            <div><div className="font-body text-sosrg-sm text-text-muted">Art Form</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.artForms.join(', ') || form.otherArtForm || '—'}</div></div>
+            <div><div className="font-body text-sosrg-sm text-text-muted">Art Form</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{artFormOptions.filter((a) => form.artForms.includes(a.id)).map((a) => a.name).join(', ') || form.otherArtForm || '—'}</div></div>
             <div><div className="font-body text-sosrg-sm text-text-muted">Experience</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.yearsInvolved || '—'}</div></div>
             <div><div className="font-body text-sosrg-sm text-text-muted">District</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.district || '—'}</div></div>
-            <div><div className="font-body text-sosrg-sm text-text-muted">Portfolio</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.portfolioFiles.length > 0 ? `${form.portfolioFiles.length} file(s) uploaded` : form.portfolioStatus === 'sent' ? 'Sent on WhatsApp' : '—'}</div></div>
+            <div><div className="font-body text-sosrg-sm text-text-muted">Portfolio</div><div className="font-body font-semibold text-sosrg-base text-text-primary">{form.portfolioFiles.length > 0 ? `${form.portfolioFiles.length} file(s) uploaded` : '—'}</div></div>
           </Card>
 
           <p className="font-body text-sosrg-sm text-text-muted mb-6 max-w-xl">
@@ -620,11 +777,15 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
 
           {submitted ? (
             <div className="flex items-center gap-2 py-4 font-body text-sosrg-base text-text-muted max-w-xl">
-              <CheckCircle2 size={16} className="text-gold-700 shrink-0" /> Registration isn't open yet — check back soon, or watch this page for the announcement.
+              <CheckCircle2 size={16} className="text-gold-700 shrink-0" /> Thank you — your registration is in. We'll be in touch.
             </div>
           ) : (
-            <Button onClick={handleSubmit} className="w-full max-w-xl flex items-center justify-center gap-2">
-              <Send size={16} /> Submit the Form
+            <Button
+              onClick={handleSubmit}
+              disabled={stepSaving || !submissionId}
+              className="w-full max-w-xl flex items-center justify-center gap-2"
+            >
+              <Send size={16} /> {stepSaving ? 'Submitting…' : 'Submit the Form'}
             </Button>
           )}
         </>
