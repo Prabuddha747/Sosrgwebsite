@@ -248,6 +248,13 @@ export const ProfileSystem = ({
   const { profile: authProfile, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
+  // The Actor/Model Advanced Module (physical attributes, playing age, etc.)
+  // only makes sense for that profession — initialType only distinguishes
+  // artist vs. business (see MyProfilePage), not which profession within
+  // "artist", so it's checked separately here against the real profession
+  // data instead of assuming every creator account is an actor/model.
+  const isActorOrModel = authProfile?.professions?.some((p) => /actor|model/i.test(p.name)) ?? false;
+
   // Privacy & Security tab — wired to the real Profiles/Auth APIs. Current
   // values are seeded from GET /v1/profiles/me's nested `.privacy` (see
   // doc/API_REQUIREMENTS.md §2.4a for the correction: an earlier version of
@@ -1384,8 +1391,8 @@ export const ProfileSystem = ({
                       )}
                     </HoverGlowPanel>
 
-                    {/* Conditional Advanced Module */}
-                    {profile.type === 'artist' && (
+                    {/* Conditional Advanced Module — actor/model professions only, see isActorOrModel above */}
+                    {profile.type === 'artist' && isActorOrModel && (
                       <HoverGlowPanel className="glass-panel-purple p-8">
                         <div className="flex justify-between items-center mb-6">
                           <h3 className="text-xl font-bold flex items-center gap-2"><Star size={20} className="text-gold" /> Actor/Model Advanced Module</h3>
@@ -1567,41 +1574,6 @@ export const ProfileSystem = ({
                                 </div>
                               </div>
                             )}
-                          </div>
-
-                          <div className="space-y-6">
-                            {/* None of the three below exist in the profile API yet — no
-                                experience-category, comfort-declaration, or availability
-                                field anywhere in ProfileDetailsResponseDto. Scaffolded
-                                rather than shown as real, empty, or editable — flagged in
-                                doc/API_REQUIREMENTS.md §2.4b. */}
-                            <div>
-                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
-                                Experience Categories
-                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
-                              </h4>
-                              <div className="flex gap-2">
-                                <ScaffoldRow className="h-6 w-24" />
-                                <ScaffoldRow className="h-6 w-20" />
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
-                                Comfort Declaration
-                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
-                              </h4>
-                              <div className="flex gap-2">
-                                <ScaffoldRow className="h-6 w-20" />
-                                <ScaffoldRow className="h-6 w-16" />
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 flex items-center justify-between">
-                                Availability
-                                <span className="bg-gold text-black px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">Visit Our App</span>
-                              </h4>
-                              <ScaffoldRow className="h-6 w-28" />
-                            </div>
                           </div>
                         </div>
 
