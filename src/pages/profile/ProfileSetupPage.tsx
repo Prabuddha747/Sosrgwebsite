@@ -331,7 +331,6 @@ export const ProfileSetupPage = () => {
     }
   };
 
-  const selectedTypeOption = TYPE_OPTIONS.find((t) => t.value === profileType);
   const selectedProfession = professions.find((p) => String(p.id) === professionId);
   const secondSelectedProfessions = professions.filter((p) => secondProfessionIds.includes(String(p.id)));
 
@@ -657,15 +656,10 @@ export const ProfileSetupPage = () => {
                 <p className="font-body text-sosrg-base text-text-muted mb-8">You can always update these later from your profile.</p>
 
                 <div className="rounded-xl bg-cream-100 border border-cream-200 p-[1em] flex flex-col gap-3">
-                  {selectedTypeOption && (
-                    <div className="flex items-center gap-3">
-                      <selectedTypeOption.icon size={20} className="text-gold-700" />
-                      <div>
-                        <div className="font-body text-sosrg-xs text-text-muted">I am</div>
-                        <div className="font-body font-semibold text-sosrg-sm text-text-primary">{selectedTypeOption.label}</div>
-                      </div>
-                    </div>
-                  )}
+                  <div>
+                    <div className="font-body text-sosrg-xs text-text-muted">Username</div>
+                    <div className="font-body font-semibold text-sosrg-sm text-text-primary">@{username}</div>
+                  </div>
                   {selectedProfession && (
                     <div>
                       <div className="font-body text-sosrg-xs text-text-muted">Profession</div>
@@ -682,10 +676,6 @@ export const ProfileSetupPage = () => {
                       </div>
                     </div>
                   )}
-                  <div>
-                    <div className="font-body text-sosrg-xs text-text-muted">Username</div>
-                    <div className="font-body font-semibold text-sosrg-sm text-text-primary">@{username}</div>
-                  </div>
                   <div>
                     <div className="font-body text-sosrg-xs text-text-muted">Display name</div>
                     <div className="font-body font-semibold text-sosrg-sm text-text-primary">{displayName}</div>
