@@ -6,6 +6,7 @@ import { CollaborationNetwork } from '../components/home/CollaborationNetwork';
 import { SevenWorlds } from '../components/home/SevenWorlds';
 import { FeaturedProfessionals } from '../components/home/FeaturedProfessionals';
 import { Testimonials } from '../components/home/Testimonials';
+import { BrandDeals } from '../components/home/BrandDeals';
 import { WhatSosrgGives } from '../components/home/WhatSosrgGives';
 import { TwoSidesEcosystem } from '../components/home/TwoSidesEcosystem';
 import { CommunityOpportunitiesPreview } from '../components/home/CommunityOpportunitiesPreview';
@@ -31,6 +32,7 @@ export const HomePage = ({ setActiveSection }: { setActiveSection: (s: Section) 
     <TwoSidesEcosystem />
     <CommunityOpportunitiesPreview />
     <Testimonials />
+    <BrandDeals />
     <TrustFoundation />
     <FinalGoal />
     <FinalCTA />
