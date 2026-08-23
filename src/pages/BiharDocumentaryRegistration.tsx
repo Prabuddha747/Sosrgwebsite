@@ -24,6 +24,7 @@ import heroBg from '../assets/bihar/hero-bg.png';
 import personalBg from '../assets/bihar/personal-bg.png';
 import artformsBg from '../assets/bihar/artforms-bg.png';
 import experienceBg from '../assets/bihar/experience-bg.png';
+import creationsBg from '../assets/bihar/creations-bg.png';
 
 // Letters, spaces, and the handful of punctuation marks real names use
 // (apostrophe, hyphen, period) — no digits or other special characters.
@@ -48,7 +49,7 @@ const STEP_IMAGE: Record<StepId, string> = {
   personal: personalBg,
   artforms: artformsBg,
   experience: experienceBg,
-  creations: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=1200&auto=format&fit=crop',
+  creations: creationsBg,
   engagement1: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1200&auto=format&fit=crop',
   engagement2: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&auto=format&fit=crop',
   review: heroBg,
@@ -813,7 +814,7 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
   }
 
   return (
-    <div className="min-h-screen flex-col">
+    <div className="min-h-screen flex flex-col">
       <div className="max-w-6xl mx-auto px-4 w-full shrink-0">
         {/* Intro — sits directly under the fixed navbar, no Hero banner above it */}
         <section className="py-8">
