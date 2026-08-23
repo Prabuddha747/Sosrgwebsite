@@ -1,5 +1,4 @@
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
 import ctaImage from '../../assets/community/CTA.png';
 
 export const FinalCTA = () => (
@@ -26,23 +25,9 @@ export const FinalCTA = () => (
       <p className="photo-text-muted mb-2">Bring what you know.</p>
       <p className="photo-text-muted mb-2">Bring what you're learning.</p>
       <p className="photo-text-muted mb-2">Bring what you're dreaming about.</p>
-      <p className="font-bold mb-10">Bring it to SOSRG.</p>
+      <p className="font-bold mb-10">Bring it to SosrG.</p>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Link
-          to="/signup?intent=artist"
-          className="w-full sm:w-auto bg-gold text-black px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:scale-105 transition-transform"
-        >
-          I'm a Creator
-        </Link>
-        <Link
-          to="/signup?intent=studio"
-          className="photo-text w-full sm:w-auto bg-[rgba(247,243,232,0.08)] backdrop-blur-md border border-[rgba(247,243,232,0.3)] px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-[rgba(247,243,232,0.15)] transition-colors"
-        >
-          I'm Hiring
-        </Link>
-      </div>
-      <p className="photo-text-muted mt-8 text-sm italic">Everyone starts somewhere.</p>
+      <p className="photo-text-muted text-sm italic">Everyone starts somewhere.</p>
     </motion.div>
   </section>
 );
