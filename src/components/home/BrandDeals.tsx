@@ -1,8 +1,22 @@
 import { motion } from 'motion/react';
+import hkiMedia from '../../assets/brands/hki-media.png';
+import zeeMusic from '../../assets/brands/zee-music.png';
+import tanishkaDanceAcademy from '../../assets/brands/tanishka-dance-academy.png';
+import pantene from '../../assets/brands/pantene.png';
+import johnJacobs from '../../assets/brands/john-jacobs.png';
+import lenskart from '../../assets/brands/lenskart.png';
+import real from '../../assets/brands/real.png';
+import dabur from '../../assets/brands/dabur.png';
+import kelvinOakmont from '../../assets/brands/kelvin-oakmont.png';
+import neolife from '../../assets/brands/neolife.png';
+import krutik from '../../assets/brands/krutik.png';
+import svrnWellness from '../../assets/brands/svrn-wellness.png';
+import fixsy from '../../assets/brands/fixsy.png';
 
 // Real collaborations, supplied directly by the SosrG team — no fabricated
-// or placeholder names. Grouped by industry so it reads like an actual
-// partner roster rather than a marketing logo strip.
+// or placeholder names/logos. Entries with a `logo` render in the logo
+// wall; everything else (no logo file on hand yet) falls into the plain
+// credits list below it, grouped by industry.
 const COLLABORATIONS = [
   { name: 'Vande Krsna Foundation', type: 'Educational Course', industry: 'Literature' },
   { name: 'Redesign Your Destiny', type: 'Book', industry: 'Literature' },
@@ -20,27 +34,30 @@ const COLLABORATIONS = [
   { name: 'Akshunya Motion Picture', type: 'Film Production House', industry: 'Cinema' },
   { name: 'Chanajor', type: 'Film Production House', industry: 'Cinema' },
   { name: 'KK Music & Films Production', type: 'Film Production House', industry: 'Cinema' },
-  { name: 'HKI Media', type: 'Film Production House', industry: 'Cinema' },
+  { name: 'HKI Media', type: 'Film Production House', industry: 'Cinema', logo: hkiMedia },
   { name: 'Parikrama Pictures Production', type: 'Film Production House', industry: 'Cinema' },
-  { name: 'Zee Music', type: 'Music Channel', industry: 'Music' },
-  { name: 'Tanishka Dance Academy', type: 'Performing Studio', industry: 'Dance' },
-  { name: 'Pantene', type: 'Beauty & Haircare Brand', industry: 'Art / Design' },
-  { name: 'John & Jacob', type: 'Fashion / Lifestyle Brand', industry: 'Art / Design' },
-  { name: 'Lenskart', type: 'Eyewear / Fashion-Tech Brand', industry: 'Art / Design' },
-  { name: 'Real Juice', type: 'FMCG / Beverage Brand', industry: 'Art / Design' },
-  { name: 'Dabur', type: 'FMCG / Consumer Wellness Brand', industry: 'Art / Design' },
-  { name: 'Kelvin Oakmont Services', type: 'Event Brand', industry: 'Art / Design' },
-  { name: 'NeoLife', type: 'Medicated Product Company', industry: 'Art / Design' },
-  { name: 'Krutik', type: 'Painting Company', industry: 'Art / Design' },
-  { name: 'SVRN Wellness', type: 'Wellness / Lifestyle Brand', industry: 'Art / Design' },
-  { name: 'Fixsy India', type: 'Consumer / Service Brand', industry: 'Art / Design' },
+  { name: 'Zee Music', type: 'Music Channel', industry: 'Music', logo: zeeMusic },
+  { name: 'Tanishka Dance Academy', type: 'Performing Studio', industry: 'Dance', logo: tanishkaDanceAcademy },
+  { name: 'Pantene', type: 'Beauty & Haircare Brand', industry: 'Art / Design', logo: pantene },
+  { name: 'John & Jacob', type: 'Fashion / Lifestyle Brand', industry: 'Art / Design', logo: johnJacobs },
+  { name: 'Lenskart', type: 'Eyewear / Fashion-Tech Brand', industry: 'Art / Design', logo: lenskart },
+  { name: 'Real Juice', type: 'FMCG / Beverage Brand', industry: 'Art / Design', logo: real },
+  { name: 'Dabur', type: 'FMCG / Consumer Wellness Brand', industry: 'Art / Design', logo: dabur },
+  { name: 'Kelvin Oakmont Services', type: 'Event Brand', industry: 'Art / Design', logo: kelvinOakmont },
+  { name: 'NeoLife', type: 'Medicated Product Company', industry: 'Art / Design', logo: neolife },
+  { name: 'Krutik', type: 'Painting Company', industry: 'Art / Design', logo: krutik },
+  { name: 'SVRN Wellness', type: 'Wellness / Lifestyle Brand', industry: 'Art / Design', logo: svrnWellness },
+  { name: 'Fixsy India', type: 'Consumer / Service Brand', industry: 'Art / Design', logo: fixsy },
 ];
+
+const WITH_LOGO = COLLABORATIONS.filter((c) => c.logo);
+const WITHOUT_LOGO = COLLABORATIONS.filter((c) => !c.logo);
 
 // Preserves the order above (roughly grouped already) while collapsing into
 // { industry -> entries[] } — an entry whose industry spans several tags
 // (e.g. "Literature / Theatre / ...") is filed under its first tag only, so
 // nothing appears twice.
-const GROUPS = COLLABORATIONS.reduce<{ industry: string; entries: typeof COLLABORATIONS }[]>((groups, item) => {
+const GROUPS = WITHOUT_LOGO.reduce<{ industry: string; entries: typeof WITHOUT_LOGO }[]>((groups, item) => {
   const key = item.industry.split('/')[0].trim();
   const group = groups.find((g) => g.industry === key);
   if (group) group.entries.push(item);
@@ -64,6 +81,24 @@ export const BrandDeals = () => (
         Organizations, studios, and brands SosrG has collaborated with.
       </p>
     </motion.div>
+
+    {/* Logo wall — only entries with a real, provided logo file. Sits on a
+        light chip since most of these marks are drawn for a white
+        background and would vanish against the dark theme otherwise. */}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-16">
+      {WITH_LOGO.map((c, i) => (
+        <motion.div
+          key={c.name}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.4, delay: i * 0.04 }}
+          className="h-24 sm:h-28 rounded-xl bg-white p-4 flex items-center justify-center"
+        >
+          <img src={c.logo} alt={c.name} className="max-h-full max-w-full object-contain" />
+        </motion.div>
+      ))}
+    </div>
 
     <div className="max-w-4xl mx-auto space-y-12">
       {GROUPS.map((group) => (
