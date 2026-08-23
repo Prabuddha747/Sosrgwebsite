@@ -35,17 +35,16 @@ const INDUSTRIES: { value: string; label: string; icon: typeof Theater; descript
   { value: 'Craft', label: 'Craft', icon: Scissors, description: 'Handcraft, traditional arts, artisan work, material-based creation' },
 ];
 
-// Curated per-industry profession picker — richer than the live catalogue
-// (GET /v1/professions, ~27 rows across all 7 industries as of the
-// 2026-08-23 backfill) so the picker reads as a real, complete list rather
-// than whatever's been seeded so far. Selecting an item checks it against the live catalogue
-// (case-insensitive, scoped to the chosen industry) at render time: a real
-// match submits the real professionId; no match falls through to the
-// existing free-text `headline` field so nothing fake is ever submitted as
-// a profession ID. This list intentionally names a few items to match the
-// live catalogue's exact wording (e.g. "Film Director", "Lead Actor /
-// Actress", "Vocalist & Composer", "Stage Performer", "Creative Director")
-// so those specific picks resolve to a real professionId today.
+// Category layout only — NOT rendered directly (see professionGroups below).
+// The live catalogue (GET /v1/professions) is still much sparser than this
+// list per industry (e.g. Music today is only Composer/Vocalist/Vocalist &
+// Composer/Instrumentalist, not the ~15 labels below), so rendering every
+// label here used to produce a wall of buttons that silently did nothing
+// when tapped — confusing, not just incomplete. professionGroups filters
+// this down to only the labels that have a matching live entry (case-
+// insensitive) and uses these category names purely for grouping; any live
+// entry with no matching label anywhere (e.g. plain "Actor" in Cinema)
+// still needs to be pickable, so it lands in a catch-all "Other" group.
 const CURATED_PROFESSIONS: Record<string, { category: string; items: string[] }[]> = {
   Theatre: [
     { category: 'Performance', items: ['Actor', 'Stage Performer', 'Comedian', 'Puppeteer', 'Dancer / Movement Performer'] },
@@ -364,6 +363,32 @@ export const ProfileSetupPage = () => {
   // than a static split.
   const imageOnRight = currentIndex % 2 === 0;
 
+  // Profession picker groups, built from the LIVE catalogue rather than
+  // rendering every CURATED_PROFESSIONS label — most curated labels per
+  // industry have no matching catalogue entry (e.g. today's Music catalogue
+  // is only Composer/Vocalist/Vocalist & Composer/Instrumentalist, not the
+  // ~15 labels curated for it), and a button that can't actually be picked
+  // just reads as broken. CURATED_PROFESSIONS still supplies the category
+  // layout for whichever real entries match one of its labels; any live
+  // entry that doesn't match a curated label anywhere (e.g. plain "Actor"/
+  // "Cinematographer" in Cinema, "Vocalist" in Music) still needs to be
+  // selectable, so it falls into a catch-all "Other" group instead of
+  // being silently dropped.
+  const industryProfessions = professions.filter((p) => p.industry === selectedIndustry);
+  const professionGroups = (() => {
+    const usedIds = new Set<number>();
+    const groups = (CURATED_PROFESSIONS[selectedIndustry] ?? [])
+      .map((group) => ({
+        category: group.category,
+        items: industryProfessions.filter((p) => group.items.some((label) => label.toLowerCase() === p.name.toLowerCase())),
+      }))
+      .filter((group) => group.items.length > 0);
+    groups.forEach((group) => group.items.forEach((p) => usedIds.add(p.id)));
+    const leftover = industryProfessions.filter((p) => !usedIds.has(p.id));
+    if (leftover.length > 0) groups.push({ category: 'Other', items: leftover });
+    return groups;
+  })();
+
   return (
     <div className="min-h-dvh flex flex-col md:flex-row relative">
       {/* Logo sits at the page's top-left corner regardless of which side the
@@ -485,57 +510,38 @@ export const ProfileSetupPage = () => {
                       <p className="font-body text-sosrg-base text-text-muted">Loading professions…</p>
                     ) : (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6 max-h-[420px] overflow-y-auto pr-2">
-                        {(CURATED_PROFESSIONS[selectedIndustry] ?? []).map((group) => (
+                        {professionGroups.map((group) => (
                           <div key={group.category}>
                             <div className="font-body text-sosrg-xs uppercase tracking-widest text-gold-700 mb-2">{group.category}</div>
                             <div className="flex flex-wrap gap-2">
-                              {group.items.map((item) => {
-                                const match = professions.find(
-                                  (p) => p.industry === selectedIndustry && p.name.toLowerCase() === item.toLowerCase(),
-                                );
-                                const matchId = match ? String(match.id) : undefined;
-                                const isPrimary = matchId ? professionId === matchId : headline === item;
-                                const isSecondary = matchId ? secondProfessionIds.includes(matchId) : false;
+                              {group.items.map((p) => {
+                                const id = String(p.id);
+                                const isPrimary = professionId === id;
+                                const isSecondary = secondProfessionIds.includes(id);
                                 return (
                                   <button
-                                    key={item}
+                                    key={p.id}
                                     type="button"
                                     onClick={() => {
-                                      if (!match) {
-                                        // No live catalogue entry — this curated label can't
-                                        // take part in the primary/secondary set (no numeric
-                                        // id to submit). If nothing is picked yet it becomes the
-                                        // free-text headline primary; if a real primary is
-                                        // already set, leave everything alone instead of
-                                        // wiping out picks that were actually valid — most
-                                        // curated labels per industry have no live match today,
-                                        // so this used to nuke the whole selection on a single
-                                        // stray click.
-                                        if (professionId) return;
-                                        setSecondProfessionIds([]);
-                                        setHeadline(item);
-                                        setProfileType(CREATOR_PROFESSION_TYPE[item] ?? 'artist');
-                                        return;
-                                      }
                                       // Already primary or already a secondary — leave it as-is on
                                       // a single click; double-click is what promotes a secondary,
                                       // so a plain click here must stay a no-op.
-                                      if (matchId === professionId || secondProfessionIds.includes(matchId)) return;
+                                      if (isPrimary || isSecondary) return;
                                       if (!professionId) {
-                                        setProfessionId(matchId);
+                                        setProfessionId(id);
                                         setHeadline('');
-                                        setProfileType(CREATOR_PROFESSION_TYPE[item] ?? 'artist');
+                                        setProfileType(CREATOR_PROFESSION_TYPE[p.name] ?? 'artist');
                                       } else {
-                                        setSecondProfessionIds((ids) => [...ids, matchId]);
+                                        setSecondProfessionIds((ids) => [...ids, id]);
                                       }
                                     }}
                                     onDoubleClick={() => {
-                                      if (!match || !secondProfessionIds.includes(matchId)) return;
+                                      if (!isSecondary) return;
                                       // Promote this secondary pick to primary; the old primary
                                       // joins the rest as a secondary pick instead of being dropped.
-                                      setSecondProfessionIds((ids) => [...ids.filter((id) => id !== matchId), professionId].filter(Boolean));
-                                      setProfessionId(matchId);
-                                      setProfileType(CREATOR_PROFESSION_TYPE[match.name] ?? 'artist');
+                                      setSecondProfessionIds((ids) => [...ids.filter((x) => x !== id), professionId].filter(Boolean));
+                                      setProfessionId(id);
+                                      setProfileType(CREATOR_PROFESSION_TYPE[p.name] ?? 'artist');
                                     }}
                                     className={cn(
                                       'sosrg-focus-ring px-4 py-2 rounded-full text-sosrg-sm font-body transition-colors',
@@ -546,7 +552,7 @@ export const ProfileSetupPage = () => {
                                           : 'border border-cream-200 bg-cream-50 text-text-primary hover:border-gold-500',
                                     )}
                                   >
-                                    {item}
+                                    {p.name}
                                   </button>
                                 );
                               })}
