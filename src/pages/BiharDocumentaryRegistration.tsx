@@ -26,6 +26,7 @@ import artformsBg from '../assets/bihar/artforms-bg.png';
 import experienceBg from '../assets/bihar/experience-bg.png';
 import creationsBg from '../assets/bihar/creations-bg.png';
 import engagement1Bg from '../assets/bihar/engagement1-bg.png';
+import engagement2Bg from '../assets/bihar/engagement2-bg.png';
 
 // Letters, spaces, and the handful of punctuation marks real names use
 // (apostrophe, hyphen, period) — no digits or other special characters.
@@ -52,7 +53,7 @@ const STEP_IMAGE: Record<StepId, string> = {
   experience: experienceBg,
   creations: creationsBg,
   engagement1: engagement1Bg,
-  engagement2: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&auto=format&fit=crop',
+  engagement2: engagement2Bg,
   review: heroBg,
 };
 
