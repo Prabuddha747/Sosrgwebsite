@@ -1,14 +1,14 @@
-import { Marquee } from '../ui/marquee';
+import { motion } from 'motion/react';
 
 // Real collaborations, supplied directly by the SosrG team — no fabricated
-// or placeholder names. Split into two rows for the marquee; order within
-// each row doesn't matter since it just scrolls.
+// or placeholder names. Grouped by industry so it reads like an actual
+// partner roster rather than a marketing logo strip.
 const COLLABORATIONS = [
   { name: 'Vande Krsna Foundation', type: 'Educational Course', industry: 'Literature' },
   { name: 'Redesign Your Destiny', type: 'Book', industry: 'Literature' },
+  { name: 'Abhinav Toli', type: 'NGO', industry: 'Literature / Theatre / Music / Dance / Art / Craft' },
   { name: 'Saptak Cultural Society, Rohtak', type: 'NGO', industry: 'Theatre' },
   { name: 'Haryana Institute of Performing Arts, Rohtak', type: 'NGO', industry: 'Theatre' },
-  { name: 'Abhinav Toli', type: 'NGO', industry: 'Literature / Theatre / Music / Dance / Art / Craft' },
   { name: 'Stage', type: 'OTT Platform', industry: 'Cinema' },
   { name: 'Chaupal', type: 'OTT Platform', industry: 'Cinema' },
   { name: 'Infinity Creators', type: 'Film Production House', industry: 'Cinema' },
@@ -36,40 +36,60 @@ const COLLABORATIONS = [
   { name: 'Fixsy India', type: 'Consumer / Service Brand', industry: 'Art / Design' },
 ];
 
-const MID = Math.ceil(COLLABORATIONS.length / 2);
-const ROW_1 = COLLABORATIONS.slice(0, MID);
-const ROW_2 = COLLABORATIONS.slice(MID);
-
-const CollabCard = ({ name, type, industry }: { name: string; type: string; industry: string }) => (
-  <div className="w-64 sm:w-72 shrink-0 rounded-2xl border border-white/10 bg-cinematic-gray px-5 py-4">
-    <p className="font-bold text-white/90 leading-snug">{name}</p>
-    <p className="text-white/40 text-xs mt-1">{type}</p>
-    <p className="text-gold/70 text-[11px] mt-2 uppercase tracking-wider">{industry}</p>
-  </div>
-);
+// Preserves the order above (roughly grouped already) while collapsing into
+// { industry -> entries[] } — an entry whose industry spans several tags
+// (e.g. "Literature / Theatre / ...") is filed under its first tag only, so
+// nothing appears twice.
+const GROUPS = COLLABORATIONS.reduce<{ industry: string; entries: typeof COLLABORATIONS }[]>((groups, item) => {
+  const key = item.industry.split('/')[0].trim();
+  const group = groups.find((g) => g.industry === key);
+  if (group) group.entries.push(item);
+  else groups.push({ industry: key, entries: [item] });
+  return groups;
+}, []);
 
 export const BrandDeals = () => (
   <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto border-t border-white/10">
-    <div className="text-center mb-12">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-100px' }}
+      transition={{ duration: 0.7 }}
+      className="text-center mb-14"
+    >
       <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
         Backed by <span className="gold-text">brands who believe in creators</span>
       </h2>
       <p className="text-white/50 text-sm mt-3 max-w-xl mx-auto">
         Organizations, studios, and brands SosrG has collaborated with.
       </p>
-    </div>
+    </motion.div>
 
-    <div className="space-y-4">
-      <Marquee pauseOnHover>
-        {ROW_1.map((c) => (
-          <CollabCard key={c.name} {...c} />
-        ))}
-      </Marquee>
-      <Marquee pauseOnHover reverse>
-        {ROW_2.map((c) => (
-          <CollabCard key={c.name} {...c} />
-        ))}
-      </Marquee>
+    <div className="max-w-4xl mx-auto space-y-12">
+      {GROUPS.map((group) => (
+        <div key={group.industry}>
+          <span className="block text-gold text-xs font-bold uppercase tracking-[0.3em] mb-5">
+            {group.industry}
+          </span>
+          <div className="grid sm:grid-cols-2 gap-x-10">
+            {group.entries.map((c, i) => (
+              <motion.div
+                key={c.name}
+                initial={{ opacity: 0, x: -8 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.4, delay: i * 0.03 }}
+                className="group flex items-baseline justify-between gap-4 py-3 border-b border-white/10 hover:border-gold/40 transition-colors"
+              >
+                <span className="font-auth-display text-lg text-white/85 group-hover:text-gold transition-colors">
+                  {c.name}
+                </span>
+                <span className="shrink-0 text-white/30 text-xs italic">{c.type}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   </section>
 );
