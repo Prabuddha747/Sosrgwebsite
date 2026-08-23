@@ -23,6 +23,7 @@ import type { BiharUntoldOptions, BiharUntoldPortfolioFile, ExperienceRange } fr
 import heroBg from '../assets/bihar/hero-bg.png';
 import personalBg from '../assets/bihar/personal-bg.png';
 import artformsBg from '../assets/bihar/artforms-bg.png';
+import experienceBg from '../assets/bihar/experience-bg.png';
 
 // Letters, spaces, and the handful of punctuation marks real names use
 // (apostrophe, hyphen, period) — no digits or other special characters.
@@ -46,7 +47,7 @@ const STEP_IMAGE: Record<StepId, string> = {
   welcome: heroBg,
   personal: personalBg,
   artforms: artformsBg,
-  experience: 'https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=1200&auto=format&fit=crop',
+  experience: experienceBg,
   creations: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=1200&auto=format&fit=crop',
   engagement1: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1200&auto=format&fit=crop',
   engagement2: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&auto=format&fit=crop',
