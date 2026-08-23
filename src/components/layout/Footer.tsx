@@ -60,6 +60,9 @@ import {
   Image,
   Instagram,
   Youtube,
+  Facebook,
+  Linkedin,
+  Mail,
   ExternalLink,
   Plus,
   Share2,
@@ -93,9 +96,26 @@ export const Footer = () => (
         <p className="text-white/40 max-w-md mb-8">
           The unified ecosystem for Cinema, Theatre, and Cultural Arts. Empowering the next generation of creative professionals with AI and trust.
         </p>
-        <div className="flex gap-4">
-          {['Twitter', 'Instagram', 'LinkedIn', 'YouTube'].map(s => (
-            <a key={s} href="#" className="text-white/40 hover:text-gold transition-colors text-sm">{s}</a>
+        <div className="flex flex-wrap gap-3">
+          {[
+            { label: 'WhatsApp', Icon: MessageCircle, href: 'https://wa.me/message/A36K3OVFIWT2B1' },
+            { label: 'Instagram', Icon: Instagram, href: 'https://www.instagram.com/sosrgstudios/' },
+            { label: 'Facebook', Icon: Facebook, href: 'https://www.facebook.com/SosrGGroup/' },
+            { label: 'YouTube', Icon: Youtube, href: 'https://www.youtube.com/@sosrgstudios' },
+            { label: 'LinkedIn', Icon: Linkedin, href: 'https://in.linkedin.com/company/sosrgstudios' },
+            { label: 'Email', Icon: Mail, href: 'mailto:sosrgstudios@gmail.com' },
+          ].map(({ label, Icon, href }) => (
+            <a
+              key={label}
+              href={href}
+              target={href.startsWith('http') ? '_blank' : undefined}
+              rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+              aria-label={label}
+              title={label}
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 text-white/50 hover:text-gold hover:border-gold/40 transition-colors"
+            >
+              <Icon size={16} />
+            </a>
           ))}
         </div>
       </div>
@@ -115,6 +135,17 @@ export const Footer = () => (
           <li><a href="#" className="hover:text-gold">Safety Policy</a></li>
           <li><a href="#" className="hover:text-gold">Premium Plans</a></li>
           <li><a href="#" className="hover:text-gold">Contact Support</a></li>
+          <li>
+            <a href="https://www.sosrgstudios.com/" target="_blank" rel="noopener noreferrer" className="hover:text-gold inline-flex items-center gap-1">
+              Studios Website <ExternalLink size={12} />
+            </a>
+          </li>
+          <li>
+            <a href="https://www.instagram.com/sosrgcasting" target="_blank" rel="noopener noreferrer" className="hover:text-gold inline-flex items-center gap-1">
+              SosrG Casting <ExternalLink size={12} />
+            </a>
+          </li>
+          <li><a href="mailto:sosrgstudios@gmail.com" className="hover:text-gold">sosrgstudios@gmail.com</a></li>
         </ul>
       </div>
     </div>

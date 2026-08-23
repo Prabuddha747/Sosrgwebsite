@@ -34,6 +34,13 @@
   to { transform: translateX(calc(-100% - var(--gap, 1rem))); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-marquee-vertical {
+    animation: none;
+  }
+}
+
 @keyframes marquee-vertical {
   from { transform: translateY(0); }
   to { transform: translateY(calc(-100% - var(--gap, 1rem))); }
