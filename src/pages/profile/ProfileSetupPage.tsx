@@ -19,12 +19,12 @@ import openMicImage from '../../assets/community/open-mic.png';
 type StepId = 'industry' | 'profession' | 'details' | 'review' | 'welcome';
 
 // Fixed top-level industry categories — the 7 Core Creative Sectors. Values
-// match the live GET /v1/professions industry strings where data already
-// exists (Cinema, Theatre, Music, "Art & Design" — curl-verified live).
-// Literature, Dance, and Crafts have no professions behind them yet on the
-// backend, so those two buttons currently lead to an honest "none yet,
-// skip" state rather than a fabricated list — same pattern the profession
-// step below already uses.
+// match the live GET /v1/professions industry strings for all 7 sectors
+// (curl-verified live, 2026-08-23 — the catalogue was backfilled from its
+// earlier 5-row/4-industry state; see doc/API_REQUIREMENTS.md §2.4h). The
+// industryHasNoCatalogueProfessions gate below is still worth keeping even
+// though every industry has entries today — it's what makes a future gap
+// in the catalogue fail safe instead of dead-ending signup.
 const INDUSTRIES: { value: string; label: string; icon: typeof Theater; description: string }[] = [
   { value: 'Literature', label: 'Literature', icon: BookOpen, description: 'Writing, poetry, publishing, storytelling' },
   { value: 'Theatre', label: 'Theatre', icon: Theater, description: 'Stage performance, theatre production, dramaturgy' },
@@ -35,10 +35,10 @@ const INDUSTRIES: { value: string; label: string; icon: typeof Theater; descript
   { value: 'Craft', label: 'Craft', icon: Scissors, description: 'Handcraft, traditional arts, artisan work, material-based creation' },
 ];
 
-// Curated per-industry profession picker — the live catalogue
-// (GET /v1/professions) only has 5 rows total today (doc/API_REQUIREMENTS.md
-// §2.4h), so this list is shown for real UX even where the backend has
-// nothing yet. Selecting an item checks it against the live catalogue
+// Curated per-industry profession picker — richer than the live catalogue
+// (GET /v1/professions, ~27 rows across all 7 industries as of the
+// 2026-08-23 backfill) so the picker reads as a real, complete list rather
+// than whatever's been seeded so far. Selecting an item checks it against the live catalogue
 // (case-insensitive, scoped to the chosen industry) at render time: a real
 // match submits the real professionId; no match falls through to the
 // existing free-text `headline` field so nothing fake is ever submitted as
@@ -192,6 +192,13 @@ export const ProfileSetupPage = () => {
   );
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [professionId, setProfessionId] = useState('');
+  // Optional extra professions beyond the primary (e.g. a musician who also
+  // acts) — same catalogue-backed idea as the single "Second Profession /
+  // Other Interest" editor already on the profile page (ProfileSystem.tsx),
+  // just offered up front and allowing more than one. Not industry-scoped:
+  // the catalogue's own `industry` field on each entry is what lets these
+  // cross into a different sector than the primary pick.
+  const [secondProfessionIds, setSecondProfessionIds] = useState<string[]>([]);
   const [headline, setHeadline] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -248,6 +255,7 @@ export const ProfileSetupPage = () => {
     if (profileType === 'artist' || profileType === 'model') {
       setProfileType(null);
       setProfessionId('');
+      setSecondProfessionIds([]);
       setHeadline('');
     }
   };
@@ -302,6 +310,18 @@ export const ProfileSetupPage = () => {
           // from Profile → Basic Information if this follow-up call fails.
         }
       }
+      if (secondProfessionIds.length > 0 && professionId) {
+        try {
+          await profilesService.updateProfessions({
+            professionIds: [Number(professionId), ...secondProfessionIds.map(Number)],
+            primaryProfessionId: Number(professionId),
+          });
+          await refreshProfile();
+        } catch {
+          // Profile itself was created fine — extra professions can still be
+          // added from Profile → Basic Information if this follow-up call fails.
+        }
+      }
       setCurrentStepId('welcome');
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
@@ -314,15 +334,15 @@ export const ProfileSetupPage = () => {
 
   const selectedTypeOption = TYPE_OPTIONS.find((t) => t.value === profileType);
   const selectedProfession = professions.find((p) => String(p.id) === professionId);
+  const secondSelectedProfessions = professions.filter((p) => secondProfessionIds.includes(String(p.id)));
 
   // Artist/model profiles require a real professionId server-side (verified
   // live: POST /v1/profiles 4xxs with "Artist and model profiles require a
-  // primary profession ID" when it's missing). Industries with zero
-  // catalogue entries — Literature, Dance, Craft today (doc/API_REQUIREMENTS.md
-  // §2.4h) — can never produce one, so an individual Creator signup for
-  // those industries can't complete at all yet, not just "shows an empty
-  // list." Surfaced here instead of letting someone fill in the whole form
-  // and hit it as a submit failure.
+  // primary profession ID" when it's missing). Every industry has catalogue
+  // entries today (doc/API_REQUIREMENTS.md §2.4h), but an industry with zero
+  // entries would otherwise let someone fill in the whole Creator form and
+  // only find out it can't submit at the very end — this check surfaces
+  // that up front instead, and keeps working if the catalogue ever regresses.
   const industryHasNoCatalogueProfessions =
     !professionsLoading && selectedIndustry !== '' && !professions.some((p) => p.industry === selectedIndustry);
 
@@ -345,15 +365,18 @@ export const ProfileSetupPage = () => {
   const imageOnRight = currentIndex % 2 === 0;
 
   return (
-    <div className="min-h-dvh flex flex-col md:flex-row">
-      {/* Logo stays fixed at the page's top-left corner regardless of which
-          side the image/content are currently on, instead of traveling with
-          the content column. Text color flips depending on what's actually
-          under it (photo vs. cream). */}
+    <div className="min-h-dvh flex flex-col md:flex-row relative">
+      {/* Logo sits at the page's top-left corner regardless of which side the
+          image/content are currently on, instead of traveling with the
+          content column. Positioned relative to this outer container (not
+          `fixed` to the viewport) so it scrolls away with the page instead
+          of staying pinned over the step indicator on tall steps. Text
+          color flips depending on what's actually under it (photo vs.
+          cream). */}
       <Link
         to="/"
         className={cn(
-          'sosrg-focus-ring fixed top-6 left-6 z-20 inline-flex items-center gap-2.5',
+          'sosrg-focus-ring absolute top-6 left-6 z-20 inline-flex items-center gap-2.5',
           !imageOnRight ? 'photo-text' : 'text-text-primary',
         )}
       >
@@ -379,7 +402,7 @@ export const ProfileSetupPage = () => {
                     <SelectTile
                       key={ind.value}
                       selected={selectedIndustry === ind.value}
-                      onClick={() => { setSelectedIndustry(ind.value); setProfessionId(''); goNext(); }}
+                      onClick={() => { setSelectedIndustry(ind.value); setProfessionId(''); setSecondProfessionIds([]); goNext(); }}
                     >
                       <ind.icon size={22} className={selectedIndustry === ind.value ? 'text-gold-700' : 'text-text-muted'} />
                       <div className="font-body font-semibold text-sosrg-sm text-text-primary mt-2">{ind.label}</div>
@@ -454,6 +477,10 @@ export const ProfileSetupPage = () => {
                     <h1 className="font-auth-display text-sosrg-3xl text-text-primary mb-2">Select your profession</h1>
                     <p className="font-body text-sosrg-base text-text-muted mb-8">Select your primary profession in {selectedIndustry}.</p>
 
+                    <p className="font-body text-sosrg-xs text-text-muted mb-4 -mt-4">
+                      Tap a profession to set it as primary, tap others to add them too — double-tap an added one to make it your primary instead.
+                    </p>
+
                     {professionsLoading ? (
                       <p className="font-body text-sosrg-base text-text-muted">Loading professions…</p>
                     ) : (
@@ -466,26 +493,57 @@ export const ProfileSetupPage = () => {
                                 const match = professions.find(
                                   (p) => p.industry === selectedIndustry && p.name.toLowerCase() === item.toLowerCase(),
                                 );
-                                const selected = match ? professionId === String(match.id) : headline === item;
+                                const matchId = match ? String(match.id) : undefined;
+                                const isPrimary = matchId ? professionId === matchId : headline === item;
+                                const isSecondary = matchId ? secondProfessionIds.includes(matchId) : false;
                                 return (
                                   <button
                                     key={item}
                                     type="button"
                                     onClick={() => {
-                                      if (match) {
-                                        setProfessionId(String(match.id));
-                                        setHeadline('');
-                                      } else {
-                                        setProfessionId('');
+                                      if (!match) {
+                                        // No live catalogue entry — this curated label can't
+                                        // take part in the primary/secondary set (no numeric
+                                        // id to submit). If nothing is picked yet it becomes the
+                                        // free-text headline primary; if a real primary is
+                                        // already set, leave everything alone instead of
+                                        // wiping out picks that were actually valid — most
+                                        // curated labels per industry have no live match today,
+                                        // so this used to nuke the whole selection on a single
+                                        // stray click.
+                                        if (professionId) return;
+                                        setSecondProfessionIds([]);
                                         setHeadline(item);
+                                        setProfileType(CREATOR_PROFESSION_TYPE[item] ?? 'artist');
+                                        return;
                                       }
-                                      setProfileType(CREATOR_PROFESSION_TYPE[item] ?? 'artist');
+                                      // Already primary or already a secondary — leave it as-is on
+                                      // a single click; double-click is what promotes a secondary,
+                                      // so a plain click here must stay a no-op.
+                                      if (matchId === professionId || secondProfessionIds.includes(matchId)) return;
+                                      if (!professionId) {
+                                        setProfessionId(matchId);
+                                        setHeadline('');
+                                        setProfileType(CREATOR_PROFESSION_TYPE[item] ?? 'artist');
+                                      } else {
+                                        setSecondProfessionIds((ids) => [...ids, matchId]);
+                                      }
+                                    }}
+                                    onDoubleClick={() => {
+                                      if (!match || !secondProfessionIds.includes(matchId)) return;
+                                      // Promote this secondary pick to primary; the old primary
+                                      // joins the rest as a secondary pick instead of being dropped.
+                                      setSecondProfessionIds((ids) => [...ids.filter((id) => id !== matchId), professionId].filter(Boolean));
+                                      setProfessionId(matchId);
+                                      setProfileType(CREATOR_PROFESSION_TYPE[match.name] ?? 'artist');
                                     }}
                                     className={cn(
-                                      'sosrg-focus-ring px-4 py-2 rounded-full text-sosrg-sm font-body border transition-colors',
-                                      selected
-                                        ? 'bg-gold-500 border-gold-500 text-cream-50 font-semibold'
-                                        : 'bg-cream-50 border-cream-200 text-text-primary hover:border-gold-500',
+                                      'sosrg-focus-ring px-4 py-2 rounded-full text-sosrg-sm font-body transition-colors',
+                                      isPrimary
+                                        ? 'border-2 border-gold-500 bg-gold-500 text-cream-50 font-semibold'
+                                        : isSecondary
+                                          ? 'border-2 border-gold-500 bg-transparent text-gold-700 font-semibold'
+                                          : 'border border-cream-200 bg-cream-50 text-text-primary hover:border-gold-500',
                                     )}
                                   >
                                     {item}
@@ -503,7 +561,7 @@ export const ProfileSetupPage = () => {
                         label="Not seeing your exact profession? Tell us in a few words"
                         placeholder="e.g. Puppeteer, Sound Designer for regional theatre"
                         value={headline}
-                        onChange={(e) => { setHeadline(e.target.value); setProfessionId(''); setProfileType('artist'); }}
+                        onChange={(e) => { setHeadline(e.target.value); setProfessionId(''); setSecondProfessionIds([]); setProfileType('artist'); }}
                       />
                     </div>
 
@@ -606,6 +664,16 @@ export const ProfileSetupPage = () => {
                     <div>
                       <div className="font-body text-sosrg-xs text-text-muted">Profession</div>
                       <div className="font-body font-semibold text-sosrg-sm text-text-primary">{selectedProfession.name}</div>
+                    </div>
+                  )}
+                  {secondSelectedProfessions.length > 0 && (
+                    <div>
+                      <div className="font-body text-sosrg-xs text-text-muted">
+                        {secondSelectedProfessions.length === 1 ? 'Also' : 'Also professions'}
+                      </div>
+                      <div className="font-body font-semibold text-sosrg-sm text-text-primary">
+                        {secondSelectedProfessions.map((p) => `${p.industry} — ${p.name}`).join(', ')}
+                      </div>
                     </div>
                   )}
                   <div>

@@ -69,10 +69,11 @@ One block per gap below, in the same shape as the OpenAPI spec you already publi
   },
   {
     "gap": "Profession catalogue is too sparse for the industry-first onboarding flow (§2.4h)",
+    "status": "RESOLVED 2026-08-23 — `GET /v1/professions` now returns 27 rows across all 7 industries (curl-verified live). Creator signup is unlocked for every industry; no frontend change needed since the gate was already computed from the live response.",
     "requests": [
       { "method": "POST", "path": "/v1/professions", "input": { "industry": "string", "name": "string" }, "output": "ProfessionCatalogueResponseDto ({id, industry, name})" }
     ],
-    "openQuestion": "Not a new endpoint (an admin-side POST/bulk-import onto the existing `profession_catalog` table would do) — this is a content-population ask: today `GET /v1/professions` returns exactly 5 rows, covering only Cinema (2), Theatre (1), Music (1), Art & Design (1). Literature, Dance, and Craft have zero entries, so those three of the onboarding flow's 7 industry buttons currently dead-end into an empty picker. Needs real curated entries per industry, ideally grouped (Performance/Direction/Production/Technical/Other per the product's own taxonomy proposal) — grouping would need a new `category` column alongside `industry`/`name` if adopted."
+    "openQuestion": "No `category` column was added (grouping is still done client-side via CURATED_PROFESSIONS in ProfileSetupPage.tsx) — leave open if per-industry grouping in the API response is still wanted."
   },
   {
     "gap": "No catalogue endpoint for skills — `PUT /v1/profiles/me/skills` exists but `skillId` values are undiscoverable (§2.4i)",
