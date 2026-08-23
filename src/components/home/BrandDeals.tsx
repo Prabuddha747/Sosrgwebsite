@@ -14,9 +14,8 @@ import svrnWellness from '../../assets/brands/svrn-wellness.png';
 import fixsy from '../../assets/brands/fixsy.png';
 
 // Real collaborations, supplied directly by the SosrG team — no fabricated
-// or placeholder names/logos. Entries with a `logo` render in the logo
-// wall; everything else (no logo file on hand yet) falls into the plain
-// credits list below it, grouped by industry.
+// or placeholder names/logos. Only entries with a `logo` file on hand
+// render; the rest stay here unrendered until a logo is provided.
 const COLLABORATIONS = [
   { name: 'Vande Krsna Foundation', type: 'Educational Course', industry: 'Literature' },
   { name: 'Redesign Your Destiny', type: 'Book', industry: 'Literature' },
@@ -51,19 +50,6 @@ const COLLABORATIONS = [
 ];
 
 const WITH_LOGO = COLLABORATIONS.filter((c) => c.logo);
-const WITHOUT_LOGO = COLLABORATIONS.filter((c) => !c.logo);
-
-// Preserves the order above (roughly grouped already) while collapsing into
-// { industry -> entries[] } — an entry whose industry spans several tags
-// (e.g. "Literature / Theatre / ...") is filed under its first tag only, so
-// nothing appears twice.
-const GROUPS = WITHOUT_LOGO.reduce<{ industry: string; entries: typeof WITHOUT_LOGO }[]>((groups, item) => {
-  const key = item.industry.split('/')[0].trim();
-  const group = groups.find((g) => g.industry === key);
-  if (group) group.entries.push(item);
-  else groups.push({ industry: key, entries: [item] });
-  return groups;
-}, []);
 
 export const BrandDeals = () => (
   <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto border-t border-white/10">
@@ -85,7 +71,7 @@ export const BrandDeals = () => (
     {/* Logo wall — only entries with a real, provided logo file. Sits on a
         light chip since most of these marks are drawn for a white
         background and would vanish against the dark theme otherwise. */}
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-16">
+    <div className="flex flex-wrap items-center justify-center gap-3">
       {WITH_LOGO.map((c, i) => (
         <motion.div
           key={c.name}
@@ -93,37 +79,10 @@ export const BrandDeals = () => (
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.4, delay: i * 0.04 }}
-          className="h-24 sm:h-28 rounded-xl bg-white p-4 flex items-center justify-center"
+          className="h-14 sm:h-16 rounded-lg bg-white px-3 flex items-center"
         >
-          <img src={c.logo} alt={c.name} className="max-h-full max-w-full object-contain" />
+          <img src={c.logo} alt={c.name} className="h-full max-h-9 sm:max-h-10 w-auto max-w-[9rem] object-contain" />
         </motion.div>
-      ))}
-    </div>
-
-    <div className="max-w-4xl mx-auto space-y-12">
-      {GROUPS.map((group) => (
-        <div key={group.industry}>
-          <span className="block text-gold text-xs font-bold uppercase tracking-[0.3em] mb-5">
-            {group.industry}
-          </span>
-          <div className="grid sm:grid-cols-2 gap-x-10">
-            {group.entries.map((c, i) => (
-              <motion.div
-                key={c.name}
-                initial={{ opacity: 0, x: -8 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.4, delay: i * 0.03 }}
-                className="group flex items-baseline justify-between gap-4 py-3 border-b border-white/10 hover:border-gold/40 transition-colors"
-              >
-                <span className="font-auth-display text-lg text-white/85 group-hover:text-gold transition-colors">
-                  {c.name}
-                </span>
-                <span className="shrink-0 text-white/30 text-xs italic">{c.type}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
       ))}
     </div>
   </section>
