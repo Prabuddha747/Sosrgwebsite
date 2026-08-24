@@ -69,7 +69,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
   return (
     <>
       <nav ref={navRef} className="sticky top-0 z-40 bg-cream-50 shadow-elevation-1">
-        <div className="sosrg-container flex items-center justify-between h-20">
+        <div className="SosrG-container flex items-center justify-between h-20">
           <div className="shrink-0">{logo}</div>
 
           {/* Desktop mega-menu (1025px+) */}
@@ -79,8 +79,8 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
                 <button
                   type="button"
                   className={cn(
-                    'sosrg-focus-ring min-h-12 px-4 rounded-lg inline-flex items-center gap-1',
-                    'font-body text-sosrg-sm font-medium text-text-primary hover:bg-cream-200',
+                    'SosrG-focus-ring min-h-12 px-4 rounded-lg inline-flex items-center gap-1',
+                    'font-body text-SosrG-sm font-medium text-text-primary hover:bg-cream-200',
                   )}
                   aria-haspopup="true"
                   aria-expanded={openGroup === group.id}
@@ -101,8 +101,8 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
                           role="menuitem"
                           to={child.href}
                           className={cn(
-                            'sosrg-focus-ring flex items-center gap-2 min-h-12 px-3 rounded-lg',
-                            'font-body text-sosrg-sm text-text-primary hover:bg-cream-200',
+                            'SosrG-focus-ring flex items-center gap-2 min-h-12 px-3 rounded-lg',
+                            'font-body text-SosrG-sm text-text-primary hover:bg-cream-200',
                             activeHref === child.href && 'text-gold-500',
                           )}
                           onClick={() => setOpenGroup(null)}
@@ -122,7 +122,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
             {adminHref && (
               <Link
                 to={adminHref}
-                className="sosrg-focus-ring min-h-12 px-4 rounded-lg inline-flex items-center gap-2 font-body text-sosrg-sm text-text-muted hover:text-text-primary"
+                className="SosrG-focus-ring min-h-12 px-4 rounded-lg inline-flex items-center gap-2 font-body text-SosrG-sm text-text-muted hover:text-text-primary"
               >
                 <Lock className="w-4 h-4" />
                 Admin
@@ -133,7 +133,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
           {/* Tablet + mobile hamburger trigger */}
           <button
             type="button"
-            className="sosrg-focus-ring desktop:hidden min-h-12 min-w-12 flex items-center justify-center rounded-lg text-text-primary"
+            className="SosrG-focus-ring desktop:hidden min-h-12 min-w-12 flex items-center justify-center rounded-lg text-text-primary"
             aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={drawerOpen}
             onClick={() => setDrawerOpen((v) => !v)}
@@ -154,7 +154,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
               <div key={group.id} className="border-b border-cream-200 last:border-0">
                 <button
                   type="button"
-                  className="sosrg-focus-ring w-full min-h-12 flex items-center justify-between px-2 font-body text-sosrg-base text-text-primary"
+                  className="SosrG-focus-ring w-full min-h-12 flex items-center justify-between px-2 font-body text-SosrG-base text-text-primary"
                   aria-expanded={expandedDrawerGroup === group.id}
                   onClick={() => setExpandedDrawerGroup((current) => (current === group.id ? null : group.id))}
                 >
@@ -167,7 +167,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
                       <li key={child.href}>
                         <Link
                           to={child.href}
-                          className="sosrg-focus-ring flex items-center gap-2 min-h-12 px-4 rounded-lg font-body text-sosrg-sm text-text-muted hover:text-text-primary"
+                          className="SosrG-focus-ring flex items-center gap-2 min-h-12 px-4 rounded-lg font-body text-SosrG-sm text-text-muted hover:text-text-primary"
                           onClick={() => setDrawerOpen(false)}
                         >
                           {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
@@ -182,7 +182,7 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
             {adminHref && (
               <Link
                 to={adminHref}
-                className="sosrg-focus-ring flex items-center gap-2 min-h-12 px-2 font-body text-sosrg-base text-text-muted"
+                className="SosrG-focus-ring flex items-center gap-2 min-h-12 px-2 font-body text-SosrG-base text-text-muted"
                 onClick={() => setDrawerOpen(false)}
               >
                 <Lock className="w-4 h-4" />
@@ -205,8 +205,8 @@ export const Navbar = ({ logo, groups, adminHref, activeHref, bottomTabItems }: 
               key={item.href}
               to={item.href}
               className={cn(
-                'sosrg-focus-ring flex-1 min-h-12 py-2 flex flex-col items-center justify-center gap-1',
-                'font-body text-sosrg-xs',
+                'SosrG-focus-ring flex-1 min-h-12 py-2 flex flex-col items-center justify-center gap-1',
+                'font-body text-SosrG-xs',
                 active ? 'text-gold-500' : 'text-text-muted',
               )}
             >

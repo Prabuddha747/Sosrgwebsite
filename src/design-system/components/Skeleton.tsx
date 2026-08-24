@@ -24,7 +24,7 @@ export const Skeleton = ({ shape, className, ...props }: SkeletonProps) => (
       'motion-safe:before:absolute motion-safe:before:inset-0',
       'motion-safe:before:bg-[linear-gradient(90deg,transparent,var(--color-cream-50),transparent)]',
       'motion-safe:before:bg-[length:200%_100%]',
-      'motion-safe:before:animate-[sosrg-shine_1.6s_ease-in-out_infinite]',
+      'motion-safe:before:animate-[SosrG-shine_1.6s_ease-in-out_infinite]',
       shapeClasses[shape],
       className,
     )}

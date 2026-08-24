@@ -20,7 +20,7 @@ import { EventManagement } from './pages/EventManagement';
 import { CommunityHub } from './pages/CommunityHub';
 import { SosrGAcademy } from './pages/SosrGAcademy';
 import { AdminPage } from './pages/AdminPage';
-import { Sosrg7EPage } from './pages/Sosrg7EPage';
+import { SosrG7EPage } from './pages/SosrG7EPage';
 import { AppLoader } from './components/layout/AppLoader';
 import { BiharDocumentaryRegistration } from './pages/BiharDocumentaryRegistration';
 import { AccountDeletionRequest } from './pages/AccountDeletionRequest';
@@ -114,7 +114,7 @@ export default function App() {
           <Route path="/auction" element={<TalentAuction />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/academy" element={<SosrGAcademy />} />
-          <Route path="/sosrg-7e" element={<Sosrg7EPage />} />
+          <Route path="/SosrG-7e" element={<SosrG7EPage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

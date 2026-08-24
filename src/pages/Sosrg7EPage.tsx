@@ -1,4 +1,4 @@
-export const Sosrg7EContent = () => (
+export const SosrG7EContent = () => (
   <>
     {/* Education */}
     <div>
@@ -110,8 +110,8 @@ export const Sosrg7EContent = () => (
   </>
 );
 
-export const Sosrg7EPage = () => (
+export const SosrG7EPage = () => (
   <div className="pt-32 pb-32 px-6 w-full max-w-[1600px] mx-auto min-h-screen space-y-24">
-    <Sosrg7EContent />
+    <SosrG7EContent />
   </div>
 );

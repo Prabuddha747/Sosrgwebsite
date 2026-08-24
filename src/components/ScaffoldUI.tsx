@@ -2,7 +2,7 @@ import { cn } from '../lib/utils';
 
 // Shimmer placeholder standing in for a real list/card item until there's a
 // live endpoint to fetch it from — reuses the shimmer keyframe defined in
-// tokens.css (`sosrg-shine`). Shared across pages so decorative-mock-data
+// tokens.css (`SosrG-shine`). Shared across pages so decorative-mock-data
 // content converts to the same honest loading look everywhere.
 export const ScaffoldRow = ({ className }: { className?: string }) => (
   <div
@@ -15,7 +15,7 @@ export const ScaffoldRow = ({ className }: { className?: string }) => (
       // bg-white/5 usage site-wide, not just this one.
       'scaffold-row relative overflow-hidden rounded-xl bg-white/5 border border-white/5',
       'before:absolute before:inset-0 before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]',
-      'before:bg-[length:200%_100%] motion-safe:before:animate-[sosrg-shine_1.6s_ease-in-out_infinite]',
+      'before:bg-[length:200%_100%] motion-safe:before:animate-[SosrG-shine_1.6s_ease-in-out_infinite]',
       className,
     )}
   />

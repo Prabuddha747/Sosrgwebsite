@@ -8,7 +8,7 @@
 
 ## Repo / branch state
 
-- Remote: `https://github.com/digitalsosrg/SosrgWebApp`
+- Remote: `https://github.com/digitalSosrG/SosrGWebApp`
 - `main` has Phase 0, Phase 1, and this session's Phase 2 (global shell + live API integration) work — **committed directly to `main`, not a phase branch.** `implementation.md` §0 rule 2 calls for a branch per phase; this session didn't follow that. Flagging rather than silently normalizing it — next session should decide whether to retroactively branch/tag or accept `main`-direct as the pattern going forward.
 - Tags on `main`: `baseline-pre-redesign` (pre-redesign snapshot), `phase-0-complete`, `phase-1-complete`. No `phase-2-complete` tag yet — pending the open items listed under Phase 2 below.
 - Branch `phase-2-global-shell` still exists, still has **no commits** — this session's Phase 2 work landed on `main` instead, so this branch is now stale relative to `main`, not "safe to continue on" as previously noted.
@@ -31,10 +31,10 @@
 
 ## Phase 1 — Design tokens & component library: DONE, merged, tagged
 
-**Everything here is net-new and additive — no live page was touched.** All new tokens/classes are deliberately namespaced (`navy-*`, `gold-500/300/700`, `text-sosrg-*`, `tablet:/laptop:/desktop:` breakpoints, `shadow-elevation-*`) so they can't collide with or override the legacy tokens old pages still use.
+**Everything here is net-new and additive — no live page was touched.** All new tokens/classes are deliberately namespaced (`navy-*`, `gold-500/300/700`, `text-SosrG-*`, `tablet:/laptop:/desktop:` breakpoints, `shadow-elevation-*`) so they can't collide with or override the legacy tokens old pages still use.
 
 - `src/design-system/design-tokens.json` — canonical token values (colors, elevation shadow recipes, fluid type scale, breakpoints, container, focus ring, the new heading-settle motion primitive). Hand-kept in sync with:
-- `src/design-system/tokens.css` — the actual Tailwind v4 `@theme` block + supporting utility classes (`.sosrg-focus-ring`, `.sosrg-container`, `.sosrg-heading-settle`), imported into `src/index.css` alongside (not replacing) the old `@theme` block.
+- `src/design-system/tokens.css` — the actual Tailwind v4 `@theme` block + supporting utility classes (`.SosrG-focus-ring`, `.SosrG-container`, `.SosrG-heading-settle`), imported into `src/index.css` alongside (not replacing) the old `@theme` block.
 - **New tokens added beyond redesign.md's original palette**, each with a stated reason and measured contrast (same relative-luminance method redesign.md §1 used, hand-verified against its own stated ratios first): `--color-tier-yellow` (#F59E0B, 6.67:1 vs navy-900) and `--color-tier-blue` (#60A5FA, 5.64:1 vs navy-900) — needed for the 4-tier account Badge, since redesign.md's palette only had semantic colors for 2 of the 4 tiers (Green→success, Red→danger already existed).
 - Full component library in `src/design-system/components/`: `Button`, `Card`, `Badge` (+ `tierColorVar` export), `Modal`, `Toast` (+`ToastProvider`/`useToast`), `Tabs`, `Input`/`Select`/`Textarea`, `Avatar`, `Skeleton`, `EmptyState`, `Navbar` (isolated — see below), `SettledHeading`. Barrel export at `src/design-system/index.ts`.
 - **Navbar built in Phase 1 is intentionally NOT wired into the live app** — it's the isolated, showcase-verified version only. It takes a generic `groups`/`bottomTabItems` prop shape and renders plain `<a href>` tags. Real `<Link>` wiring + real route data + role-gated Admin visibility is explicit Phase 2 work (see below).

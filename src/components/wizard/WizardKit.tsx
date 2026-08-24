@@ -23,7 +23,7 @@ export const SelectTile = ({
     onClick={onClick}
     aria-pressed={selected}
     className={cn(
-      'sosrg-texture sosrg-focus-ring text-left rounded-xl p-[1em] bg-cream-50 border-2 transition-all duration-200',
+      'SosrG-texture SosrG-focus-ring text-left rounded-xl p-[1em] bg-cream-50 border-2 transition-all duration-200',
       selected ? 'border-gold-500 shadow-elevation-2' : 'border-transparent shadow-elevation-1 hover:shadow-elevation-2',
       className,
     )}
@@ -43,7 +43,7 @@ export const StepIndicator = ({ steps, currentIndex }: { steps: string[]; curren
         <div className="flex flex-col items-center gap-1.5 shrink-0">
           <div
             className={cn(
-              'w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sosrg-xs font-bold font-body transition-shadow duration-200',
+              'w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-SosrG-xs font-bold font-body transition-shadow duration-200',
               i < currentIndex
                 ? 'bg-gold-500 text-text-primary shadow-elevation-1'
                 : i === currentIndex
@@ -53,7 +53,7 @@ export const StepIndicator = ({ steps, currentIndex }: { steps: string[]; curren
           >
             {i < currentIndex ? <Check size={14} /> : i + 1}
           </div>
-          <span className={cn('hidden sm:block text-sosrg-xs font-body whitespace-nowrap', i === currentIndex ? 'text-text-primary font-semibold' : 'text-text-muted')}>
+          <span className={cn('hidden sm:block text-SosrG-xs font-body whitespace-nowrap', i === currentIndex ? 'text-text-primary font-semibold' : 'text-text-muted')}>
             {label}
           </span>
         </div>
@@ -144,6 +144,6 @@ export const SplitStepImage = ({
         hidden entirely below that rather than showing a fade with nothing
         for it to dissolve into. */}
     <div className={cn('hidden md:block absolute inset-0 pointer-events-none', imageOnRight ? 'split-image-overlay-right' : 'split-image-overlay-left')} />
-    <p className="absolute bottom-4 left-4 md:bottom-8 md:left-8 font-auth-display italic photo-text text-sosrg-lg">{caption}</p>
+    <p className="absolute bottom-4 left-4 md:bottom-8 md:left-8 font-auth-display italic photo-text text-SosrG-lg">{caption}</p>
   </div>
 );

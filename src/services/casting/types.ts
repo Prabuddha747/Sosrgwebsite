@@ -1,7 +1,7 @@
 export type CastingWorkMode = 'onsite' | 'hybrid' | 'remote';
 export type CastingCompensationType = 'paid' | 'unpaid' | 'negotiable';
 
-// Verified live against https://sosrg-api-292824095440.asia-south1.run.app
+// Verified live against https://SosrG-api-292824095440.asia-south1.run.app
 // GET /v1/casting-calls — status is a free-form string in the observed
 // responses ("active" seen so far); the OpenAPI spec doesn't publish the
 // full enum, so this stays untyped rather than guessing the other values.

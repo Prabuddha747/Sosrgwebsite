@@ -8,7 +8,7 @@ export const RequireAuth = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="sosrg-container py-16 flex flex-col gap-4">
+      <div className="SosrG-container py-16 flex flex-col gap-4">
         <Skeleton shape="card" />
       </div>
     );

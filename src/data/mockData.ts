@@ -43,7 +43,7 @@ export const BACKGROUNDS: Record<Section, string> = {
   'creator-profile': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=2000&auto=format&fit=crop',
   'business-profile': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=2000&auto=format&fit=crop',
   'admin': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2000&auto=format&fit=crop',
-  'sosrg-7e': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop',
+  'SosrG-7e': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop',
   'community': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2000&auto=format&fit=crop',
   'bihar-documentary': 'https://images.unsplash.com/photo-1540039155732-684735035727?q=80&w=2000&auto=format&fit=crop',
 };

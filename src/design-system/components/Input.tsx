@@ -7,8 +7,8 @@ import { cn } from '../../lib/utils';
 // identical apart from their native element.
 const fieldClasses = (hasError: boolean, className?: string) =>
   cn(
-    'sosrg-focus-ring w-full min-h-12 rounded-xl px-[1em] py-[0.5em] bg-cream-50',
-    'font-body text-sosrg-base text-text-primary placeholder:text-text-muted',
+    'SosrG-focus-ring w-full min-h-12 rounded-xl px-[1em] py-[0.5em] bg-cream-50',
+    'font-body text-SosrG-base text-text-primary placeholder:text-text-muted',
     'border transition-colors',
     hasError ? 'border-danger' : 'border-cream-200 focus:border-gold-500',
     'disabled:opacity-45 disabled:cursor-not-allowed',
@@ -26,12 +26,12 @@ const FieldWrapper = ({ id, label, error, children }: FieldWrapperProps) => {
   const errorId = error ? `${id}-error` : undefined;
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="font-body text-sosrg-sm text-text-muted">
+      <label htmlFor={id} className="font-body text-SosrG-sm text-text-muted">
         {label}
       </label>
       {children(errorId)}
       {error && (
-        <p id={errorId} role="alert" className="font-body text-sosrg-xs text-danger">
+        <p id={errorId} role="alert" className="font-body text-SosrG-xs text-danger">
           {error}
         </p>
       )}

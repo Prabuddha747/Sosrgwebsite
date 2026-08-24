@@ -53,7 +53,7 @@ export const Tabs = ({ items, value, onChange, variant = 'underline', label, cla
             onClick={() => onChange(item.id)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'sosrg-focus-ring min-h-12 px-4 font-body text-sosrg-sm font-medium whitespace-nowrap transition-colors',
+              'SosrG-focus-ring min-h-12 px-4 font-body text-SosrG-sm font-medium whitespace-nowrap transition-colors',
               variant === 'underline' && [
                 'border-b-2 -mb-px',
                 selected ? 'border-gold-500 text-text-primary' : 'border-transparent text-text-muted hover:text-text-primary',

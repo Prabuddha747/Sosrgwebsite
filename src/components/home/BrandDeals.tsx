@@ -79,7 +79,7 @@ export const BrandDeals = () => (
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.4, delay: i * 0.04 }}
-          className="h-14 sm:h-16 rounded-lg bg-white px-3 flex items-center"
+          className="h-14 sm:h-16 rounded-lg bg-[#ffffff] px-3 flex items-center"
         >
           <img src={c.logo} alt={c.name} className="h-full max-h-9 sm:max-h-10 w-auto max-w-[9rem] object-contain" />
         </motion.div>

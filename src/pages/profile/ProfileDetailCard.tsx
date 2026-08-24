@@ -25,8 +25,8 @@ export const ProfileDetailCard = ({ profile }: { profile: MyProfile }) => (
         size="lg"
       />
       <div>
-        <h1 className="font-display text-sosrg-2xl text-text-primary">{profile.displayName}</h1>
-        <p className="text-sosrg-sm text-text-muted">@{profile.username}</p>
+        <h1 className="font-display text-SosrG-2xl text-text-primary">{profile.displayName}</h1>
+        <p className="text-SosrG-sm text-text-muted">@{profile.username}</p>
       </div>
       {profile.tier !== 'free' && (
         <Badge variant="info" className="ml-auto">
@@ -35,10 +35,10 @@ export const ProfileDetailCard = ({ profile }: { profile: MyProfile }) => (
       )}
     </div>
 
-    {profile.headline && <p className="text-sosrg-base text-text-primary mb-2">{profile.headline}</p>}
-    {profile.bio && <p className="text-sosrg-sm text-text-muted mb-4">{profile.bio}</p>}
+    {profile.headline && <p className="text-SosrG-base text-text-primary mb-2">{profile.headline}</p>}
+    {profile.bio && <p className="text-SosrG-sm text-text-muted mb-4">{profile.bio}</p>}
 
-    <dl className="grid grid-cols-2 gap-4 text-sosrg-sm">
+    <dl className="grid grid-cols-2 gap-4 text-SosrG-sm">
       <div>
         <dt className="text-text-muted">Type</dt>
         <dd className="text-text-primary capitalize">{profile.profileType.replace('_', ' ')}</dd>

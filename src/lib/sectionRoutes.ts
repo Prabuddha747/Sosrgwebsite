@@ -22,7 +22,7 @@ export const sectionPath: Record<Section, string> = {
   'creator-profile': '/profile',
   'business-profile': '/profile',
   admin: '/admin',
-  'sosrg-7e': '/sosrg-7e',
+  'SosrG-7e': '/SosrG-7e',
   academy: '/academy',
   community: '/community',
   'bihar-documentary': '/bihar-untold',

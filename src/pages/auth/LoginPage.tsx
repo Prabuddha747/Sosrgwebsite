@@ -41,7 +41,7 @@ export const LoginPage = () => {
 
   return (
     <AuthShell image={backstageImage} caption="Good to see you again." imageSide="left">
-      <h1 className="font-auth-display text-sosrg-3xl text-text-primary mb-2">Log in</h1>
+      <h1 className="font-auth-display text-SosrG-3xl text-text-primary mb-2">Log in</h1>
       <div className="w-12 h-1 bg-gold-500 rounded-full mb-8" />
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Input
@@ -51,7 +51,7 @@ export const LoginPage = () => {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="text-sosrg-lg"
+          className="text-SosrG-lg"
         />
         <Input
           label="Password"
@@ -61,15 +61,15 @@ export const LoginPage = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={error}
-          className="text-sosrg-lg"
+          className="text-SosrG-lg"
         />
-        <Button type="submit" disabled={submitting} className="text-sosrg-lg mt-1">
+        <Button type="submit" disabled={submitting} className="text-SosrG-lg mt-1">
           {submitting ? 'Logging in…' : 'Log in'}
         </Button>
       </form>
-      <p className="mt-8 text-sosrg-base text-text-muted">
+      <p className="mt-8 text-SosrG-base text-text-muted">
         Don't have an account?{' '}
-        <Link to="/signup" className="text-gold-500 sosrg-focus-ring">
+        <Link to="/signup" className="text-gold-500 SosrG-focus-ring">
           Sign up
         </Link>
       </p>

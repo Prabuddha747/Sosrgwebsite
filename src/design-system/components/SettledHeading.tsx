@@ -47,7 +47,7 @@ export const SettledHeading = ({ as: Tag = 'h2', trigger = 'scroll', className, 
   return (
     <Tag
       ref={ref}
-      className={cn('sosrg-heading-settle font-display', visible && 'is-visible', className)}
+      className={cn('SosrG-heading-settle font-display', visible && 'is-visible', className)}
       {...hoverHandlers}
       {...props}
     >

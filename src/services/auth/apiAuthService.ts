@@ -30,7 +30,7 @@ function persistTokens(tokens: AuthTokens) {
   setRefreshToken(tokens.refreshToken);
 }
 
-// Verified live against https://sosrg-api-292824095440.asia-south1.run.app
+// Verified live against https://SosrG-api-292824095440.asia-south1.run.app
 // (see doc/API_INTEGRATION_LOG.md) — register auto-logs-in, no separate
 // login call needed after a successful register.
 export const apiAuthService: AuthService = {

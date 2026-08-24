@@ -3,7 +3,7 @@ import { clearTokens, getAccessToken, getDeviceId, getRefreshToken, setAccessTok
 // Falls back to the production API when VITE_API_BASE_URL isn't set (e.g.
 // a deploy host missing the env var) — this URL isn't a secret, it's
 // already committed in .env.example.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://sosrg-api-292824095440.asia-south1.run.app';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://SosrG-api-292824095440.asia-south1.run.app';
 const APP_VERSION = '1.0.0';
 
 export class ApiError extends Error {
@@ -39,6 +39,8 @@ export interface ApiFetchOptions {
   /** Register/login/refresh don't send a bearer token — everything else does. */
   skipAuth?: boolean;
   signal?: AbortSignal;
+  /** Extra headers beyond the common/auth ones — e.g. a submission-scoped token for public flows. */
+  headers?: Record<string, string>;
 }
 
 function buildUrl(path: string, query?: ApiFetchOptions['query']) {
@@ -83,7 +85,7 @@ export function setSessionExpiredHandler(handler: (() => void) | null) {
 // to rather than the stale one it started with.
 function withCrossTabLock<T>(fn: () => Promise<T>): Promise<T> {
   if (typeof navigator === 'undefined' || !navigator.locks) return fn();
-  return navigator.locks.request('sosrg:token-refresh', fn);
+  return navigator.locks.request('SosrG:token-refresh', fn);
 }
 
 async function refreshAccessToken(): Promise<string> {
@@ -123,9 +125,14 @@ async function refreshAccessToken(): Promise<string> {
 // JSON-only body handling, but still needs the same bearer token + 401
 // refresh-retry behavior — pulled out separately rather than duplicating
 // the auth/refresh logic in the media service.
-export async function apiUploadBinary(path: string, body: Blob, contentType: string): Promise<void> {
+export async function apiUploadBinary(
+  path: string,
+  body: Blob,
+  contentType: string,
+  extraHeaders?: Record<string, string>,
+): Promise<void> {
   const doFetch = async (): Promise<Response> => {
-    const headers: Record<string, string> = { ...commonHeaders(), 'Content-Type': contentType };
+    const headers: Record<string, string> = { ...commonHeaders(), 'Content-Type': contentType, ...extraHeaders };
     const token = getAccessToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return fetch(buildUrl(path), { method: 'PUT', headers, body });
@@ -154,10 +161,10 @@ export async function apiUploadBinary(path: string, body: Blob, contentType: str
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { method = 'GET', body, query, idempotencyKey, skipAuth, signal } = options;
+  const { method = 'GET', body, query, idempotencyKey, skipAuth, signal, headers: extraHeaders } = options;
 
   const doFetch = async (): Promise<Response> => {
-    const headers: Record<string, string> = { ...commonHeaders() };
+    const headers: Record<string, string> = { ...commonHeaders(), ...extraHeaders };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
     if (!skipAuth) {

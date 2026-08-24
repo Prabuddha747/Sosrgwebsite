@@ -13,7 +13,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: cn(
     'bg-gold-500 text-text-primary font-semibold',
     'bg-[linear-gradient(110deg,var(--color-gold-500)_35%,var(--color-gold-300)_50%,var(--color-gold-500)_65%)] bg-[length:250%_100%]',
-    'motion-safe:hover:animate-sosrg-shine motion-safe:focus-visible:animate-sosrg-shine',
+    'motion-safe:hover:animate-SosrG-shine motion-safe:focus-visible:animate-SosrG-shine',
     'hover:shadow-elevation-2 active:shadow-elevation-pressed',
   ),
   secondary: cn(
@@ -39,9 +39,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled}
       className={cn(
-        'sosrg-focus-ring inline-flex items-center justify-center gap-2',
+        'SosrG-focus-ring inline-flex items-center justify-center gap-2',
         'min-h-12 min-w-12 px-[1.5em] rounded-xl',
-        'font-body text-sosrg-base transition-shadow duration-200',
+        'font-body text-SosrG-base transition-shadow duration-200',
         'disabled:shadow-none disabled:opacity-45 disabled:cursor-not-allowed',
         variantClasses[variant],
         className,

@@ -21,7 +21,7 @@ import type {
   UpdateProfileInput,
 } from './types';
 
-// Verified live against https://sosrg-api-292824095440.asia-south1.run.app
+// Verified live against https://SosrG-api-292824095440.asia-south1.run.app
 // (see doc/API_INTEGRATION_LOG.md). Profile creation is a separate step
 // after register/login — there is no profile auto-created on account
 // creation, GET /v1/profiles/me 404s with PROFILE_NOT_FOUND until POST
@@ -58,7 +58,7 @@ export const apiProfilesService: ProfilesService = {
   },
 
   // GET /v1/profiles — verified live against the OpenAPI spec at
-  // https://sosrg-api-292824095440.asia-south1.run.app/docs this session.
+  // https://SosrG-api-292824095440.asia-south1.run.app/docs this session.
   // Powers the Talent Directory grid; no rating/verified/rate fields exist
   // on this response, only PublicProfileResponseDto's real fields.
   async searchProfiles(params: ProfileSearchParams = {}) {

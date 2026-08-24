@@ -1,4 +1,4 @@
-// Verified live against https://sosrg-api-292824095440.asia-south1.run.app —
+// Verified live against https://SosrG-api-292824095440.asia-south1.run.app —
 // GET /v1/portfolios returns `{data: [], meta: {...}}` for a fresh account
 // (a bare array, unlike casting-calls/conversations' {items, nextCursor}
 // wrapper). Named PortfolioAccessLevel, not PortfolioVisibility, to avoid

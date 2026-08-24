@@ -254,6 +254,6 @@ phase's scope before writing any code.
 
 ## How this connects to the wider roadmap
 
-This redesign covers the **Phase 1 (Foundation MVP)** screen set from the cross-team tracker (`sosrg-cross-team-tracker.xlsx`) — Casting, Events, Community, Profiles, CP structural, Admin. It does not design Phase 2/3 screens (Marketplace, Auction, Academy, Foundation, etc.) — those get their own design pass once their product scope is confirmed, per `design.md` Part D's own reasoning about not designing what isn't built yet.
+This redesign covers the **Phase 1 (Foundation MVP)** screen set from the cross-team tracker (`SosrG-cross-team-tracker.xlsx`) — Casting, Events, Community, Profiles, CP structural, Admin. It does not design Phase 2/3 screens (Marketplace, Auction, Academy, Foundation, etc.) — those get their own design pass once their product scope is confirmed, per `design.md` Part D's own reasoning about not designing what isn't built yet.
 
-Once a mobile app track is greenlit (see `sosrg-cross-team-tracker.xlsx`, "App - Design & Frontend" tab), the token system in `redesign.md` §11 is the handoff point — the same navy/gold palette and elevation scale, reimplemented with native-appropriate shadow and animation primitives rather than a literal port of the web's CSS.
+Once a mobile app track is greenlit (see `SosrG-cross-team-tracker.xlsx`, "App - Design & Frontend" tab), the token system in `redesign.md` §11 is the handoff point — the same navy/gold palette and elevation scale, reimplemented with native-appropriate shadow and animation primitives rather than a literal port of the web's CSS.

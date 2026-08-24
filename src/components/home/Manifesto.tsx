@@ -12,7 +12,7 @@ const BELIEFS = [
 
 export const Manifesto = () => (
   <section className="relative py-16 sm:py-24 px-6 max-w-[1600px] mx-auto overflow-hidden">
-    <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none" aria-hidden="true">
+    <div className="manifesto-art absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none" aria-hidden="true">
       <img
         src={manifestoImage}
         alt=""
@@ -46,7 +46,7 @@ export const Manifesto = () => (
           </div>
         ))}
         <p className="pt-4 text-lg font-medium">
-          That's why <span className="gold-text">SOSRG</span> exists.
+          That's why <span className="gold-text">SosrG</span> exists.
         </p>
       </motion.div>
     </div>

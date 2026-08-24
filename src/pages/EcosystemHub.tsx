@@ -81,7 +81,7 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { profilesService, type PublicProfile } from '../services/profiles';
 import { ScaffoldRow } from '../components/ScaffoldUI';
-import { Sosrg7EContent } from './Sosrg7EPage';
+import { SosrG7EContent } from './SosrG7EPage';
 import { IndiaMap } from '../components/ecosystem/IndiaMap';
 
 export const EcosystemHub = () => {
@@ -412,7 +412,7 @@ export const EcosystemHub = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-24"
           >
-            <Sosrg7EContent />
+            <SosrG7EContent />
           </motion.div>
         )}
 

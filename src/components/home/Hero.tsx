@@ -1,45 +1,61 @@
 import { motion } from 'motion/react';
 import { ChevronRight, Users, Video } from 'lucide-react';
 import type { Section } from '../../types';
+import heroCollage from '../../assets/home/hero-collage.png';
 
 // Homepage redesign (reference boards, Aug 2026): headline copy is lifted
 // verbatim from the reference — see sibling section components for the same
-// rule. Per explicit direction, the photo is a full-bleed section
-// background (not the split/boxed layout the reference boards actually
-// show), and the three CTAs are the pre-redesign ones (Join as Talent /
-// Casting Calls / Bihar Untold), restored with their original routing
-// rather than the reference's "I'm an Artist" / "I'm a Studio" pair.
+// rule. The three CTAs are the pre-redesign ones (Join as Talent / Casting
+// Calls / Bihar Untold), restored with their original routing rather than
+// the reference's "I'm an Artist" / "I'm a Studio" pair.
+// Photo is still a full-bleed background, but the text block is now
+// left-aligned over a left-weighted gradient (trial per Aug 2026 request)
+// instead of centered, so the collage's right half stays visible — matches
+// the reference boards' left-text/right-image balance without splitting
+// the image into its own column.
 // Photo + overlaid text use the fixed .photo-scrim/.photo-text utilities
 // (see index.css) so the vignette and text stay legible in both themes —
 // full-bleed photography doesn't participate in the light/dark repaint the
 // way page chrome does (see the other full-bleed sections for the same
 // pattern).
 export const Hero = ({ setActiveSection }: { setActiveSection: (s: Section) => void }) => (
-  <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  <section className="relative min-h-screen flex items-center overflow-hidden">
     <img
-      src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2400&auto=format&fit=crop"
-      alt="An artist looking out at a stage bathed in light"
+      src={heroCollage}
+      alt="A collage of SosrG creators — dance, film, music, writing, and painting"
       className="absolute inset-0 h-full w-full object-cover"
     />
-    <div className="absolute inset-0 bg-[rgba(20,15,10,0.5)]" />
+    {/* Left-weighted gradient (not the old centered scrim) so the text
+        block reads clearly against the busiest part of the collage while
+        the artwork on the right stays visible, matching the reference
+        layout's left-text/right-image balance. */}
+    <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/10" />
     <div className="absolute inset-0 photo-scrim-b" />
+    {/* Fades into the actual page background (--color-cinematic-black,
+        redefined cream in light mode) rather than a fixed dark rgba, so
+        there's no hard seam where the hero meets the next section in
+        light mode. */}
+    <div
+      className="absolute inset-x-0 bottom-0 h-24 pointer-events-none"
+      style={{ background: 'linear-gradient(to top, var(--color-cinematic-black) 0%, transparent 100%)' }}
+    />
 
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="photo-text relative z-10 text-center px-6 max-w-4xl pt-24"
+      className="photo-text relative z-10 text-left px-6 sm:px-12 md:px-16 max-w-xl pt-24"
     >
-      <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 leading-[1.05]">
-        Every <span className="photo-accent">Artist</span> Starts Somewhere.
+      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05]">
+        Every <span className="photo-accent">Artist </span>Starts Somewhere.
       </h1>
       <p className="text-xl md:text-2xl font-semibold photo-text-muted mb-5">
-        SOSRG is here to help you <span className="photo-accent">Go Further</span>.
+        SosrG is here to help you <span className="photo-accent">Go Further</span>.
       </p>
-      <p className="photo-text-muted max-w-2xl mx-auto mb-10 leading-relaxed">
+      <p className="photo-text-muted max-w-md mb-10 leading-relaxed">
         A creative ecosystem for artists, creators and people who believe they have something worth sharing.
       </p>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start gap-4">
         <button
           onClick={() => setActiveSection('profile')}
           className="w-full sm:w-auto bg-gold text-black px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:scale-105 transition-transform flex items-center justify-center gap-2"

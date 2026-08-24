@@ -5,7 +5,7 @@
  * comment for why this is hand-kept-in-sync rather than generated).
  *
  * Every new key here is deliberately namespaced (cream-*, gold-500/300/700,
- * sosrg-*, tablet/laptop/desktop) so it never collides with or overrides the
+ * SosrG-*, tablet/laptop/desktop) so it never collides with or overrides the
  * legacy tokens in src/index.css that not-yet-redesigned pages still depend
  * on (gold, crimson, cinematic-black/gray, the default Tailwind text-* scale,
  * the default sm/md/lg breakpoints). Old pages must keep rendering exactly as
@@ -22,10 +22,10 @@
      unchanged from v2 (redesign.md §2): never pure black/white — a warm
      umber-brown dark side, a warm near-white light side, recalibrated for
      the cream base instead of navy. */
-  --sosrg-shadow-dark: rgba(120, 92, 56, 0.28);
-  --sosrg-shadow-light: rgba(255, 252, 244, 0.9);
-  --sosrg-shadow-inset-dark: rgba(120, 92, 56, 0.22);
-  --sosrg-shadow-inset-light: rgba(198, 149, 46, 0.12);
+  --SosrG-shadow-dark: rgba(120, 92, 56, 0.28);
+  --SosrG-shadow-light: rgba(255, 252, 244, 0.9);
+  --SosrG-shadow-inset-dark: rgba(120, 92, 56, 0.22);
+  --SosrG-shadow-inset-light: rgba(198, 149, 46, 0.12);
 }
 
 @theme {
@@ -67,16 +67,16 @@
      reads more like a considered choice than a generic template font. */
   --font-auth-display: "Lora", ui-serif, serif;
 
-  /* Fluid type scale, namespaced under "sosrg" so it never overrides
+  /* Fluid type scale, namespaced under "SosrG" so it never overrides
      Tailwind's default text-xs..text-4xl scale that old pages still use. */
-  --text-sosrg-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
-  --text-sosrg-sm: clamp(0.875rem, 0.84rem + 0.18vw, 0.9375rem);
-  --text-sosrg-base: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
-  --text-sosrg-lg: clamp(1.125rem, 1.06rem + 0.32vw, 1.25rem);
-  --text-sosrg-xl: clamp(1.375rem, 1.25rem + 0.6vw, 1.625rem);
-  --text-sosrg-2xl: clamp(1.75rem, 1.5rem + 1.25vw, 2.25rem);
-  --text-sosrg-3xl: clamp(2.25rem, 1.85rem + 2vw, 3rem);
-  --text-sosrg-4xl: clamp(2.75rem, 2.1rem + 3.25vw, 4.25rem);
+  --text-SosrG-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+  --text-SosrG-sm: clamp(0.875rem, 0.84rem + 0.18vw, 0.9375rem);
+  --text-SosrG-base: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --text-SosrG-lg: clamp(1.125rem, 1.06rem + 0.32vw, 1.25rem);
+  --text-SosrG-xl: clamp(1.375rem, 1.25rem + 0.6vw, 1.625rem);
+  --text-SosrG-2xl: clamp(1.75rem, 1.5rem + 1.25vw, 2.25rem);
+  --text-SosrG-3xl: clamp(2.25rem, 1.85rem + 2vw, 3rem);
+  --text-SosrG-4xl: clamp(2.75rem, 2.1rem + 3.25vw, 4.25rem);
 
   /* Breakpoints exactly as specified in redesign.md §4 — additive variants
      (tablet:/laptop:/desktop:) alongside Tailwind's existing sm:/md:/lg:/xl:,
@@ -87,18 +87,18 @@
 
   /* Elevation scale — redesign.md §2. elevation-0 is intentionally omitted
      (Tailwind's own `shadow-none` already covers it). */
-  --shadow-elevation-1: 6px 6px 14px var(--sosrg-shadow-dark), -6px -6px 14px var(--sosrg-shadow-light);
-  --shadow-elevation-2: 10px 10px 22px var(--sosrg-shadow-dark), -10px -10px 22px var(--sosrg-shadow-light);
-  --shadow-elevation-3: 16px 16px 32px var(--sosrg-shadow-dark), -16px -16px 32px var(--sosrg-shadow-light);
-  --shadow-elevation-pressed: inset 4px 4px 10px var(--sosrg-shadow-inset-dark), inset -4px -4px 10px var(--sosrg-shadow-inset-light);
+  --shadow-elevation-1: 6px 6px 14px var(--SosrG-shadow-dark), -6px -6px 14px var(--SosrG-shadow-light);
+  --shadow-elevation-2: 10px 10px 22px var(--SosrG-shadow-dark), -10px -10px 22px var(--SosrG-shadow-light);
+  --shadow-elevation-3: 16px 16px 32px var(--SosrG-shadow-dark), -16px -16px 32px var(--SosrG-shadow-light);
+  --shadow-elevation-pressed: inset 4px 4px 10px var(--SosrG-shadow-inset-dark), inset -4px -4px 10px var(--SosrG-shadow-inset-light);
 
   /* Primary-CTA shine sweep — redesign.md §5: "reserved for the *one* most
      important action per screen." Gated behind motion-safe: at the call
      site so it degrades to a static gold fill under prefers-reduced-motion. */
-  --animate-sosrg-shine: sosrg-shine 1.2s ease-in-out;
+  --animate-SosrG-shine: SosrG-shine 1.2s ease-in-out;
 }
 
-@keyframes sosrg-shine {
+@keyframes SosrG-shine {
   0% { background-position: 200% 0; }
   100% { background-position: -50% 0; }
 }
@@ -130,10 +130,10 @@ body:not(.light-mode) {
      every SelectTile on a near-black surface. Re-picked as a dim warm
      highlight, same recipe as .glass-panel's dark-theme box-shadow in
      index.css, instead of stark white. */
-  --sosrg-shadow-dark: rgba(0, 0, 0, 0.6);
-  --sosrg-shadow-light: rgba(198, 149, 46, 0.12);
-  --sosrg-shadow-inset-dark: rgba(0, 0, 0, 0.5);
-  --sosrg-shadow-inset-light: rgba(198, 149, 46, 0.08);
+  --SosrG-shadow-dark: rgba(0, 0, 0, 0.6);
+  --SosrG-shadow-light: rgba(198, 149, 46, 0.12);
+  --SosrG-shadow-inset-dark: rgba(0, 0, 0, 0.5);
+  --SosrG-shadow-inset-light: rgba(198, 149, 46, 0.08);
 }
 
 /* Focus-visible ring — redesign.md §2/§9: always an explicit 2px solid
@@ -143,13 +143,13 @@ body:not(.light-mode) {
    gold-700 instead — same accent hue, recalibrated for which end of the
    scale actually contrasts against the new surface. Every new interactive
    component uses this class; never relies on the elevation shadow alone. */
-.sosrg-focus-ring:focus-visible {
+.SosrG-focus-ring:focus-visible {
   outline: 2px solid var(--color-gold-700);
   outline-offset: 2px;
 }
 
 /* Fluid container — redesign.md §4: max-width 1440px, fluid padding below that. */
-.sosrg-container {
+.SosrG-container {
   max-width: 1440px;
   margin-inline: auto;
   padding-inline: clamp(1rem, 4vw, 3rem);
@@ -160,7 +160,7 @@ body:not(.light-mode) {
    index.css, tuned lighter (multiply, lower opacity) since it sits on a
    near-white surface instead of a near-black one. A background-image layer,
    not a ::before, so it paints behind content automatically. */
-.sosrg-texture {
+.SosrG-texture {
   background-color: var(--color-cream-50);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
   background-blend-mode: multiply;
@@ -171,15 +171,15 @@ body:not(.light-mode) {
    repeatable typographic motion idea. Resting state is deliberately lighter
    and smaller; .is-visible (added on scroll-into-view or hover/focus,
    depending on trigger) transitions it to full weight/optical-size. */
-.sosrg-heading-settle {
+.SosrG-heading-settle {
   font-variation-settings: "wght" 380, "opsz" 40;
   transition: font-variation-settings 600ms ease-out;
 }
-.sosrg-heading-settle.is-visible {
+.SosrG-heading-settle.is-visible {
   font-variation-settings: "wght" 620, "opsz" 72;
 }
 @media (prefers-reduced-motion: reduce) {
-  .sosrg-heading-settle {
+  .SosrG-heading-settle {
     font-variation-settings: "wght" 620, "opsz" 72;
     transition: none;
   }

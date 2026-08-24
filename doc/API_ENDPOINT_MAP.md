@@ -2,7 +2,7 @@
 
 Every backend endpoint the frontend service layer calls, and exactly where in the app each one is wired in. Grouped by resource. "Status" flags the few that are implemented in the service layer but not yet called from any screen, and the two with a known server-side bug.
 
-Base URL: `https://sosrg-api-292824095440.asia-south1.run.app`
+Base URL: `https://SosrG-api-292824095440.asia-south1.run.app`
 
 ---
 

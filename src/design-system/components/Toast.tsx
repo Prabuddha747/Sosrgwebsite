@@ -76,16 +76,16 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.2 }}
-                  className="sosrg-focus-ring flex items-center gap-3 bg-cream-50 shadow-elevation-2 rounded-xl px-4 py-3 min-w-[280px] max-w-sm"
+                  className="SosrG-focus-ring flex items-center gap-3 bg-cream-50 shadow-elevation-2 rounded-xl px-4 py-3 min-w-[280px] max-w-sm"
                   role="status"
                 >
                   <Icon className="shrink-0 w-5 h-5" style={{ color }} />
-                  <p className="text-text-primary text-sosrg-sm flex-1">{toast.message}</p>
+                  <p className="text-text-primary text-SosrG-sm flex-1">{toast.message}</p>
                   <button
                     type="button"
                     aria-label="Dismiss notification"
                     onClick={() => dismiss(toast.id)}
-                    className={cn('sosrg-focus-ring shrink-0 min-h-8 min-w-8 flex items-center justify-center rounded-full text-text-muted hover:text-text-primary')}
+                    className={cn('SosrG-focus-ring shrink-0 min-h-8 min-w-8 flex items-center justify-center rounded-full text-text-muted hover:text-text-primary')}
                   >
                     <X className="w-4 h-4" />
                   </button>

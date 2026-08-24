@@ -5,10 +5,10 @@ import backstageImage from '../../assets/community/backstage.png';
 import portfolioImage from '../../assets/community/portfolio.png';
 import rehearsalImage from '../../assets/community/rehearsal.png';
 import workshopImage from '../../assets/community/workshop.png';
-import sosrgMark from '../../assets/sosrg-mark.jpeg';
+import SosrGMark from '../../assets/SosrG-mark.jpeg';
 
 // Reference board (section 3): a single horizontal row — five real photo
-// milestones plus the SOSRG mark as the sixth, final node — not a two-row
+// milestones plus the SosrG mark as the sixth, final node — not a two-row
 // photo grid. Real SosrG Studios photos (same set TALENT_CATEGORIES draws
 // from), reused here rather than fetching new stock.
 const MILESTONES = [
@@ -46,7 +46,7 @@ export const OriginStory = () => (
           It Started With A Journey.
         </h2>
         <p className="text-white/60 mb-4 leading-relaxed">
-          Before SOSRG became an ecosystem, it was a journey through the arts.
+          Before SosrG became an ecosystem, it was a journey through the arts.
         </p>
         <p className="text-white/60 mb-8 leading-relaxed">
           What started with one creative journey is growing into a space for every kind of artist.
@@ -85,9 +85,9 @@ export const OriginStory = () => (
               className="flex-1 min-w-0"
             >
               <div className="relative h-64 rounded-xl overflow-hidden">
-                <img src={sosrgMark} alt="SOSRG" className="h-full w-full object-cover" />
+                <img src={SosrGMark} alt="SosrG" className="h-full w-full object-cover" />
               </div>
-              <TimelineNode label="SOSRG" desc="A platform where every artist belongs." />
+              <TimelineNode label="SosrG" desc="A platform where every artist belongs." />
             </motion.div>
           </div>
         </div>

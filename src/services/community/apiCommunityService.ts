@@ -7,9 +7,9 @@ import type {
   UpdateContentShareInput,
 } from './types';
 
-// sosrg-api's new /v1/community endpoints (content-sharing feature) aren't
-// deployed to the live API yet — only this branch's SosrgBackend has them.
-// Until that ships, every call here 404s — curl-verified live: sosrg-api's
+// SosrG-api's new /v1/community endpoints (content-sharing feature) aren't
+// deployed to the live API yet — only this branch's SosrGBackend has them.
+// Until that ships, every call here 404s — curl-verified live: SosrG-api's
 // own GlobalErrorFilter formats Nest's built-in "no matching route"
 // NotFoundException as {error:{code:"HTTP_REQUEST_FAILED", message:"Cannot
 // GET /v1/community/feed"}}. Recognize exactly that signature and surface a

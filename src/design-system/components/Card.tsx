@@ -24,10 +24,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       ref={ref}
       tabIndex={interactive ? (tabIndex ?? 0) : tabIndex}
       className={cn(
-        'sosrg-texture bg-cream-50 border-2 border-cream-200 rounded-xl p-[1.5em] text-text-primary',
+        'SosrG-texture bg-cream-50 border-2 border-cream-200 rounded-xl p-[1.5em] text-text-primary',
         'transition-shadow duration-200',
         variantClasses[variant],
-        interactive && 'sosrg-focus-ring cursor-pointer hover:shadow-elevation-2',
+        interactive && 'SosrG-focus-ring cursor-pointer hover:shadow-elevation-2',
         className,
       )}
       {...props}

@@ -22,8 +22,8 @@ import {
   type CardVariant,
 } from '../design-system';
 
-const SECTION_TITLE = 'text-sosrg-2xl text-text-primary mb-4';
-const SUBSECTION_TITLE = 'font-body text-sosrg-sm text-text-muted mb-3 uppercase tracking-wide';
+const SECTION_TITLE = 'text-SosrG-2xl text-text-primary mb-4';
+const SUBSECTION_TITLE = 'font-body text-SosrG-sm text-text-muted mb-3 uppercase tracking-wide';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section className="mb-16">
@@ -65,15 +65,15 @@ const CardSection = () => {
       <div className="grid grid-cols-1 tablet:grid-cols-3 gap-6">
         {variants.map((v) => (
           <Card key={v} variant={v}>
-            <p className="font-display text-sosrg-lg mb-2">{v}</p>
-            <p className="font-body text-sosrg-sm text-text-muted">Card content on the cream-50 surface.</p>
+            <p className="font-display text-SosrG-lg mb-2">{v}</p>
+            <p className="font-body text-SosrG-sm text-text-muted">Card content on the cream-50 surface.</p>
           </Card>
         ))}
         <Card variant="elevation-1" interactive onClick={() => {}}>
-          <SettledHeading as="h3" trigger="hover" className="text-sosrg-lg mb-2">
+          <SettledHeading as="h3" trigger="hover" className="text-SosrG-lg mb-2">
             Epic Period Drama
           </SettledHeading>
-          <p className="font-body text-sosrg-sm text-text-muted">
+          <p className="font-body text-SosrG-sm text-text-muted">
             Card title as a link — hover/focus retriggers the same settle transition instead of scroll.
           </p>
         </Card>
@@ -161,10 +161,10 @@ const ModalSection = () => {
         </Button>
       </div>
       <Modal open={standardOpen} onClose={() => setStandardOpen(false)} titleId="standard-modal-title">
-        <h3 id="standard-modal-title" className="font-display text-sosrg-xl mb-4">
+        <h3 id="standard-modal-title" className="font-display text-SosrG-xl mb-4">
           Standard modal
         </h3>
-        <p className="font-body text-sosrg-sm text-text-muted mb-6">
+        <p className="font-body text-SosrG-sm text-text-muted mb-6">
           Collapses to a fullscreen sheet below 481px. Escape, backdrop click, or the button below close it.
         </p>
         <Button variant="primary" onClick={() => setStandardOpen(false)}>
@@ -172,7 +172,7 @@ const ModalSection = () => {
         </Button>
       </Modal>
       <Modal open={fullscreenOpen} onClose={() => setFullscreenOpen(false)} variant="fullscreen" titleId="fullscreen-modal-title">
-        <h3 id="fullscreen-modal-title" className="font-display text-sosrg-xl mb-4">
+        <h3 id="fullscreen-modal-title" className="font-display text-SosrG-xl mb-4">
           Fullscreen modal
         </h3>
         <Button variant="primary" onClick={() => setFullscreenOpen(false)}>
@@ -237,7 +237,7 @@ const NavbarSection = () => (
     </p>
     <div className="relative border border-cream-200 rounded-2xl overflow-hidden" style={{ height: 400 }}>
       <Navbar
-        logo={<span className="font-display text-sosrg-xl text-gold-500">SosrG</span>}
+        logo={<span className="font-display text-SosrG-xl text-gold-500">SosrG</span>}
         activeHref="/casting"
         adminHref="/admin"
         groups={[
@@ -272,11 +272,11 @@ const NavbarSection = () => (
 export const ComponentShowcase = () => (
   <ToastProvider>
     <div className="min-h-screen bg-cream-100 text-text-primary">
-      <div className="sosrg-container py-12">
-        <SettledHeading as="h1" trigger="scroll" className="text-sosrg-4xl text-gold-500 mb-2">
+      <div className="SosrG-container py-12">
+        <SettledHeading as="h1" trigger="scroll" className="text-SosrG-4xl text-gold-500 mb-2">
           SosrG Component Library
         </SettledHeading>
-        <p className="font-body text-sosrg-base text-text-muted mb-12">
+        <p className="font-body text-SosrG-base text-text-muted mb-12">
           Phase 1 showcase — dev only, excluded from the production build.
         </p>
         <ButtonSection />

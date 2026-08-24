@@ -24,7 +24,7 @@ Every person or organization on the platform — artist, business, buyer, castin
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| Platform ID | Text | Yes | The human-readable SosrG ID shown to the user and others (e.g. `SOSRG-8K3F2QZ1M`) |
+| Platform ID | Text | Yes | The human-readable SosrG ID shown to the user and others (e.g. `SosrG-8K3F2QZ1M`) |
 | Email | Text | No | Unique if provided |
 | Phone Number | Text | Yes | Unique; primary login identifier |
 | Phone Verified At | Date & Time | No | Set once OTP verification succeeds |

@@ -58,7 +58,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
         ref={ref}
         className={cn(
           'inline-flex items-center gap-1.5 rounded-full px-3 py-1',
-          'font-body text-sosrg-xs font-medium border',
+          'font-body text-SosrG-xs font-medium border',
           className,
         )}
         style={{ color, borderColor: color, backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)` }}

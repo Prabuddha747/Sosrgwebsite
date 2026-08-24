@@ -70,7 +70,7 @@ export const PublicProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="sosrg-container pt-36 pb-16 flex justify-center">
+      <div className="SosrG-container pt-36 pb-16 flex justify-center">
         <div className="w-full max-w-2xl">
           <Skeleton shape="card" />
         </div>
@@ -80,7 +80,7 @@ export const PublicProfilePage = () => {
 
   if (!profile) {
     return (
-      <div className="sosrg-container pt-36 pb-16">
+      <div className="SosrG-container pt-36 pb-16">
         <EmptyState icon={UserX} message={`No profile found for @${username}.`} />
       </div>
     );
@@ -89,7 +89,7 @@ export const PublicProfilePage = () => {
   const isOwnProfile = myProfile?.id === profile.id;
 
   return (
-    <div className="sosrg-container pt-36 pb-16 flex flex-col items-center gap-4">
+    <div className="SosrG-container pt-36 pb-16 flex flex-col items-center gap-4">
       <ProfileDetailCard profile={profile} />
       {myProfile && !isOwnProfile && (
         <div className="w-full max-w-2xl flex gap-3 justify-end">

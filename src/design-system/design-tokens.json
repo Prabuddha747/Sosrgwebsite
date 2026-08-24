@@ -26,10 +26,10 @@
   },
   "elevation": {
     "0": "none",
-    "1": "6px 6px 14px var(--sosrg-shadow-dark), -6px -6px 14px var(--sosrg-shadow-light)",
-    "2": "10px 10px 22px var(--sosrg-shadow-dark), -10px -10px 22px var(--sosrg-shadow-light)",
-    "3": "16px 16px 32px var(--sosrg-shadow-dark), -16px -16px 32px var(--sosrg-shadow-light)",
-    "pressed": "inset 4px 4px 10px var(--sosrg-shadow-inset-dark), inset -4px -4px 10px var(--sosrg-shadow-inset-light)"
+    "1": "6px 6px 14px var(--SosrG-shadow-dark), -6px -6px 14px var(--SosrG-shadow-light)",
+    "2": "10px 10px 22px var(--SosrG-shadow-dark), -10px -10px 22px var(--SosrG-shadow-light)",
+    "3": "16px 16px 32px var(--SosrG-shadow-dark), -16px -16px 32px var(--SosrG-shadow-light)",
+    "pressed": "inset 4px 4px 10px var(--SosrG-shadow-inset-dark), inset -4px -4px 10px var(--SosrG-shadow-inset-light)"
   },
   "font": {
     "display": "\"Fraunces\", ui-serif, serif",

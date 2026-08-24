@@ -12,9 +12,9 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const sizeClasses: Record<NonNullable<AvatarProps['size']>, string> = {
-  sm: 'w-8 h-8 text-sosrg-xs',
-  md: 'w-12 h-12 text-sosrg-sm',
-  lg: 'w-16 h-16 text-sosrg-lg',
+  sm: 'w-8 h-8 text-SosrG-xs',
+  md: 'w-12 h-12 text-SosrG-sm',
+  lg: 'w-16 h-16 text-SosrG-lg',
 };
 
 export const Avatar = ({ src, alt, fallback, tier, size = 'md', className, ...props }: AvatarProps) => {

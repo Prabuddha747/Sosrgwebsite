@@ -121,7 +121,7 @@ export const CommunityOpportunitiesPreview = () => {
           </h2>
           <p className="text-white/50 text-sm leading-relaxed">
             A director you haven't met. A writer looking for a composer. A dancer looking for a stage.
-            A filmmaker looking for an actor. A studio looking for a collaborator. SOSRG brings creative
+            A filmmaker looking for an actor. A studio looking for a collaborator. SosrG brings creative
             people closer together.
           </p>
         </motion.div>

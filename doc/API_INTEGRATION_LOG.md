@@ -1,6 +1,6 @@
 # Live API Integration Log
 
-Curl-verified behavior of `https://sosrg-api-292824095440.asia-south1.run.app` that shaped the frontend's service-layer implementation. Referenced from `src/services/auth/apiAuthService.ts` and `src/services/profiles/apiProfilesService.ts` — update this log, not just the code comments, when a documented behavior changes.
+Curl-verified behavior of `https://SosrG-api-292824095440.asia-south1.run.app` that shaped the frontend's service-layer implementation. Referenced from `src/services/auth/apiAuthService.ts` and `src/services/profiles/apiProfilesService.ts` — update this log, not just the code comments, when a documented behavior changes.
 
 ## Auth
 
