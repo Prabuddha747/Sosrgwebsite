@@ -114,6 +114,50 @@ const ASSISTANCE_NEEDS = [
   { label: 'Legal & Licensing Support like Copyright/trademark', id: 'legal_licensing' },
 ];
 
+// Well-known Bihar art forms not in the live backend catalog (see the
+// GET /options comment above) — offered as tiles too, but since the
+// backend 400s on any artForms id it doesn't recognize, picking one of
+// these writes its name into the free-text otherArtForm field instead.
+const EXTRA_ART_FORMS = [
+  'Glass Painting & Embroidery',
+  'Fabric Art & Designing',
+  'Metal Art',
+  'Bhojpuri Sohrai Painting',
+  'Wooden Toy Making',
+  'Conch Shell Art',
+  'Leaf Painting',
+  'Folk Dance',
+  'Classical Dance',
+  'Folk Singing',
+  'Classical Singing',
+  'Art of Playing Musical Instruments',
+  'Theatre & Drama',
+  'Story & Screenplay Writing',
+  'Nautanki & Bahurupiya Art',
+  'Pandavani Singing',
+  'Chaupat Dance',
+  'Launda Naach',
+  'Bhagait Singing',
+  'Photography',
+  'Film Making',
+  'Documentary Film Making',
+  'Video Editing & Post Production',
+  'VFX & Motion Graphics',
+  'Animation & Graphic Designing',
+  'Music Video Production',
+  'Folk Tales & Story Writing',
+  'Folk Songs & Bhajan Writing',
+  'Drama & Script Writing',
+  'Ghazal & Shayari Writing',
+  'Handwritten Manuscript Art',
+  'Vidyapati Poetry Tradition',
+  'Bundel Art',
+  'Sujni Embroidery & Zari Work',
+  'Tussar Silk & Bhagalpuri Silk',
+  'Iron & Brass Art',
+  'Clay Pottery',
+];
+
 const YEARS_OPTIONS: { label: string; id: ExperienceRange }[] = [
   { label: '1 to 2 years', id: '1_to_2' },
   { label: '3 to 5 years', id: '3_to_5' },
@@ -272,6 +316,27 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
     () => artFormOptions.filter((a) => a.name.toLowerCase().includes(artSearch.toLowerCase())),
     [artFormOptions, artSearch],
   );
+  const filteredExtraArtForms = useMemo(
+    () => EXTRA_ART_FORMS.filter((name) => name.toLowerCase().includes(artSearch.toLowerCase())),
+    [artSearch],
+  );
+
+  // EXTRA_ART_FORMS tiles piggyback on the same free-text otherArtForm
+  // field rather than their own state — selected ones are just names
+  // present in its comma-separated value, so manual typing there and
+  // tile-toggling stay in sync automatically.
+  const otherArtFormTokens = useMemo(
+    () => form.otherArtForm.split(',').map((s) => s.trim()).filter(Boolean),
+    [form.otherArtForm],
+  );
+  const toggleExtraArtForm = (name: string) => {
+    set(
+      'otherArtForm',
+      otherArtFormTokens.includes(name)
+        ? otherArtFormTokens.filter((t) => t !== name).join(', ')
+        : [...otherArtFormTokens, name].join(', '),
+    );
+  };
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const personalValid =
@@ -576,7 +641,25 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
                 </button>
               );
             })}
-            {options && filteredArtForms.length === 0 && (
+            {filteredExtraArtForms.map((name) => {
+              const selected = otherArtFormTokens.includes(name);
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => toggleExtraArtForm(name)}
+                  className={cn(
+                    'sosrg-focus-ring px-4 py-2 rounded-full text-sosrg-sm font-body border transition-colors',
+                    selected
+                      ? 'bg-gold-500 border-gold-500 text-cream-50 font-semibold'
+                      : 'bg-cream-50 border-cream-200 text-text-primary hover:border-gold-500',
+                  )}
+                >
+                  {name}
+                </button>
+              );
+            })}
+            {options && filteredArtForms.length === 0 && filteredExtraArtForms.length === 0 && (
               <p className="w-full font-body text-sosrg-base text-text-muted italic py-4 text-center">No art forms match "{artSearch}".</p>
             )}
           </div>
