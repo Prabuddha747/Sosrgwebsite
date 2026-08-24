@@ -276,7 +276,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
                 <span className="text-xs font-bold uppercase">{language}</span>
               </button>
               <div className="absolute right-0 top-full mt-2 bg-cinematic-black border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all overflow-hidden min-w-[120px]">
-                {['en', 'hi', 'mr', 'ta', 'te', 'bn'].map(lang => (
+                {['en', 'hi'].map(lang => (
                   <button 
                     key={lang}
                     onClick={() => setLanguage(lang)}
@@ -381,7 +381,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               <div className="py-2 border-b border-white/5">
                 <span className="text-white/60 font-medium block mb-3">{t.languageLabel}</span>
                 <div className="flex flex-wrap gap-2">
-                  {['en', 'hi', 'mr', 'ta', 'te', 'bn'].map(lang => (
+                  {['en', 'hi'].map(lang => (
                     <button 
                       key={lang}
                       onClick={() => { setLanguage(lang); setIsMenuOpen(false); }}
