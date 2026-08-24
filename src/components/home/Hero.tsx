@@ -47,7 +47,8 @@ export const Hero = ({ setActiveSection }: { setActiveSection: (s: Section) => v
       className="photo-text relative z-10 text-left px-6 sm:px-12 md:px-16 max-w-xl pt-24"
     >
       <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05]">
-        Every <span className="photo-accent">Artist </span>Starts Somewhere.
+        Every <span className="photo-accent">Artist</span>{' '}
+        <span className="whitespace-nowrap">Starts Somewhere.</span>
       </h1>
       <p className="text-xl md:text-2xl font-semibold photo-text-muted mb-5">
         SosrG is here to help you <span className="photo-accent">Go Further</span>.
