@@ -47,8 +47,12 @@
 }
 
 @layer base {
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-cinematic-black text-white font-sans antialiased transition-colors duration-500;
+    overflow-x: hidden;
   }
 }
 
