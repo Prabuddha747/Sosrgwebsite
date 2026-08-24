@@ -5,7 +5,7 @@ import backstageImage from '../../assets/community/backstage.png';
 import portfolioImage from '../../assets/community/portfolio.png';
 import rehearsalImage from '../../assets/community/rehearsal.png';
 import workshopImage from '../../assets/community/workshop.png';
-import SosrGMark from '../../assets/SosrG-mark.jpeg';
+import SosrGMark from '../../assets/sosrg-mark.jpeg';
 
 // Reference board (section 3): a single horizontal row — five real photo
 // milestones plus the SosrG mark as the sixth, final node — not a two-row
