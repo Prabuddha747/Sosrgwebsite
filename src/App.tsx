@@ -20,7 +20,7 @@ import { EventManagement } from './pages/EventManagement';
 import { CommunityHub } from './pages/CommunityHub';
 import { SosrGAcademy } from './pages/SosrGAcademy';
 import { AdminPage } from './pages/AdminPage';
-import { SosrG7EPage } from './pages/SosrG7EPage';
+import { SosrG7EPage } from './pages/Sosrg7EPage';
 import { AppLoader } from './components/layout/AppLoader';
 import { BiharDocumentaryRegistration } from './pages/BiharDocumentaryRegistration';
 import { AccountDeletionRequest } from './pages/AccountDeletionRequest';
