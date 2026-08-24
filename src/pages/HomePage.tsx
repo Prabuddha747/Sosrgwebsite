@@ -14,27 +14,24 @@ import { TrustFoundation } from '../components/home/TrustFoundation';
 import { FinalGoal } from '../components/home/FinalGoal';
 import { FinalCTA } from '../components/home/FinalCTA';
 
-// `language` stays in the signature only because App.tsx still passes it
-// (other routes' i18n plumbing) — the redesigned sections are English-only,
-// see Hero.tsx's comment for why.
 // Each section below already carries its own py-* vertical rhythm, so this
 // wrapper adds no spacing of its own — an outer space-y-* here would just
 // stack on top of every section's padding and double the gaps.
-export const HomePage = ({ setActiveSection }: { setActiveSection: (s: Section) => void, language: string }) => (
+export const HomePage = ({ setActiveSection, language }: { setActiveSection: (s: Section) => void, language: string }) => (
   <div>
-    <Hero setActiveSection={setActiveSection} />
-    <Manifesto />
-    <OriginStory />
-    <CollaborationNetwork />
-    <SevenWorlds setActiveSection={setActiveSection} />
-    <FeaturedProfessionals setActiveSection={setActiveSection} />
-    <WhatSosrgGives />
-    <TwoSidesEcosystem />
-    <CommunityOpportunitiesPreview />
-    <Testimonials />
-    <BrandDeals />
-    <TrustFoundation />
-    <FinalGoal />
-    <FinalCTA />
+    <Hero setActiveSection={setActiveSection} language={language} />
+    <Manifesto language={language} />
+    <OriginStory language={language} />
+    <CollaborationNetwork language={language} />
+    <SevenWorlds setActiveSection={setActiveSection} language={language} />
+    <FeaturedProfessionals setActiveSection={setActiveSection} language={language} />
+    <WhatSosrgGives language={language} />
+    <TwoSidesEcosystem language={language} />
+    <CommunityOpportunitiesPreview language={language} />
+    <Testimonials language={language} />
+    <BrandDeals language={language} />
+    <TrustFoundation language={language} />
+    <FinalGoal language={language} />
+    <FinalCTA language={language} />
   </div>
 );

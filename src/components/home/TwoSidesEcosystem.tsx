@@ -4,8 +4,9 @@ import { Check } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import creatorImage from '../../assets/creator.png';
 import businessImage from '../../assets/business.png';
+import { tr } from '../../lib/i18n';
 
-const SIDES = [
+const SIDES_EN = [
   {
     key: 'artist',
     heading: "I'M A CREATOR",
@@ -24,10 +25,27 @@ const SIDES = [
   },
 ];
 
-export const TwoSidesEcosystem = () => (
+const SIDES_HI: Record<string, { heading: string; tagline: string; bullets: string[]; cta: string }> = {
+  artist: {
+    heading: 'मैं एक क्रिएटर हूं',
+    tagline: 'मैं बनाना, सीखना, जुड़ना और आगे बढ़ना चाहता हूं।',
+    bullets: ['अपनी प्रतिभा दिखाएं', 'अवसर खोजें', 'लोगों से जुड़ें', 'अपने सफ़र को आगे बढ़ाएं'],
+    cta: 'क्रिएटर के रूप में एक्सप्लोर करें',
+  },
+  studio: {
+    heading: 'मैं एक बिज़नेस हूं',
+    tagline: 'मैं प्रतिभा खोजना, टीमें बनाना और क्रिएटिव प्रोजेक्ट्स को जीवंत करना चाहता हूं।',
+    bullets: ['सत्यापित प्रतिभा खोजें', 'कास्टिंग कॉल्स पोस्ट करें', 'प्रोजेक्ट्स मैनेज करें', 'अपनी टीम बनाएं'],
+    cta: 'बिज़नेस के रूप में एक्सप्लोर करें',
+  },
+};
+
+export const TwoSidesEcosystem = ({ language }: { language: string }) => {
+  const SIDES = SIDES_EN.map((s) => (language === 'hi' ? { ...s, ...SIDES_HI[s.key] } : s));
+  return (
   <section className="relative py-16 sm:py-24 px-6 max-w-400 mx-auto">
     <div className="text-center mb-16">
-      <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">Two Sides of the Ecosystem</p>
+      <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">{tr(language, 'Two Sides of the Ecosystem', 'इकोसिस्टम के दो पहलू')}</p>
     </div>
 
     <div className="relative grid md:grid-cols-2 gap-1 rounded-2xl overflow-hidden">
@@ -72,4 +90,5 @@ export const TwoSidesEcosystem = () => (
       ))}
     </div>
   </section>
-);
+  );
+};

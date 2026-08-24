@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Quote } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Marquee } from '../ui/marquee';
+import { tr } from '../../lib/i18n';
 
 // Real Google Business reviews for SosrG Studios, copied verbatim (typos and
 // all — "Sasarg", "sosrg" lowercase, etc. — since editing someone else's
@@ -113,7 +114,12 @@ const TestimonialCard = ({ name, meta, text }: Testimonial) => (
   </div>
 );
 
-export const Testimonials = () => (
+// Note: the review quotes themselves stay English-only regardless of
+// `language` — they're real Google Business reviews copied verbatim (see
+// comment above), and machine-translating someone's actual words would
+// misrepresent what they wrote. Only this section's own heading/subtext
+// is translated.
+export const Testimonials = ({ language }: { language: string }) => (
   <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -123,10 +129,10 @@ export const Testimonials = () => (
       className="text-center mb-12"
     >
       <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-        Nice things <span className="gold-text">people say</span>
+        {tr(language, 'Nice things ', 'लोग हमारे बारे में ')}<span className="gold-text">{tr(language, 'people say', 'अच्छी बातें कहते हैं')}</span>
       </h2>
       <p className="text-white/50 text-sm mt-3 max-w-xl mx-auto">
-        Real reviews from SosrG Studios' Google Business page.
+        {tr(language, "Real reviews from SosrG Studios' Google Business page.", 'SosrG Studios के Google Business पेज से असली रिव्यू।')}
       </p>
     </motion.div>
 

@@ -6,6 +6,7 @@ import backstageImage from '../../assets/community/backstage.png';
 import openMicImage from '../../assets/community/open-mic.png';
 import rehearsalImage from '../../assets/community/rehearsal.png';
 import workshopImage from '../../assets/community/workshop.png';
+import { tr } from '../../lib/i18n';
 
 // Content restored verbatim from the deleted CollaborationNetwork.tsx (all
 // four programs' full description/bullets/CTA/"how it works" panel — not a
@@ -15,7 +16,7 @@ import workshopImage from '../../assets/community/workshop.png';
 // the marquee carousel the first pass used. None of the four programs have
 // a live API behind them — same as the original — so the whole panel stays
 // marked Coming Soon rather than implying otherwise.
-const PROGRAMS = [
+const PROGRAMS_EN = [
   {
     id: 'theatre',
     title: 'Theatre to Cinema Bridge',
@@ -90,7 +91,70 @@ const PROGRAMS = [
   },
 ];
 
-export const CollaborationNetwork = () => {
+// Hindi mirrors PROGRAMS_EN by array index (id/icon/accent/image stay
+// identical — only the copy fields are translated), so selection logic
+// keeps working off ids from the English source of truth.
+const PROGRAMS_HI = [
+  {
+    title: 'थिएटर से सिनेमा ब्रिज',
+    desc: 'अनुभवी स्टेज एक्टर्स को फिल्म और OTT भूमिकाओं में सहजता से बदलाव करने में मदद करने वाला एक समर्पित रास्ता। हमारा AI थिएटर के अनुभव को सिनेमैटिक कास्टिंग मेट्रिक्स में बदलता है।',
+    bullets: [
+      'स्टेज क्रेडिट्स का स्क्रीन के बराबर AI अनुवाद',
+      'क्लासिकल ट्रेनिंग प्राप्त अभिनेताओं के लिए एक्सक्लूसिव कास्टिंग कॉल्स',
+      'कैमरा एक्टिंग तकनीकों पर वर्कशॉप',
+      'सीधे प्रोड्यूसर नेटवर्किंग इवेंट्स',
+    ],
+    cta: 'ब्रिज प्रोग्राम एक्सप्लोर करें',
+    howTitle: 'ब्रिज कैसे काम करता है',
+    howDesc: 'आपके स्टेज क्रेडिट्स — प्रोडक्शन, रन लेंथ, ट्रेनिंग लीनिएज — को एक सिनेमैटिक कास्टिंग रूब्रिक के आधार पर परखा जाता है, ताकि स्क्रीन अनुभव खोज रहा कास्टिंग डायरेक्टर सिर्फ थिएटर अनुभव के आधार पर भी आपको ढूंढ सके।',
+    tags: ['AI क्रेडिट अनुवाद', 'क्लासिकल ट्रेनिंग मान्य', 'कैमरा तकनीक वर्कशॉप', 'सीधी प्रोड्यूसर पहुंच'],
+  },
+  {
+    title: 'साहित्य से स्क्रीन मार्केटप्लेस',
+    desc: 'एक सुरक्षित मार्केटप्लेस जहाँ स्क्रीनराइटर्स, उपन्यासकार और नाटककार अपनी बौद्धिक संपदा सीधे सत्यापित प्रोड्यूसर्स और स्टूडियोज़ के सामने पेश कर सकते हैं।',
+    bullets: [
+      'पिच करने से पहले सुरक्षित IP टाइमस्टैम्पिंग',
+      'सत्यापित प्रोड्यूसर्स के साथ सीधी मैसेजिंग',
+      'AI-सहायता प्राप्त पिच डेक जनरेशन',
+      'मानकीकृत ऑप्शन एग्रीमेंट्स',
+    ],
+    cta: 'मार्केटप्लेस में प्रवेश करें',
+    howTitle: 'मार्केटप्लेस कैसे काम करता है',
+    howDesc: 'आपकी स्क्रिप्ट या पांडुलिपि को अपलोड करते ही, प्रोड्यूसर को दिखाए जाने से पहले ही एक टाइमस्टैम्प्ड IP रिकॉर्ड मिल जाता है — ताकि पिचिंग सिर्फ भरोसे पर नहीं, साबित करने लायक बनी रहे।',
+    tags: ['IP टाइमस्टैम्प्ड', 'केवल सत्यापित प्रोड्यूसर्स', 'AI पिच सहायता', 'मानक ऑप्शन शर्तें'],
+  },
+  {
+    title: 'संगीत सहयोग हब',
+    desc: 'गीतकारों, गायकों, संगीतकारों और साउंड इंजीनियरों को रियल-टाइम में जोड़ें। स्टेम्स शेयर करें, साथ में गीत लिखें, और स्प्लिट शीट्स को अपने आप मैनेज करें।',
+    bullets: [
+      'रियल-टाइम ऑडियो कोलैबोरेशन रूम्स',
+      'ऑटोमेटेड रॉयल्टी स्प्लिट शीट जनरेशन',
+      'इंस्ट्रूमेंट और जॉनर के आधार पर सेशन म्यूज़िशियन खोजें',
+      'फिल्म पोस्ट-प्रोडक्शन के साथ सीधा इंटीग्रेशन',
+    ],
+    cta: 'सहयोग शुरू करें',
+    howTitle: 'हब कैसे काम करता है',
+    howDesc: 'किसी ट्रैक के लिए एक रूम खोलें, भूमिका के अनुसार सहयोगियों को आमंत्रित करें, और सभी एक ही स्टेम्स और लिरिक डॉक पर काम करें — रॉयल्टी स्प्लिट्स इस आधार पर बनते हैं कि किसने वास्तव में योगदान दिया, बाद में बातचीत करने पर नहीं।',
+    tags: ['रियल-टाइम रूम्स', 'ऑटो स्प्लिट शीट्स', 'जॉनर-मैच्ड सर्च', 'पोस्ट-प्रोडक्शन रेडी'],
+  },
+  {
+    title: 'कला और शिल्प वेंडर डायरेक्टरी',
+    desc: 'प्रोडक्शन डिज़ाइनरों, आर्ट डायरेक्टर्स और कॉस्ट्यूम डिज़ाइनरों को सीधे विशेष सप्लायर्स, कारीगरों और रेंटल हाउसों से जोड़ने वाली एक सत्यापित डायरेक्टरी।',
+    bullets: [
+      'सत्यापित वेंडर रेटिंग्स और रिव्यू',
+      'सीधा RFQ (रिक्वेस्ट फॉर क्वोट) सिस्टम',
+      'बड़े ऑर्डर्स के लिए एस्क्रो पेमेंट्स',
+      'लोकेशन-आधारित सप्लायर सर्च',
+    ],
+    cta: 'डायरेक्टरी ब्राउज़ करें',
+    howTitle: 'डायरेक्टरी कैसे काम करती है',
+    howDesc: 'श्रेणी और लोकेशन के अनुसार सत्यापित प्रॉप हाउस, कॉस्ट्यूम सप्लायर और रेंटल स्टूडियो खोजें, कोटेशन का अनुरोध भेजें, और फोन-और-इनवॉइस की भागदौड़ की बजाय एस्क्रो के ज़रिए भुगतान करें।',
+    tags: ['सत्यापित वेंडर्स', 'RFQ सिस्टम', 'एस्क्रो सुरक्षित', 'लोकेशन सर्च'],
+  },
+];
+
+export const CollaborationNetwork = ({ language }: { language: string }) => {
+  const PROGRAMS = PROGRAMS_EN.map((p, i) => (language === 'hi' ? { ...p, ...PROGRAMS_HI[i] } : p));
   const [selectedId, setSelectedId] = useState(PROGRAMS[0].id);
   const selected = PROGRAMS.find((p) => p.id === selectedId) ?? PROGRAMS[0];
 
@@ -98,10 +162,10 @@ export const CollaborationNetwork = () => {
     <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
       <div className="text-center mb-16">
         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-          Collaboration & <span className="gold-text">Network Layer</span>
+          {tr(language, 'Collaboration & ', 'सहयोग और ')}<span className="gold-text">{tr(language, 'Network Layer', 'नेटवर्क लेयर')}</span>
         </h2>
         <p className="text-white/40 max-w-xl mx-auto">
-          Cross-pollinating talent across the 7 core creative sectors.
+          {tr(language, 'Cross-pollinating talent across the 7 core creative sectors.', '7 प्रमुख क्रिएटिव क्षेत्रों में प्रतिभा का आदान-प्रदान।')}
         </p>
       </div>
 
@@ -168,7 +232,7 @@ export const CollaborationNetwork = () => {
                 disabled
                 className="w-full sm:w-auto bg-white/10 border border-white/10 text-white/50 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest cursor-not-allowed"
               >
-                {selected.cta} — Coming Soon
+                {selected.cta} — {tr(language, 'Coming Soon', 'जल्द आ रहा है')}
               </button>
 
               <div className="mt-8 pt-6 border-t border-white/10">

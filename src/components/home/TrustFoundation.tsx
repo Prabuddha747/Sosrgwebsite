@@ -1,14 +1,24 @@
 import { motion } from 'motion/react';
 import { ShieldCheck, FileText, Handshake, Award } from 'lucide-react';
+import { tr } from '../../lib/i18n';
 
-const PILLARS = [
+const PILLARS_EN = [
   { title: 'Verified People', desc: "Know who you're working with.", icon: ShieldCheck },
   { title: 'Clear Agreements', desc: "Know what you've agreed to.", icon: FileText },
   { title: 'Safe Collaboration', desc: 'Protect both sides of a project.', icon: Handshake },
   { title: 'Credit & Ownership', desc: 'Respect the people behind the work.', icon: Award },
 ];
 
-export const TrustFoundation = () => (
+const PILLARS_HI = [
+  { title: 'सत्यापित लोग', desc: 'जानें कि आप किसके साथ काम कर रहे हैं।', icon: ShieldCheck },
+  { title: 'स्पष्ट समझौते', desc: 'जानें कि आपने किस बात पर सहमति दी है।', icon: FileText },
+  { title: 'सुरक्षित सहयोग', desc: 'प्रोजेक्ट के दोनों पक्षों की सुरक्षा करें।', icon: Handshake },
+  { title: 'श्रेय और स्वामित्व', desc: 'काम के पीछे के लोगों का सम्मान करें।', icon: Award },
+];
+
+export const TrustFoundation = ({ language }: { language: string }) => {
+  const PILLARS = language === 'hi' ? PILLARS_HI : PILLARS_EN;
+  return (
   <section className="py-12 sm:py-20 px-6 max-w-[1600px] mx-auto border-t border-white/10">
     <div className="grid md:grid-cols-[280px_1fr] gap-10 items-center">
       <motion.h2
@@ -18,7 +28,7 @@ export const TrustFoundation = () => (
         transition={{ duration: 0.7 }}
         className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight"
       >
-        Because creative work <span className="gold-text">deserves respect</span>.
+        {tr(language, 'Because creative work ', 'क्योंकि क्रिएटिव काम ')}<span className="gold-text">{tr(language, 'deserves respect', 'सम्मान का हकदार है')}</span>.
       </motion.h2>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -39,4 +49,5 @@ export const TrustFoundation = () => (
       </div>
     </div>
   </section>
-);
+  );
+};

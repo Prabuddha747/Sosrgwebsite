@@ -12,6 +12,7 @@ import neolife from '../../assets/brands/neolife.png';
 import krutik from '../../assets/brands/krutik.png';
 import svrnWellness from '../../assets/brands/svrn-wellness.png';
 import fixsy from '../../assets/brands/fixsy.png';
+import { tr } from '../../lib/i18n';
 
 // Real collaborations, supplied directly by the SosrG team — no fabricated
 // or placeholder names/logos. Only entries with a `logo` file on hand
@@ -51,7 +52,7 @@ const COLLABORATIONS = [
 
 const WITH_LOGO = COLLABORATIONS.filter((c) => c.logo);
 
-export const BrandDeals = () => (
+export const BrandDeals = ({ language }: { language: string }) => (
   <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto border-t border-white/10">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -61,10 +62,10 @@ export const BrandDeals = () => (
       className="text-center mb-14"
     >
       <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-        Backed by <span className="gold-text">brands who believe in creators</span>
+        {tr(language, 'Backed by ', 'ऐसे ब्रांड्स का समर्थन जो ')}<span className="gold-text">{tr(language, 'brands who believe in creators', 'क्रिएटर्स में भरोसा रखते हैं')}</span>
       </h2>
       <p className="text-white/50 text-sm mt-3 max-w-xl mx-auto">
-        Organizations, studios, and brands SosrG has collaborated with.
+        {tr(language, 'Organizations, studios, and brands SosrG has collaborated with.', 'संगठन, स्टूडियो और ब्रांड्स जिनके साथ SosrG ने सहयोग किया है।')}
       </p>
     </motion.div>
 

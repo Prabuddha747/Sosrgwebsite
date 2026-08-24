@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { ChevronRight, Users, Video } from 'lucide-react';
 import type { Section } from '../../types';
 import heroCollage from '../../assets/home/hero-collage.png';
+import { tr } from '../../lib/i18n';
 
 // Homepage redesign (reference boards, Aug 2026): headline copy is lifted
 // verbatim from the reference — see sibling section components for the same
@@ -18,7 +19,7 @@ import heroCollage from '../../assets/home/hero-collage.png';
 // full-bleed photography doesn't participate in the light/dark repaint the
 // way page chrome does (see the other full-bleed sections for the same
 // pattern).
-export const Hero = ({ setActiveSection }: { setActiveSection: (s: Section) => void }) => (
+export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Section) => void, language: string }) => (
   <section className="relative min-h-screen flex items-center overflow-hidden">
     <img
       src={heroCollage}
@@ -47,27 +48,35 @@ export const Hero = ({ setActiveSection }: { setActiveSection: (s: Section) => v
       className="photo-text relative z-10 text-left px-6 sm:px-12 md:px-16 max-w-xl pt-24"
     >
       <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05]">
-        Every <span className="photo-accent">Artist</span>{' '}
-        <span className="whitespace-nowrap">Starts Somewhere.</span>
+        {language === 'hi' ? (
+          <>हर <span className="photo-accent">कलाकार</span> की शुरुआत कहीं न कहीं से होती है।</>
+        ) : (
+          <>Every <span className="photo-accent">Artist</span>{' '}
+          <span className="whitespace-nowrap">Starts Somewhere.</span></>
+        )}
       </h1>
       <p className="text-xl md:text-2xl font-semibold photo-text-muted mb-5">
-        SosrG is here to help you <span className="photo-accent">Go Further</span>.
+        {language === 'hi' ? (
+          <>SosrG आपको <span className="photo-accent">आगे बढ़ने</span> में मदद करता है।</>
+        ) : (
+          <>SosrG is here to help you <span className="photo-accent">Go Further</span>.</>
+        )}
       </p>
       <p className="photo-text-muted max-w-md mb-10 leading-relaxed">
-        A creative ecosystem for artists, creators and people who believe they have something worth sharing.
+        {tr(language, 'A creative ecosystem for artists, creators and people who believe they have something worth sharing.', 'कलाकारों, क्रिएटर्स और उन लोगों के लिए एक क्रिएटिव इकोसिस्टम जो मानते हैं कि उनके पास साझा करने लायक कुछ खास है।')}
       </p>
       <div className="flex flex-col sm:flex-row items-start gap-4">
         <button
           onClick={() => setActiveSection('profile')}
           className="w-full sm:w-auto bg-gold text-black px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:scale-105 transition-transform flex items-center justify-center gap-2"
         >
-          Join as Talent <ChevronRight size={18} />
+          {tr(language, 'Join as Talent', 'टैलेंट के रूप में जुड़ें')} <ChevronRight size={18} />
         </button>
         <button
           onClick={() => setActiveSection('casting')}
           className="photo-text w-full sm:w-auto bg-[rgba(247,243,232,0.08)] backdrop-blur-md border border-[rgba(247,243,232,0.3)] px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-[rgba(247,243,232,0.15)] transition-colors flex items-center justify-center gap-2"
         >
-          <Users size={18} /> Casting Calls
+          <Users size={18} /> {tr(language, 'Casting Calls', 'कास्टिंग कॉल्स')}
         </button>
         {/* <button
           onClick={() => setActiveSection('bihar-documentary')}

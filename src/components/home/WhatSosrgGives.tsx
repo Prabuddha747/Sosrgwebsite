@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
 import { Search, UserCircle, BookOpen, Users, ShieldCheck, Target, Sparkles } from 'lucide-react';
 import { HoverEffect } from '../ui/hover-effect';
+import { tr } from '../../lib/i18n';
 
-const BENEFITS = [
+const BENEFITS_EN = [
   { title: 'Find Opportunities', desc: 'Casting calls, auditions, projects, freelance work and collaborations.', icon: Search },
   { title: 'Build Your Presence', desc: 'Portfolio, profile, showreel and digital visibility.', icon: UserCircle },
   { title: 'Learn & Improve', desc: 'Workshops, academy content, mentorship and industry knowledge.', icon: BookOpen },
@@ -11,7 +12,18 @@ const BENEFITS = [
   { title: 'Get Discovered', desc: 'Relevant opportunities and connections based on your craft.', icon: Target },
 ];
 
-export const WhatSosrgGives = () => (
+const BENEFITS_HI = [
+  { title: 'अवसर खोजें', desc: 'कास्टिंग कॉल्स, ऑडिशन, प्रोजेक्ट्स, फ्रीलांस काम और सहयोग।', icon: Search },
+  { title: 'अपनी पहचान बनाएं', desc: 'पोर्टफोलियो, प्रोफाइल, शोरील और डिजिटल विज़िबिलिटी।', icon: UserCircle },
+  { title: 'सीखें और बेहतर बनें', desc: 'वर्कशॉप, अकादमी कंटेंट, मेंटरशिप और इंडस्ट्री की जानकारी।', icon: BookOpen },
+  { title: 'अपने लोगों से मिलें', desc: 'कलाकार, निर्देशक, प्रोड्यूसर, स्टूडियो, लेखक और सहयोगी।', icon: Users },
+  { title: 'अपने काम को सुरक्षित रखें', desc: 'कॉन्ट्रैक्ट्स, एग्रीमेंट्स, वेरिफिकेशन और सुरक्षित सहयोग।', icon: ShieldCheck },
+  { title: 'डिस्कवर हों', desc: 'आपके हुनर के आधार पर प्रासंगिक अवसर और संपर्क।', icon: Target },
+];
+
+export const WhatSosrgGives = ({ language }: { language: string }) => {
+  const BENEFITS = language === 'hi' ? BENEFITS_HI : BENEFITS_EN;
+  return (
   <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
     <div className="grid lg:grid-cols-[420px_1fr] gap-16 items-center">
       <motion.div
@@ -21,11 +33,11 @@ export const WhatSosrgGives = () => (
         transition={{ duration: 0.7 }}
       >
         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight mb-6">
-          A little help can <span className="gold-text">change a creative journey</span>.
+          {tr(language, 'A little help can ', 'थोड़ी सी मदद ')}<span className="gold-text">{tr(language, 'change a creative journey', 'एक क्रिएटिव सफ़र बदल सकती है')}</span>.
         </h2>
         <div className="flex items-center gap-2 text-xs text-white/40 uppercase tracking-widest">
           <Sparkles size={14} className="text-gold" />
-          Powered by intelligent matching and human trust.
+          {tr(language, 'Powered by intelligent matching and human trust.', 'इंटेलिजेंट मैचिंग और इंसानी भरोसे पर आधारित।')}
         </div>
       </motion.div>
 
@@ -47,4 +59,5 @@ export const WhatSosrgGives = () => (
       </HoverEffect>
     </div>
   </section>
-);
+  );
+};

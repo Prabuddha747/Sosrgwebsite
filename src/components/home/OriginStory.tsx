@@ -6,17 +6,26 @@ import portfolioImage from '../../assets/community/portfolio.png';
 import rehearsalImage from '../../assets/community/rehearsal.png';
 import workshopImage from '../../assets/community/workshop.png';
 import SosrGMark from '../../assets/sosrg-mark.jpeg';
+import { tr } from '../../lib/i18n';
 
 // Reference board (section 3): a single horizontal row — five real photo
 // milestones plus the SosrG mark as the sixth, final node — not a two-row
 // photo grid. Real SosrG Studios photos (same set TALENT_CATEGORIES draws
 // from), reused here rather than fetching new stock.
-const MILESTONES = [
+const MILESTONES_EN = [
   { label: 'Theatre', desc: 'A passion for performing and storytelling.', image: onSetImage },
   { label: 'Filmmaking', desc: 'Bringing stories to life on screen.', image: backstageImage },
   { label: 'Writing', desc: 'Crafting words that move hearts.', image: portfolioImage },
   { label: 'Direction', desc: 'Leading visions and creative teams.', image: rehearsalImage },
   { label: 'Community', desc: 'Building a circle of artists and dreamers.', image: workshopImage },
+];
+
+const MILESTONES_HI = [
+  { label: 'रंगमंच', desc: 'अभिनय और कहानी कहने का जुनून।', image: onSetImage },
+  { label: 'फिल्म निर्माण', desc: 'पर्दे पर कहानियों को जीवंत करना।', image: backstageImage },
+  { label: 'लेखन', desc: 'दिल छू लेने वाले शब्द गढ़ना।', image: portfolioImage },
+  { label: 'निर्देशन', desc: 'विज़न और क्रिएटिव टीमों का नेतृत्व।', image: rehearsalImage },
+  { label: 'समुदाय', desc: 'कलाकारों और सपने देखने वालों का एक घेरा बनाना।', image: workshopImage },
 ];
 
 // Line + dot share one top edge (this wrapper's own top), so they can't
@@ -33,7 +42,9 @@ const TimelineNode = ({ label, desc }: { label: string; desc: string }) => (
   </>
 );
 
-export const OriginStory = () => (
+export const OriginStory = ({ language }: { language: string }) => {
+  const MILESTONES = language === 'hi' ? MILESTONES_HI : MILESTONES_EN;
+  return (
   <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
     <div className="grid lg:grid-cols-[minmax(0,420px)_1fr] gap-16 items-start">
       <motion.div
@@ -43,13 +54,13 @@ export const OriginStory = () => (
         transition={{ duration: 0.7 }}
       >
         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-tight">
-          It Started With A Journey.
+          {tr(language, 'It Started With A Journey.', 'यह एक सफ़र से शुरू हुआ।')}
         </h2>
         <p className="text-white/60 mb-4 leading-relaxed">
-          Before SosrG became an ecosystem, it was a journey through the arts.
+          {tr(language, 'Before SosrG became an ecosystem, it was a journey through the arts.', 'SosrG एक इकोसिस्टम बनने से पहले, कला की दुनिया का एक सफ़र था।')}
         </p>
         <p className="text-white/60 mb-8 leading-relaxed">
-          What started with one creative journey is growing into a space for every kind of artist.
+          {tr(language, 'What started with one creative journey is growing into a space for every kind of artist.', 'जो एक क्रिएटिव सफ़र से शुरू हुआ, वह अब हर तरह के कलाकार के लिए एक जगह बनता जा रहा है।')}
         </p>
         {/* <button className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest border-b border-gold text-gold pb-1 hover:gap-3 transition-all">
           Our Full Story <ArrowRight size={16} />
@@ -87,11 +98,12 @@ export const OriginStory = () => (
               <div className="relative h-64 rounded-xl overflow-hidden">
                 <img src={SosrGMark} alt="SosrG" className="h-full w-full object-cover" />
               </div>
-              <TimelineNode label="SosrG" desc="A platform where every artist belongs." />
+              <TimelineNode label="SosrG" desc={tr(language, 'A platform where every artist belongs.', 'एक ऐसा मंच जहाँ हर कलाकार का अपना स्थान है।')} />
             </motion.div>
           </div>
         </div>
       </div>
     </div>
   </section>
-);
+  );
+};
