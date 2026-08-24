@@ -41,7 +41,11 @@ export default function App() {
   // toggle. Body's own background is the page background in both themes;
   // no separate backdrop layer is needed.
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguageState] = useState(() => localStorage.getItem('sosrg-language') ?? 'en');
+  const setLanguage = (l: string) => {
+    localStorage.setItem('sosrg-language', l);
+    setLanguageState(l);
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const { loading: authLoading } = useAuth();

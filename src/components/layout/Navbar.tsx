@@ -113,49 +113,56 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
       business: "Business", casting: "Casting/Hiring", marketplace: "Marketplace", auction: "Auction",
       discover: "Discover", events: "Events", academy: "Academy", sosrg: "SosrG 7E",
       profile: "Profile", creatorProfile: "Creator Profile", businessProfile: "Business Profile",
-      joinPremium: "Join Premium", admin: "Admin"
+      joinPremium: "Join Premium", admin: "Admin", bcreators: "BCreators",
+      toggleTheme: "Toggle Theme", themeLabel: "Theme", languageLabel: "Language"
     },
     hi: {
       network: "नेटवर्क", talent: "प्रतिभा", community: "समुदाय", ecosystem: "पारिस्थितिकी तंत्र",
       business: "व्यापार", casting: "कास्टिंग/हायरिंग", marketplace: "बाज़ार", auction: "नीलामी",
       discover: "खोजें", events: "आयोजन", academy: "अकादमी", sosrg: "SosrG 7E",
       profile: "प्रोफ़ाइल", creatorProfile: "क्रिएटर प्रोफ़ाइल", businessProfile: "बिजनेस प्रोफ़ाइल",
-      joinPremium: "प्रीमियम से जुड़ें", admin: "व्यवस्थापक"
+      joinPremium: "प्रीमियम से जुड़ें", admin: "व्यवस्थापक", bcreators: "बीक्रिएटर्स",
+      toggleTheme: "थीम बदलें", themeLabel: "थीम", languageLabel: "भाषा"
     },
     mr: {
       network: "नेटवर्क", talent: "प्रतिभा", community: "समुदाय", ecosystem: "इकोसिस्टम",
       business: "व्यवसाय", casting: "कास्टिंग/हायरिंग", marketplace: "मार्केटप्लेस", auction: "लिलाव",
       discover: "शोधा", events: "इव्हेंट्स", academy: "अकादमी", sosrg: "SosrG 7E",
       profile: "प्रोफाइल", creatorProfile: "क्रिएटर प्रोफाइल", businessProfile: "बिझनेस प्रोफाइल",
-      joinPremium: "प्रीमियम जॉईन करा", admin: "अॅडमिन"
+      joinPremium: "प्रीमियम जॉईन करा", admin: "अॅडमिन", bcreators: "BCreators",
+      toggleTheme: "Toggle Theme", themeLabel: "Theme", languageLabel: "Language"
     },
     ta: {
       network: "நெட்வொர்க்", talent: "திறமை", community: "சமூகம்", ecosystem: "சுற்றுச்சூழல்",
       business: "வணிகம்", casting: "காஸ்டிங்/நியமனம்", marketplace: "சந்தை", auction: "ஏலம்",
       discover: "கண்டுபிடி", events: "நிகழ்வுகள்", academy: "அகாடமி", sosrg: "SosrG 7E",
       profile: "சுயவிவரம்", creatorProfile: "படைப்பாளர் சுயவிவரம்", businessProfile: "வணிக சுயவிவரம்",
-      joinPremium: "பிரீமியத்தில் சேரவும்", admin: "நிர்வாகி"
+      joinPremium: "பிரீமியத்தில் சேரவும்", admin: "நிர்வாகி", bcreators: "BCreators",
+      toggleTheme: "Toggle Theme", themeLabel: "Theme", languageLabel: "Language"
     },
     te: {
       network: "నెట్‌వర్క్", talent: "ప్రతిభ", community: "సంఘం", ecosystem: "పర్యావరణ వ్యవస్థ",
       business: "వ్యాపారం", casting: "కాస్టింగ్/నియామకం", marketplace: "మార్కెట్ ప్లేస్", auction: "వేలం",
       discover: "కనుగొనండి", events: "ఈవెంట్‌లు", academy: "అకాడమీ", sosrg: "SosrG 7E",
       profile: "ప్రొఫైల్", creatorProfile: "క్రియేటర్ ప్రొఫైల్", businessProfile: "వ్యాపార ప్రొఫైల్",
-      joinPremium: "ప్రీమియంలో చేరండి", admin: "అడ్మిన్"
+      joinPremium: "ప్రీమియంలో చేరండి", admin: "అడ్మిన్", bcreators: "BCreators",
+      toggleTheme: "Toggle Theme", themeLabel: "Theme", languageLabel: "Language"
     },
     bn: {
       network: "নেটওয়ার্ক", talent: "প্রতিভা", community: "সম্প্রদায়", ecosystem: "ইকোসিস্টেম",
       business: "ব্যবসা", casting: "কাস্টিং/নিয়োগ", marketplace: "মার্কেটপ্লেস", auction: "নিলাম",
       discover: "আবিষ্কার করুন", events: "ইভেন্ট", academy: "একাডেমি", sosrg: "SosrG 7E",
       profile: "প্রোফাইল", creatorProfile: "ক্রিয়েটর প্রোফাইল", businessProfile: "বিজনেস প্রোফাইল",
-      joinPremium: "প্রিমিয়ামে যোগ দিন", admin: "অ্যাডমিন"
+      joinPremium: "প্রিমিয়ামে যোগ দিন", admin: "অ্যাডমিন", bcreators: "BCreators",
+      toggleTheme: "Toggle Theme", themeLabel: "Theme", languageLabel: "Language"
     }
   }[language as 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn'] || {
     network: "Network", talent: "Talent", community: "Community", ecosystem: "Ecosystem",
     business: "Business", casting: "Casting/Hiring", marketplace: "Marketplace", auction: "Auction",
     discover: "Discover", events: "Events", academy: "Academy", sosrg: "SosrG 7E",
     profile: "Profile", creatorProfile: "Creator Profile", businessProfile: "Business Profile",
-    joinPremium: "Join Premium", admin: "Admin"
+    joinPremium: "Join Premium", admin: "Admin", bcreators: "BCreators",
+    toggleTheme: "Toggle Theme", themeLabel: "Theme", languageLabel: "Language"
   };
 
   const navGroups = [
@@ -241,7 +248,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               activeSection === 'bihar-documentary' ? "text-gold" : "text-white/60"
             )}
           >
-            <Film size={14} className="mb-[2px]" /> BCreators
+            <Film size={14} className="mb-[2px]" /> {t.bcreators}
           </button>
 
           <button
@@ -258,7 +265,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-gold"
-              title="Toggle Theme"
+              title={t.toggleTheme}
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -340,7 +347,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
                     )}
                   >
                     <Film size={18} className={activeSection === 'bihar-documentary' ? "text-gold" : "text-white/40"} />
-                    BCreators
+                    {t.bcreators}
                   </button>
                 </div>
               </div>
@@ -362,7 +369,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               </div>
 
               <div className="flex items-center justify-between py-4 border-b border-white/5">
-                <span className="text-white/60 font-medium">Theme</span>
+                <span className="text-white/60 font-medium">{t.themeLabel}</span>
                 <button
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors text-white"
@@ -372,7 +379,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
               </div>
 
               <div className="py-2 border-b border-white/5">
-                <span className="text-white/60 font-medium block mb-3">Language</span>
+                <span className="text-white/60 font-medium block mb-3">{t.languageLabel}</span>
                 <div className="flex flex-wrap gap-2">
                   {['en', 'hi', 'mr', 'ta', 'te', 'bn'].map(lang => (
                     <button 
@@ -393,7 +400,7 @@ export const Navbar = ({ activeSection, setActiveSection, theme, setTheme, langu
                 onClick={() => { setActiveSection('profile'); setIsMenuOpen(false); }}
                 className="bg-gold text-black mt-4 px-6 py-4 rounded-xl font-bold text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2"
               >
-                <Star size={16} /> Join Premium
+                <Star size={16} /> {t.joinPremium}
               </button>
             </div>
           </motion.div>

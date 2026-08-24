@@ -33,10 +33,17 @@ import engagement2Bg from '../assets/bihar/engagement2-bg.png';
 const NAME_PATTERN = /^[A-Za-z][A-Za-z .'-]{1,59}$/;
 const isValidName = (v: string) => NAME_PATTERN.test(v.trim());
 
-// Strips a leading +91/91 country code and any spaces/dashes so "+91 98765
-// 43210" and "9876543210" both validate the same way; Indian mobile numbers
-// start 6-9.
-const normalizePhone = (v: string) => v.trim().replace(/[\s-]/g, '').replace(/^\+?91/, '');
+// Strips a leading +91/91 country code (but only when it's actually a
+// country code, not the first two digits of a bare 10-digit number like
+// 9155512548 — a plain "91" prefix is only stripped at 12 digits) and any
+// spaces/dashes, so "+91 98765 43210" and "9876543210" both validate the
+// same way; Indian mobile numbers start 6-9.
+const normalizePhone = (v: string) => {
+  const digits = v.trim().replace(/[\s-]/g, '');
+  if (digits.startsWith('+91')) return digits.slice(3);
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+  return digits;
+};
 const isValidPhone = (v: string) => /^[6-9]\d{9}$/.test(normalizePhone(v));
 
 const isValidAadhaar = (v: string) => /^\d{12}$/.test(v.trim().replace(/\s/g, ''));
