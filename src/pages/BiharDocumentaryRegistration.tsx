@@ -465,7 +465,7 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
       {currentStepId === 'welcome' && (
         <>
           <div className="mb-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/15 border border-gold-500/40 text-sosrg-xs font-bold uppercase tracking-widest text-gold-700">
-            <CheckCircle2 size={14} /> Registration is open — your progress is saved as you go
+            <CheckCircle2 size={14} /> Registration is open
           </div>
           <h1 className="font-auth-display text-sosrg-3xl text-text-primary mt-4 mb-2">
             Bihar <span className="text-gold-700">Untold</span>
