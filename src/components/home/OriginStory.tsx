@@ -130,7 +130,7 @@ export const OriginStory = ({ language }: { language: string }) => {
   const STATS = language === 'hi' ? STATS_HI : STATS_EN;
   const CARDS = language === 'hi' ? CARDS_HI : CARDS_EN;
   return (
-  <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
+  <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto">
     <div className="flex items-center gap-4 mb-10">
       <span className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gold shrink-0">
         {tr(language, 'About SosrG', 'SosrG के बारे में')}

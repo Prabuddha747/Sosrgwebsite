@@ -20,7 +20,7 @@ import { tr } from '../../lib/i18n';
 // way page chrome does (see the other full-bleed sections for the same
 // pattern).
 export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Section) => void, language: string }) => (
-  <section className="relative min-h-screen flex items-center overflow-hidden">
+  <section className="relative min-h-screen flex items-end overflow-hidden">
     <img
       src={heroCollage}
       alt="A collage of SosrG creators — dance, film, music, writing, and painting"
@@ -45,7 +45,7 @@ export const Hero = ({ setActiveSection, language }: { setActiveSection: (s: Sec
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="photo-text relative z-10 text-left px-6 sm:px-12 md:px-16 max-w-xl pt-24"
+      className="photo-text relative z-10 text-left px-6 sm:px-12 md:px-16 max-w-xl pb-16 sm:pb-20"
     >
       <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05]">
         {language === 'hi' ? (

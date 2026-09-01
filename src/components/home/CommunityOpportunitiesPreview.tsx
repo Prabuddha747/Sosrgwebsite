@@ -117,7 +117,7 @@ export const CommunityOpportunitiesPreview = ({ language }: { language: string }
   const isLive = tab === 'casting' || tab === 'projects';
 
   return (
-    <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
+    <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto">
       <div className="grid lg:grid-cols-[420px_1fr] gap-16 items-start mb-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

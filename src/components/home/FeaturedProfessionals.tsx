@@ -22,7 +22,7 @@ const FEATURED_ROLE_CATEGORIES: RoleCard[] = [
 ];
 
 export const FeaturedProfessionals = ({ setActiveSection, language }: { setActiveSection: (s: Section) => void, language: string }) => (
-  <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
+  <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}

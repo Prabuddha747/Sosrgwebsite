@@ -11,6 +11,7 @@ const SIDES_EN = [
     key: 'artist',
     heading: "I'M A CREATOR",
     tagline: 'I want to create, learn, connect and grow.',
+    roles: ['Actors', 'Musicians', 'Dancers', 'Writers', 'Filmmakers', 'Artists'],
     bullets: ['Showcase your talent', 'Find opportunities', 'Connect with people', 'Grow your journey'],
     cta: 'Explore as a Creator',
     image: creatorImage,
@@ -19,22 +20,25 @@ const SIDES_EN = [
     key: 'studio',
     heading: "I'M A BUSINESS",
     tagline: 'I want to discover talent, build teams and bring creative projects to life.',
+    roles: ['Casting Directors', 'Production Houses', 'Studios', 'Brands & Agencies'],
     bullets: ['Discover verified talent', 'Post casting calls', 'Manage projects', 'Build your team'],
     cta: 'Explore as a Business ',
     image: businessImage,
   },
 ];
 
-const SIDES_HI: Record<string, { heading: string; tagline: string; bullets: string[]; cta: string }> = {
+const SIDES_HI: Record<string, { heading: string; tagline: string; roles: string[]; bullets: string[]; cta: string }> = {
   artist: {
     heading: 'मैं एक क्रिएटर हूं',
     tagline: 'मैं बनाना, सीखना, जुड़ना और आगे बढ़ना चाहता हूं।',
+    roles: ['अभिनेता', 'संगीतकार', 'नर्तक', 'लेखक', 'फिल्ममेकर', 'कलाकार'],
     bullets: ['अपनी प्रतिभा दिखाएं', 'अवसर खोजें', 'लोगों से जुड़ें', 'अपने सफ़र को आगे बढ़ाएं'],
     cta: 'क्रिएटर के रूप में एक्सप्लोर करें',
   },
   studio: {
     heading: 'मैं एक बिज़नेस हूं',
     tagline: 'मैं प्रतिभा खोजना, टीमें बनाना और क्रिएटिव प्रोजेक्ट्स को जीवंत करना चाहता हूं।',
+    roles: ['कास्टिंग डायरेक्टर', 'प्रोडक्शन हाउस', 'स्टूडियो', 'ब्रांड्स और एजेंसियां'],
     bullets: ['सत्यापित प्रतिभा खोजें', 'कास्टिंग कॉल्स पोस्ट करें', 'प्रोजेक्ट्स मैनेज करें', 'अपनी टीम बनाएं'],
     cta: 'बिज़नेस के रूप में एक्सप्लोर करें',
   },
@@ -43,9 +47,9 @@ const SIDES_HI: Record<string, { heading: string; tagline: string; bullets: stri
 export const TwoSidesEcosystem = ({ language }: { language: string }) => {
   const SIDES = SIDES_EN.map((s) => (language === 'hi' ? { ...s, ...SIDES_HI[s.key] } : s));
   return (
-  <section className="relative py-16 sm:py-24 px-6 max-w-400 mx-auto">
+  <section className="relative py-10 sm:py-24 px-6 max-w-400 mx-auto">
     <div className="text-center mb-16">
-      <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">{tr(language, 'Two Sides of the Ecosystem', 'इकोसिस्टम के दो पहलू')}</p>
+      <h2 className="gold-text text-4xl md:text-5xl font-extrabold tracking-tight">{tr(language, 'Two Sides of the Ecosystem', 'इकोसिस्टम के दो पहलू')}</h2>
     </div>
 
     <div className="relative grid md:grid-cols-2 gap-1 rounded-2xl overflow-hidden">
@@ -71,7 +75,14 @@ export const TwoSidesEcosystem = ({ language }: { language: string }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/20" />
           <div className="relative p-8 md:p-10">
             <h3 className="photo-accent text-2xl font-bold mb-3">{side.heading}</h3>
-            <p className="photo-text-muted mb-6 max-w-sm">{side.tagline}</p>
+            <p className="photo-text-muted mb-4 max-w-sm">{side.tagline}</p>
+            <div className="flex flex-wrap gap-1.5 mb-6">
+              {side.roles.map((role) => (
+                <span key={role} className="photo-text-muted text-[11px] bg-white/10 border border-white/20 px-2.5 py-1 rounded-full">
+                  {role}
+                </span>
+              ))}
+            </div>
             <ul className="space-y-2 mb-8">
               {side.bullets.map((b) => (
                 <li key={b} className="photo-text-muted flex items-center gap-2 text-sm">

@@ -159,7 +159,7 @@ export const CollaborationNetwork = ({ language }: { language: string }) => {
   const selected = PROGRAMS.find((p) => p.id === selectedId) ?? PROGRAMS[0];
 
   return (
-    <section className="py-16 sm:py-24 px-6 max-w-[1600px] mx-auto">
+    <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto">
       <div className="text-center mb-16">
         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
           {tr(language, 'Collaboration & ', 'सहयोग और ')}<span className="gold-text">{tr(language, 'Network Layer', 'नेटवर्क लेयर')}</span>
