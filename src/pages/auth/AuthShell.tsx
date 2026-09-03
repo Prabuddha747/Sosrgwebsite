@@ -57,7 +57,12 @@ export const AuthShell = ({
           imageOnRight ? 'md:order-1 md:pl-16 md:pr-0' : 'md:order-2 md:pr-16 md:pl-0',
         )}
       >
-        <div className="w-full max-w-xl mx-auto md:mx-0 mt-16 md:mt-0">
+        {/* max-w-md until lg: this column shrink-wraps to its content, and
+            the image column gets whatever's left — at max-w-xl, the text
+            side's ~640px natural width left almost nothing for the image
+            in the md-lg range (768–1024px), so it's capped smaller there
+            and only relaxes to the full max-w-xl once there's room to. */}
+        <div className="w-full max-w-md lg:max-w-xl mx-auto md:mx-0 mt-16 md:mt-0">
           <Card variant="elevation-1" className="w-full p-[2em] sm:p-[2.75em]">
             {children}
           </Card>

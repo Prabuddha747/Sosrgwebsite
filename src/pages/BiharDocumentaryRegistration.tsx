@@ -9,12 +9,14 @@ import {
   Film,
   Landmark,
   Megaphone,
+  Play,
   ScrollText,
   Search,
   Send,
+  X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Button, Card, Input, Textarea, useToast } from '../design-system';
+import { Button, Card, Input, Modal, Textarea, useToast } from '../design-system';
 import { SplitStepImage, StepIndicator, StepTransition } from '../components/wizard/WizardKit';
 import { ApiError } from '../services/httpClient';
 import { biharUntoldService } from '../services/biharUntold';
@@ -259,6 +261,7 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
   const [currentStepId, setCurrentStepId] = useState<StepId>('welcome');
   const [artSearch, setArtSearch] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [introVideoOpen, setIntroVideoOpen] = useState(false);
   const { show } = useToast();
 
   // Draft submission created on leaving the "personal" step (createSubmission
@@ -894,7 +897,8 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
         // as SplitStepImage's non-animated markup), with the intro video
         // floating over it as its own portrait (9:16, matching the source
         // Short) card rather than replacing or squeezing the photo.
-        <div className={cn('relative h-56 md:h-auto md:flex-1 overflow-hidden', imageOnRight ? 'md:order-2' : 'md:order-1')}>
+        <>
+        <div className={cn('relative h-96 md:h-auto md:flex-1 overflow-hidden', imageOnRight ? 'md:order-2' : 'md:order-1')}>
           <img
             src={STEP_IMAGE.welcome}
             alt=""
@@ -904,24 +908,101 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
           <div className="absolute inset-0 bg-scrim md:bg-black/10" />
           <div className={cn('hidden md:block absolute inset-0 pointer-events-none', imageOnRight ? 'split-image-overlay-right-tight' : 'split-image-overlay-left-tight')} />
           <p className="absolute bottom-4 left-4 md:bottom-8 md:left-8 font-auth-display italic photo-text text-sosrg-lg">{STEP_CAPTION.welcome}</p>
-          <div className="absolute inset-0 flex items-center justify-center p-6">
-            <div className="relative w-52 sm:w-64 md:w-72 aspect-9/16 rounded-xl overflow-hidden shadow-elevation-2 ring-1 ring-white/15">
-              <iframe
-                src="https://www.youtube.com/embed/iBYrEWOTBJo?rel=0"
-                title="Bihar Untold — Introduction"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-                className="absolute inset-0 w-full h-full border-0"
+          <div className="absolute inset-0 flex items-center justify-center p-3 md:p-6">
+            {/* Below md, the column's height is fixed (h-96 = 384px, set
+                above) while its width is the full viewport — sizing this by
+                width would make a 9:16 box far taller than that and get
+                clipped by the column's overflow-hidden. w-48 (192px) keeps
+                its derived height (~341px) safely inside that fixed height
+                while still reading clearly as a portrait video, not a
+                thumbnail. From md: up the column's height is free
+                (md:h-auto) but its *width* is the constrained, fluid
+                dimension (flex-1 sharing space with the text column, which
+                can be very narrow right around the md breakpoint) —
+                w-[min(...)] scales with that width instead of jumping to a
+                fixed size that could overflow it, capped for very wide
+                columns. A static thumbnail (not the live iframe) is the
+                trigger — a real embed here would swallow the click itself
+                and just play inline in this small card instead of opening
+                the full-screen viewer below. */}
+            <button
+              type="button"
+              onClick={() => setIntroVideoOpen(true)}
+              aria-haspopup="dialog"
+              className="sosrg-focus-ring group relative w-48 md:w-[min(70%,18rem)] aspect-9/16 rounded-xl overflow-hidden shadow-elevation-2 ring-1 ring-white/15"
+            >
+              <img
+                src="https://img.youtube.com/vi/iBYrEWOTBJo/hqdefault.jpg"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover"
               />
-            </div>
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/15 transition-colors flex items-center justify-center">
+                <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/90 text-black shadow-elevation-2 group-hover:scale-105 transition-transform">
+                  <Play size={20} fill="currentColor" className="ml-0.5" />
+                </span>
+              </div>
+              <span className="sr-only">Play the introduction video</span>
+            </button>
           </div>
         </div>
+
+        {/* Full-screen viewer, not the iframe's own native fullscreen button
+            (omitted below on purpose) — the browser's native fullscreen on
+            an embedded video forces landscape on most mobile browsers,
+            which would flip a portrait Short sideways. This modal stays
+            genuinely portrait at any viewport. */}
+        <Modal
+          open={introVideoOpen}
+          onClose={() => setIntroVideoOpen(false)}
+          variant="fullscreen"
+          titleId="intro-video-title"
+          className="bg-black p-0"
+        >
+          <h2 id="intro-video-title" className="sr-only">Bihar Untold — Introduction</h2>
+          <button
+            type="button"
+            onClick={() => setIntroVideoOpen(false)}
+            aria-label="Close video"
+            className="sosrg-focus-ring absolute top-4 right-4 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black/80"
+          >
+            <X size={20} />
+          </button>
+          <div className="w-full h-full flex items-center justify-center p-4">
+            {/* Width-driven with aspect-9/16 deriving the height (not the
+                other way around) — on a portrait phone the modal's width is
+                the tight dimension, and letting height be the free one keeps
+                the exact 9:16 ratio intact. max-h-[85vh] only steps in as a
+                safety on short/landscape viewports. */}
+            <div className="relative w-full max-w-sm aspect-9/16 max-h-[85vh]">
+              {introVideoOpen && (
+                <iframe
+                  src="https://www.youtube.com/embed/iBYrEWOTBJo?rel=0&autoplay=1"
+                  title="Bihar Untold — Introduction"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full border-0"
+                />
+              )}
+            </div>
+          </div>
+        </Modal>
+        </>
       ) : (
         <SplitStepImage image={STEP_IMAGE[currentStepId]} caption={STEP_CAPTION[currentStepId]} imageOnRight={imageOnRight} stepKey={currentStepId} direction={direction} wide />
       )}
-      <div className={cn('flex flex-col justify-start px-6 py-10 sm:px-12 md:px-16', imageOnRight ? 'md:order-1' : 'md:order-2')}>
-        <div className="w-full max-w-xl mx-auto md:mx-0">
+      <div
+        className={cn(
+          'flex flex-col justify-start px-6 py-10 sm:px-12',
+          // Padding only on the outer edge, flush on the image side — same
+          // touching-layout treatment as AuthShell.
+          imageOnRight ? 'md:order-1 md:pl-16 md:pr-0' : 'md:order-2 md:pr-16 md:pl-0',
+        )}
+      >
+        {/* max-w-md until lg — see the matching comment in AuthShell.tsx;
+            at max-w-xl this column's ~576-640px natural width left almost
+            nothing for the image column in the md-lg range (768–1024px). */}
+        <div className="w-full max-w-md lg:max-w-xl mx-auto md:mx-0">
           <StepIndicator steps={STEPS.map((s) => STEP_LABEL[s])} currentIndex={currentIndex} />
           <StepTransition stepKey={currentStepId} direction={direction}>
             {stepContent}
