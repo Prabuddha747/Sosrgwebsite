@@ -51,17 +51,24 @@ export const AuthShell = ({
       <div
         className={cn(
           'flex flex-col justify-center px-6 py-10 sm:px-12',
+          // Explicit width, not just "shrink-wrap to content" (the old
+          // basis-auto approach) — with flex-basis:auto and no width set
+          // here, the browser's shrink-to-fit sizing lets this column's
+          // actual text content (which differs per page: "Log in" vs
+          // "Create your account", different button copy) decide its own
+          // width, with max-w-md/lg:max-w-xl on the child below only ever
+          // acting as a ceiling, not a floor — so login and signup rendered
+          // at genuinely different widths despite identical classes. An
+          // explicit width here makes the basis deterministic. 32rem/40rem
+          // = the max-w-md/max-w-xl targets below plus this column's own
+          // md:pl-16/md:pr-16 (4rem) padding.
+          'md:w-lg lg:w-160',
           // Padding only on the outer edge (screen side) — the inner edge
           // (image side) stays flush so the photo touches the card instead
           // of leaving a dead gap of empty background between them.
           imageOnRight ? 'md:order-1 md:pl-16 md:pr-0' : 'md:order-2 md:pr-16 md:pl-0',
         )}
       >
-        {/* max-w-md until lg: this column shrink-wraps to its content, and
-            the image column gets whatever's left — at max-w-xl, the text
-            side's ~640px natural width left almost nothing for the image
-            in the md-lg range (768–1024px), so it's capped smaller there
-            and only relaxes to the full max-w-xl once there's room to. */}
         <div className="w-full max-w-md lg:max-w-xl mx-auto md:mx-0 mt-16 md:mt-0">
           <Card variant="elevation-1" className="w-full p-[2em] sm:p-[2.75em]">
             {children}

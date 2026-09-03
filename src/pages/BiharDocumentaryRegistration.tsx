@@ -994,14 +994,17 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
       <div
         className={cn(
           'flex flex-col justify-start px-6 py-10 sm:px-12',
+          // Explicit width — see the matching comment in AuthShell.tsx.
+          // Without it, this column's flex-basis:auto shrink-wraps to
+          // whichever step's own content happens to be widest, so each of
+          // the 8 steps could render this column (and therefore the image
+          // column) at a different width instead of a consistent one.
+          'md:w-lg lg:w-160',
           // Padding only on the outer edge, flush on the image side — same
           // touching-layout treatment as AuthShell.
           imageOnRight ? 'md:order-1 md:pl-16 md:pr-0' : 'md:order-2 md:pr-16 md:pl-0',
         )}
       >
-        {/* max-w-md until lg — see the matching comment in AuthShell.tsx;
-            at max-w-xl this column's ~576-640px natural width left almost
-            nothing for the image column in the md-lg range (768–1024px). */}
         <div className="w-full max-w-md lg:max-w-xl mx-auto md:mx-0">
           <StepIndicator steps={STEPS.map((s) => STEP_LABEL[s])} currentIndex={currentIndex} />
           <StepTransition stepKey={currentStepId} direction={direction}>
