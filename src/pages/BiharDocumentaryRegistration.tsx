@@ -889,8 +889,38 @@ export const BiharDocumentaryRegistration = ({ standalone = true }: { standalone
 
   const registrationSection = (
     <section id="bihar-registration" className={cn('flex flex-col md:flex-row', standalone ? 'flex-1' : 'min-h-[640px]')}>
-      <SplitStepImage image={STEP_IMAGE[currentStepId]} caption={STEP_CAPTION[currentStepId]} imageOnRight={imageOnRight} stepKey={currentStepId} direction={direction} />
-      <div className={cn('flex-1 md:w-1/2 flex flex-col justify-start px-6 py-10 sm:px-12 md:px-16', imageOnRight ? 'md:order-1' : 'md:order-2')}>
+      {currentStepId === 'welcome' ? (
+        // Welcome-only: heroBg stays the full image column (same treatment
+        // as SplitStepImage's non-animated markup), with the intro video
+        // floating over it as its own portrait (9:16, matching the source
+        // Short) card rather than replacing or squeezing the photo.
+        <div className={cn('relative h-56 md:h-auto md:flex-1 overflow-hidden', imageOnRight ? 'md:order-2' : 'md:order-1')}>
+          <img
+            src={STEP_IMAGE.welcome}
+            alt=""
+            aria-hidden="true"
+            className={cn('absolute inset-0 h-full w-full object-cover', imageOnRight ? 'split-image-mask-right-tight' : 'split-image-mask-left-tight')}
+          />
+          <div className="absolute inset-0 bg-scrim md:bg-black/10" />
+          <div className={cn('hidden md:block absolute inset-0 pointer-events-none', imageOnRight ? 'split-image-overlay-right-tight' : 'split-image-overlay-left-tight')} />
+          <p className="absolute bottom-4 left-4 md:bottom-8 md:left-8 font-auth-display italic photo-text text-sosrg-lg">{STEP_CAPTION.welcome}</p>
+          <div className="absolute inset-0 flex items-center justify-center p-6">
+            <div className="relative w-52 sm:w-64 md:w-72 aspect-9/16 rounded-xl overflow-hidden shadow-elevation-2 ring-1 ring-white/15">
+              <iframe
+                src="https://www.youtube.com/embed/iBYrEWOTBJo?rel=0"
+                title="Bihar Untold — Introduction"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+                className="absolute inset-0 w-full h-full border-0"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <SplitStepImage image={STEP_IMAGE[currentStepId]} caption={STEP_CAPTION[currentStepId]} imageOnRight={imageOnRight} stepKey={currentStepId} direction={direction} wide />
+      )}
+      <div className={cn('flex flex-col justify-start px-6 py-10 sm:px-12 md:px-16', imageOnRight ? 'md:order-1' : 'md:order-2')}>
         <div className="w-full max-w-xl mx-auto md:mx-0">
           <StepIndicator steps={STEPS.map((s) => STEP_LABEL[s])} currentIndex={currentIndex} />
           <StepTransition stepKey={currentStepId} direction={direction}>

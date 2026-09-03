@@ -12,7 +12,7 @@ import { tr } from '../../lib/i18n';
 // pages (the talent grid) and isn't translated here — only this section's
 // own heading is, to keep this pass scoped to the home page.
 export const SevenWorlds = ({ setActiveSection, language }: { setActiveSection: (s: Section) => void, language: string }) => (
-  <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto">
+  <section className="py-10 sm:py-24 px-6 max-w-[1920px] mx-auto">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}

@@ -19,7 +19,7 @@ const PILLARS_HI = [
 export const TrustFoundation = ({ language }: { language: string }) => {
   const PILLARS = language === 'hi' ? PILLARS_HI : PILLARS_EN;
   return (
-  <section className="py-12 sm:py-20 px-6 max-w-[1600px] mx-auto border-t border-white/10">
+  <section className="py-12 sm:py-20 px-6 max-w-[1920px] mx-auto border-t border-white/10">
     <div className="grid md:grid-cols-[280px_1fr] gap-10 items-center">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}

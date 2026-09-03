@@ -177,12 +177,31 @@
     mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
     -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
   }
+  /* Narrower dissolve zone for the flush layout (AuthShell, Bihar Untold's
+     `wide` step image) where the image now touches the content column with
+     no padding gap for the 60%-wide fade to dissolve into — that width read
+     as a big washed-out "gap" once the gap itself was removed. Keeps the
+     original, wider fade for ProfileSetupPage's still-padded 50/50 split. */
+  .split-image-mask-right-tight {
+    mask-image: linear-gradient(to right, transparent 0%, black 25%, black 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 25%, black 100%);
+  }
+  .split-image-mask-left-tight {
+    mask-image: linear-gradient(to left, transparent 0%, black 25%, black 100%);
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, black 25%, black 100%);
+  }
 }
 .split-image-overlay-right {
   background: linear-gradient(to right, rgba(20, 15, 10, 0.85) 0%, rgba(20, 15, 10, 0.4) 30%, transparent 60%);
 }
 .split-image-overlay-left {
   background: linear-gradient(to left, rgba(20, 15, 10, 0.85) 0%, rgba(20, 15, 10, 0.4) 30%, transparent 60%);
+}
+.split-image-overlay-right-tight {
+  background: linear-gradient(to right, rgba(20, 15, 10, 0.85) 0%, rgba(20, 15, 10, 0.4) 15%, transparent 30%);
+}
+.split-image-overlay-left-tight {
+  background: linear-gradient(to left, rgba(20, 15, 10, 0.85) 0%, rgba(20, 15, 10, 0.4) 15%, transparent 30%);
 }
 
 /* Homepage redesign (reference boards): full-bleed photography (Artist

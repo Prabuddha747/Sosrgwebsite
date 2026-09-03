@@ -116,14 +116,21 @@ export const SplitStepImage = ({
   imageOnRight,
   stepKey,
   direction,
+  wide,
 }: {
   image: string;
   caption: string;
   imageOnRight: boolean;
   stepKey: string;
   direction: number;
+  // Bihar Untold opts into this — the image fills all space the content
+  // column doesn't need (which shrink-wraps to its own max-width) instead
+  // of a flat 50/50 split, so the photo reads as the dominant element and
+  // there's no dead gap between the two on wide screens. ProfileSetupPage
+  // keeps the even split by omitting it.
+  wide?: boolean;
 }) => (
-  <div className={cn('relative h-56 md:h-auto md:w-1/2 overflow-hidden', imageOnRight ? 'md:order-2' : 'md:order-1')}>
+  <div className={cn('relative h-56 md:h-auto overflow-hidden', wide ? 'md:flex-1' : 'md:w-1/2', imageOnRight ? 'md:order-2' : 'md:order-1')}>
     <AnimatePresence custom={direction} initial={false}>
       <motion.img
         key={stepKey}
@@ -135,15 +142,29 @@ export const SplitStepImage = ({
         animate={{ opacity: 1, x: '0%' }}
         exit={{ opacity: 0, x: direction >= 0 ? '-15%' : '15%' }}
         transition={{ duration: 0.5, ease: 'easeInOut' }}
-        className={cn('absolute inset-0 h-full w-full object-cover', imageOnRight ? 'split-image-mask-right' : 'split-image-mask-left')}
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover',
+          wide
+            ? imageOnRight ? 'split-image-mask-right-tight' : 'split-image-mask-left-tight'
+            : imageOnRight ? 'split-image-mask-right' : 'split-image-mask-left',
+        )}
       />
     </AnimatePresence>
     <div className="absolute inset-0 bg-scrim md:bg-black/10" />
     {/* Edge dissolve is a half-page-split effect — only makes sense once
         the image actually sits beside a content column at md:, so it's
         hidden entirely below that rather than showing a fade with nothing
-        for it to dissolve into. */}
-    <div className={cn('hidden md:block absolute inset-0 pointer-events-none', imageOnRight ? 'split-image-overlay-right' : 'split-image-overlay-left')} />
+        for it to dissolve into. The "wide" variant uses a narrower "-tight"
+        fade since its content column shrink-wraps flush against the image
+        with no padding gap for the wider fade to dissolve into. */}
+    <div
+      className={cn(
+        'hidden md:block absolute inset-0 pointer-events-none',
+        wide
+          ? imageOnRight ? 'split-image-overlay-right-tight' : 'split-image-overlay-left-tight'
+          : imageOnRight ? 'split-image-overlay-right' : 'split-image-overlay-left',
+      )}
+    />
     <p className="absolute bottom-4 left-4 md:bottom-8 md:left-8 font-auth-display italic photo-text text-SosrG-lg">{caption}</p>
   </div>
 );

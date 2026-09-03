@@ -53,7 +53,7 @@ const COLLABORATIONS = [
 const WITH_LOGO = COLLABORATIONS.filter((c) => c.logo);
 
 export const BrandDeals = ({ language }: { language: string }) => (
-  <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto border-t border-white/10">
+  <section className="py-10 sm:py-24 px-6 max-w-[1920px] mx-auto border-t border-white/10">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}

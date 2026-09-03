@@ -22,7 +22,7 @@ const BELIEFS_HI = [
 export const Manifesto = ({ language }: { language: string }) => {
   const BELIEFS = language === 'hi' ? BELIEFS_HI : BELIEFS_EN;
   return (
-  <section className="relative py-10 sm:py-24 px-6 max-w-[1600px] mx-auto overflow-hidden">
+  <section className="relative py-10 sm:py-24 px-6 max-w-[1920px] mx-auto overflow-hidden">
     <div className="manifesto-art absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none" aria-hidden="true">
       <img
         src={manifestoImage}

@@ -47,7 +47,7 @@ const SIDES_HI: Record<string, { heading: string; tagline: string; roles: string
 export const TwoSidesEcosystem = ({ language }: { language: string }) => {
   const SIDES = SIDES_EN.map((s) => (language === 'hi' ? { ...s, ...SIDES_HI[s.key] } : s));
   return (
-  <section className="relative py-10 sm:py-24 px-6 max-w-400 mx-auto">
+  <section className="relative py-10 sm:py-24 px-6 max-w-480 mx-auto">
     <div className="text-center mb-16">
       <h2 className="gold-text text-4xl md:text-5xl font-extrabold tracking-tight">{tr(language, 'Two Sides of the Ecosystem', 'इकोसिस्टम के दो पहलू')}</h2>
     </div>

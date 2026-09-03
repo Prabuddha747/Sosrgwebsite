@@ -24,7 +24,7 @@ const BENEFITS_HI = [
 export const WhatSosrgGives = ({ language }: { language: string }) => {
   const BENEFITS = language === 'hi' ? BENEFITS_HI : BENEFITS_EN;
   return (
-  <section className="py-10 sm:py-24 px-6 max-w-[1600px] mx-auto">
+  <section className="py-10 sm:py-24 px-6 max-w-[1920px] mx-auto">
     <div className="grid lg:grid-cols-[420px_1fr] gap-16 items-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
